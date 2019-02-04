@@ -20,6 +20,9 @@
 
 #include <string>
 #include <iostream>
+#include <stdio.h>
+#include <cstdlib>
+
 using namespace std;
 
 char current;				// Current car	
