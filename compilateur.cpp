@@ -94,12 +94,25 @@ void ArithmeticExpression(void){
 }
 
 int main(void){	// First version : Source code on standard input and assembly code on standard output
+	// Header for gcc assembler / linker
+	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
+	cout << "\t.text\t\t# The following lines contain the program"<<endl;
+	cout << "\t.globl main\t# The main function must be visible from outside"<<endl;
+	cout << "main:\t\t\t# The main function body :"<<endl;
+	cout << "\tmovq %rsp, %rbp\t# Save the position of the stack's top"<<endl;
+
+	// Let's proceed to the analysis and code production
 	ReadChar();
 	ArithmeticExpression();
 	ReadChar();
-	if(!feof(stdin))
+	// Trailer for the gcc assembler / linker
+	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top"<<endl;
+	cout << "\tret\t\t\t# Return from main function"<<endl;
+	if(!feof(stdin)){
 		cerr <<"Caractères en trop à la fin du programme : ["<<current<<"]";
 		Error("."); // unexpected characters at the end of program
+	}
+
 }
 		
 			
