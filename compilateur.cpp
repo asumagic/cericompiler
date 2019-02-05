@@ -20,17 +20,15 @@
 
 #include <string>
 #include <iostream>
-#include <stdio.h>
-#include <cstdlib>
 
 using namespace std;
 
 char current;				// Current car	
 
 void ReadChar(void){		// Read character and skip spaces until 
-	current=getchar();	// non space character is read
-	while(!feof(stdin) && (current==' '||current=='\t'||current=='\n'))
-	   	current=getchar();
+				// non space character is read
+	while(cin.get(current) && (current==' '||current=='\t'||current=='\n'))
+	   	cin.get(current);
 }
 
 void Error(string s){
@@ -90,8 +88,8 @@ void ArithmeticExpression(void){
 		if(adop=='+')
 			cout << "\taddq	%rax, %rbx"<<endl;	// add both operands
 		else
-			cout << "\tsubq	%rax, %rbx"<<endl;	// substract both operands
-		cout << "\tpush %rbx"<<endl;			// store result
+			cout << "\tsubq	%rbx, %rax"<<endl;	// substract both operands
+		cout << "\tpush %rax"<<endl;			// store result
 	}
 
 }
@@ -111,7 +109,7 @@ int main(void){	// First version : Source code on standard input and assembly co
 	// Trailer for the gcc assembler / linker
 	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top"<<endl;
 	cout << "\tret\t\t\t# Return from main function"<<endl;
-	if(!feof(stdin)){
+	if(cin.get(current)){
 		cerr <<"Caractères en trop à la fin du programme : ["<<current<<"]";
 		Error("."); // unexpected characters at the end of program
 	}
