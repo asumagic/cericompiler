@@ -1,6 +1,6 @@
 //  A compiler from a very simple Pascal-like structured language LL(k)
 //  to 64-bit 80x86 Assembly langage
-//  Copyright (C) 2009 Pierre Jourlin
+//  Copyright (C) 2019 Pierre Jourlin
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 #include <string>
 #include <iostream>
+#include <cstdlib>
 
 using namespace std;
 
@@ -86,7 +87,7 @@ void ArithmeticExpression(void){
 		cout << "\tpop %rbx"<<endl;	// get first operand
 		cout << "\tpop %rax"<<endl;	// get second operand
 		if(adop=='+')
-			cout << "\taddq	%rax, %rbx"<<endl;	// add both operands
+			cout << "\taddq	%rbx, %rax"<<endl;	// add both operands
 		else
 			cout << "\tsubq	%rbx, %rax"<<endl;	// substract both operands
 		cout << "\tpush %rax"<<endl;			// store result
