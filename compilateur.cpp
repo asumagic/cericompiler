@@ -21,27 +21,59 @@
 #include <string>
 #include <iostream>
 #include <cstdlib>
+#include <set>
 
 using namespace std;
 
-char current;				// Current car	
+enum OPREL {equ, diff, infe, supe, inf, sup, unknown};
+char current, lookedAhead;				// Current char	
+int NLookedAhead=0;
+set<string> DeclaredVariables;
+unsigned long TagNumber=0;
 
-void ReadChar(void){		// Read character and skip spaces until 
-				// non space character is read
-	while(cin.get(current) && (current==' '||current=='\t'||current=='\n'))
-	   	cin.get(current);
+bool IsDeclared(char c){
+	return DeclaredVariables.find(string(1,c))!=DeclaredVariables.end();
+}
+
+void ReadChar(void){
+	if(NLookedAhead>0){
+		current=lookedAhead;	// Char has already been read
+		NLookedAhead--;
+	}
+	else
+		// Read character and skip spaces until 
+		// non space character is read
+		while(cin.get(current) && (current==' '||current=='\t'||current=='\n'));
+}
+
+void LookAhead(void){
+	while(cin.get(lookedAhead) && (lookedAhead==' '||lookedAhead=='\t'||lookedAhead=='\n'));
+	NLookedAhead++;
 }
 
 void Error(string s){
+	cerr << "Lu : '"<<current<<"' , mais ";
 	cerr<< s << endl;
 	exit(-1);
 }
 
-// ArithmeticExpression := Term {AdditiveOperator Term}
-// Term := Digit | "(" ArithmeticExpression ")"
-// AdditiveOperator := "+" | "-"
-// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
+// Program := [DeclarationPart] StatementPart
+// DeclarationPart := "[" Letter {"," Letter} "]"
+// StatementPart := Statement {";" Statement} "."
+// Statement := AssignementStatement
+// AssignementStatement := Letter "=" Expression
 
+// Expression := SimpleExpression [RelationalOperator SimpleExpression]
+// SimpleExpression := Term {AdditiveOperator Term}
+// Term := Factor {MultiplicativeOperator Factor}
+// Factor := Number | Letter | "(" Expression ")"| "!" Factor
+// Number := Digit{Digit}
+
+// AdditiveOperator := "+" | "-" | "||"
+// MultiplicativeOperator := "*" | "/" | "%" | "&&"
+// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
+// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
+// Letter := "a"|...|"z"
 	
 void AdditiveOperator(void){
 	if(current=='+'||current=='-')
@@ -59,12 +91,12 @@ void Digit(void){
 	}
 }
 
-void ArithmeticExpression(void);			// Called by Term() and calls Term()
+void SimpleExpression(void);			// Called by Term() and calls Term()
 
 void Term(void){
 	if(current=='('){
 		ReadChar();
-		ArithmeticExpression();
+		SimpleExpression();
 		if(current!=')')
 			Error("')' était attendu");		// ")" expected
 		else
@@ -77,7 +109,7 @@ void Term(void){
 			Error("'(' ou chiffre attendu");
 }
 
-void ArithmeticExpression(void){
+void SimpleExpression(void){
 	char adop;
 	Term();
 	while(current=='+'||current=='-'){
@@ -95,18 +127,156 @@ void ArithmeticExpression(void){
 
 }
 
-int main(void){	// First version : Source code on standard input and assembly code on standard output
-	// Header for gcc assembler / linker
-	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
+// DeclarationPart := "[" Letter {"," Letter} "]"
+void DeclarationPart(void){
+	if(current!='[')
+		Error("caractère '[' attendu");
+	cout << "\t.data"<<endl;
+	cout << "\t.align 8"<<endl;
+	
+	ReadChar();
+	if(current<'a'||current>'z')
+		Error("Une lettre minuscule était attendue");
+	cout << current << ":\t.quad 0"<<endl;
+	DeclaredVariables.insert(string(1,current));
+	ReadChar();
+	while(current==','){
+		ReadChar();
+		if(current<'a'||current>'z')
+			Error("Une lettre minuscule était attendue");
+		cout << current << ":\t.quad 0"<<endl;
+		DeclaredVariables.insert(string(1,current));
+		ReadChar();
+	}
+	if(current!=']')
+		Error("Caractère ']' attendu");
+	ReadChar();
+}
+
+// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
+OPREL RelationalOperator(void){
+	if(current!='<'&&current!='>'&&current!='!'&&current!='=')
+		return unknown;
+	LookAhead();
+	if(lookedAhead=='=')
+		switch(current){
+			case '=':
+				ReadChar(); ReadChar(); 
+				return equ;
+			case '!': 
+				ReadChar(); ReadChar(); 
+				return diff;
+			case '<': 
+				ReadChar(); ReadChar(); 
+				return infe;
+			case '>': 
+				ReadChar(); ReadChar(); 
+				return supe;
+		}
+	switch(current){
+		case '=':	// Next is not '='
+				Error("utilisez '==' comme opérateur d'égalité");
+		case '<':	ReadChar();
+				return inf;
+		case '>':	ReadChar();
+				return sup;
+		default:	Error("opérateur relationnel inconnu");
+		
+	}
+	return unknown;	
+}
+
+// Expression := SimpleExpression [RelationalOperator SimpleExpression]
+void Expression(void){
+	OPREL oprel;
+	SimpleExpression();
+	if(current=='='||current=='!'||current=='<'||current=='>'){
+		oprel=RelationalOperator();
+		SimpleExpression();
+		cout << "\tpop %rax"<<endl;
+		cout << "\tpop %rbx"<<endl;
+		cout << "\tcmpq %rax, %rbx"<<endl;
+		switch(oprel){
+			case equ:
+				cout << "\tje Vrai"<<++TagNumber<<"\t# If equal"<<endl;
+				break;
+			case diff:
+				cout << "\tjne Vrai"<<++TagNumber<<"\t# If different"<<endl;
+				break;
+			case supe:
+				cout << "\tjae Vrai"<<++TagNumber<<"\t# If above or equal"<<endl;
+				break;
+			case infe:
+				cout << "\tjbe Vrai"<<++TagNumber<<"\t# If below or equal"<<endl;
+				break;
+			case inf:
+				cout << "\tjb Vrai"<<++TagNumber<<"\t# If below"<<endl;
+				break;
+			case sup:
+				cout << "\tja Vrai"<<++TagNumber<<"\t# If above"<<endl;
+				break;
+			default:
+				Error("Opérateur de comparaison inconnu");
+		}
+		cout << "\tpush $0\t\t# False"<<endl;
+		cout << "\tjmp Suite"<<TagNumber<<endl;
+		cout << "Vrai"<<TagNumber<<":\tpush $0xFFFFFFFFFFFFFFFF\t\t# True"<<endl;	
+		cout << "Suite"<<TagNumber<<":"<<endl;
+	}
+}
+
+// AssignementStatement := Letter "=" Expression
+void AssignementStatement(void){
+	char letter;
+	if(current<'a'||current>'z')
+		Error("lettre minuscule attendue");
+	letter=current;
+	if(!IsDeclared(letter)){
+		cerr << "Erreur : Variable '"<<letter<<"' non déclarée"<<endl;
+		exit(-1);
+	}
+	ReadChar();
+	if(current!='=')
+		Error("caractère '=' attendu");
+	ReadChar();
+	Expression();
+	cout << "\tpop "<<letter<<endl;
+}
+
+// Statement := AssignementStatement
+void Statement(void){
+	AssignementStatement();
+}
+
+// StatementPart := Statement {";" Statement} "."
+void StatementPart(void){
 	cout << "\t.text\t\t# The following lines contain the program"<<endl;
 	cout << "\t.globl main\t# The main function must be visible from outside"<<endl;
 	cout << "main:\t\t\t# The main function body :"<<endl;
 	cout << "\tmovq %rsp, %rbp\t# Save the position of the stack's top"<<endl;
+	Statement();
+	while(current==';'){
+		ReadChar();
+		Statement();
+	}
+	if(current!='.')
+		Error("caractère '.' attendu");
+	ReadChar();
+}
 
+// Program := [DeclarationPart] StatementPart
+void Program(void){
+	if(current=='[')
+		DeclarationPart();
+	StatementPart();	
+}
+
+int main(void){	// First version : Source code on standard input and assembly code on standard output
+	// Header for gcc assembler / linker
+	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
 	// Let's proceed to the analysis and code production
 	ReadChar();
-	ArithmeticExpression();
-	ReadChar();
+	Program();
 	// Trailer for the gcc assembler / linker
 	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top"<<endl;
 	cout << "\tret\t\t\t# Return from main function"<<endl;
