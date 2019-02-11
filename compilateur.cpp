@@ -79,24 +79,47 @@ void AdditiveOperator(void){
 	if(current=='+'||current=='-')
 		ReadChar();
 	else
-		Error("Opérateur additif attendu");	   // Additive operator expected
+		if(current=='|'){
+			ReadChar();
+			if(current!='|')
+				Error("l'opérateur de comparaison s'écrit '||'");
+			else
+				ReadChar();
+		}
+		else
+			Error("Opérateur additif attendu");	   // Additive operator expected
 }
 		
-void Digit(void){
-	if((current<'0')||(current>'9'))
-		Error("Chiffre attendu");		   // Digit expected
+void Letter(void){
+	if((current<'a')||(current>'z'))
+		Error("lettre attendue");		   // Digit expected
 	else{
-		cout << "\tpush $"<<current<<endl;
+		cout << "\tpush "<<current<<endl;
 		ReadChar();
 	}
 }
 
-void SimpleExpression(void);			// Called by Term() and calls Term()
+void Number(void){
+	unsigned long long number;
+	if((current<'0')||(current>'9'))
+		Error("chiffre attendu");		   // Digit expected
+	else
+		number=current-'0';
+	ReadChar();
+	while(current>='0' && current <='9'){
+		number*=10;
+		number+=current-'0';
+		ReadChar();
+	}
+	cout <<"\tpush $"<<number<<endl;
+}
 
-void Term(void){
+void Expression(void);			// Called by Term() and calls Term()
+
+void Factor(void){
 	if(current=='('){
 		ReadChar();
-		SimpleExpression();
+		Expression();
 		if(current!=')')
 			Error("')' était attendu");		// ")" expected
 		else
@@ -104,15 +127,67 @@ void Term(void){
 	}
 	else 
 		if (current>='0' && current <='9')
-			Digit();
+			Number();
 	     	else
-			Error("'(' ou chiffre attendu");
+				if(current>='a' && current <='z')
+					Letter();
+				else
+					Error("'(' ou chiffre ou lettre attendue");
 }
 
+// MultiplicativeOperator := "*" | "/" | "%" | "&&"
+void MultiplicativeOperator(void){
+	if(current=='*'||current=='/'||current=='%')
+		ReadChar();
+	else
+		if(current=='&'){
+			ReadChar();
+			if(current!='&')
+				Error("l'opérateur ET s'écrit '&&'");
+			else
+				ReadChar();
+		}
+		else
+			Error("Opérateur multiplicatif attendu");	   // Additive operator expected
+}
+
+// Term := Factor {MultiplicativeOperator Factor}
+void Term(void){
+	char mulop;
+	Factor();
+	while(current=='*'||current=='/'||current=='%'||current=='&'){
+		mulop=current;		// Save operator in local variable
+		MultiplicativeOperator();
+		Factor();
+		cout << "\tpop %rbx"<<endl;	// get first operand
+		cout << "\tpop %rax"<<endl;	// get second operand
+		switch(mulop){
+			case '*':
+			case '&':
+				cout << "\tmulq	%rbx"<<endl;	// a * b -> %rdx:%rax
+				cout << "\tpush %rax"<<endl;	// store result
+				break;
+			case '/':
+				cout << "\tmovq $0, %rdx"<<endl; 	// Higher part of numerator  
+				cout << "\tdiv %rbx"<<endl;			// quotient goes to %rax
+				cout << "\tpush %rax"<<endl;		// store result
+				break;
+			case '%':
+				cout << "\tmovq $0, %rdx"<<endl; 	// Higher part of numerator  
+				cout << "\tdiv %rbx"<<endl;			// remainder goes to %rdx
+				cout << "\tpush %rdx"<<endl;		// store result
+				break;
+			default:
+				Error("opérateur additif attendu");
+		}
+	}
+}
+
+// SimpleExpression := Term {AdditiveOperator Term}
 void SimpleExpression(void){
 	char adop;
 	Term();
-	while(current=='+'||current=='-'){
+	while(current=='+'||current=='-'||current=='|'){
 		adop=current;		// Save operator in local variable
 		AdditiveOperator();
 		Term();
