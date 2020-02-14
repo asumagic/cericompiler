@@ -2,11 +2,7 @@
 a := 0;
 b := 0;
 
-FOR i := 0 TO 5 DO
-BEGIN
-    a := a + i;
-    i := i + 1
-END;
+a := 15;
 
 i := 0;
 WHILE i < 5 DO
