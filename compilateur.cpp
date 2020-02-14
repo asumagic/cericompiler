@@ -340,8 +340,15 @@ void IfStatement()
 // WhileStatement := "WHILE" Expression DO Statement
 void WhileStatement()
 {
+	const auto tag = ++TagNumber;
+
 	current = TOKEN(lexer->yylex());
 	Expression();
+
+	cout << "WhileBegin" << tag << ":\n";
+	cout << "\tpop %rax\n";
+	cout << "\tcmpq $0, %rax\n";
+	cout << "\tje Suite" << tag << '\n';
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "DO"))
 	{
@@ -350,6 +357,9 @@ void WhileStatement()
 
 	current = TOKEN(lexer->yylex());
 	Statement();
+
+	cout << "\tjmp WhileBegin" << tag << '\n';
+	cout << "\tSuite" << tag << ":\n";
 }
 
 // ForStatement := "FOR" AssignementStatement "TO" Expression "DO" Statement
