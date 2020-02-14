@@ -19,7 +19,7 @@ using namespace std;
 %option c++
 %option yylineno
 
-keyword (BEGIN|END|FOR|To|DO)
+keyword (BEGIN|END|WHILE|FOR|To|DO)
 stringconst  \"[^\n"]+\"
 ws      [ \t\n\r]+
 alpha   [A-Za-z]

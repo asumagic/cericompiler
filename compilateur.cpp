@@ -301,6 +301,21 @@ void AssignementStatement(void){
 
 void Statement();
 
+// WhileStatement := "WHILE" Expression DO Statement
+void WhileStatement()
+{
+	current = TOKEN(lexer->yylex());
+	Expression();
+
+	if (current != KEYWORD || strcmp(lexer->YYText(), "DO"))
+	{
+		Error("DO attendu après expression du WHILE");
+	}
+
+	current = TOKEN(lexer->yylex());
+	Statement();
+}
+
 // ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement
 void ForStatement()
 {
@@ -350,8 +365,7 @@ void Statement(void){
 	}
 	else if (strcmp(lexer->YYText(), "WHILE") == 0)
 	{
-		//WhileStatement();
-		exit(2);
+		WhileStatement();
 	}
 	else if (strcmp(lexer->YYText(), "FOR") == 0)
 	{
