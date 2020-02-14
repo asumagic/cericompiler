@@ -310,8 +310,8 @@ void IfStatement()
 	const auto tag = ++TagNumber;
 
 	cout << "\tpopq %rax\n";
-	cout << "\tcmpq $0, %rax\n";
-	cout << "\tje IfFalse" << tag << "\n";
+	cout << "\ttest %rax, %rax\n";
+	cout << "\tjz IfFalse" << tag << "\n";
 	cout << "IfTrue" << tag << ":\n";
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "THEN"))
@@ -347,8 +347,8 @@ void WhileStatement()
 
 	cout << "WhileBegin" << tag << ":\n";
 	cout << "\tpop %rax\n";
-	cout << "\tcmpq $0, %rax\n";
-	cout << "\tje Suite" << tag << '\n';
+	cout << "\ttest $0, %rax\n";
+	cout << "\tjz Suite" << tag << '\n';
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "DO"))
 	{
