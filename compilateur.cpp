@@ -383,6 +383,9 @@ void ForStatement()
 
 	current = TOKEN(lexer->yylex());
 	Statement();
+
+	cerr << "Unimplemented codegen for ForStatement\n";
+	exit(-1);
 }
 
 // BlockStatement := "BEGIN" Statement { ";" Statement } "END"
