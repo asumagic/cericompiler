@@ -301,6 +301,27 @@ void AssignementStatement(void){
 
 void Statement();
 
+// IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
+void IfStatement()
+{
+	current = TOKEN(lexer->yylex());
+	Expression();
+
+	if (current != KEYWORD || strcmp(lexer->YYText(), "THEN"))
+	{
+		Error("THEN attendu après expression du IF");
+	}
+
+	current = TOKEN(lexer->yylex());
+	Statement();
+
+	if (current == KEYWORD && strcmp(lexer->YYText(), "ELSE") == 0)
+	{
+		current = TOKEN(lexer->yylex());
+		Statement();
+	}
+}
+
 // WhileStatement := "WHILE" Expression DO Statement
 void WhileStatement()
 {
@@ -316,15 +337,15 @@ void WhileStatement()
 	Statement();
 }
 
-// ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement
+// ForStatement := "FOR" AssignementStatement "TO" Expression "DO" Statement
 void ForStatement()
 {
 	current = TOKEN(lexer->yylex());
 	AssignementStatement();
 
-	if (current != KEYWORD || strcmp(lexer->YYText(), "To") != 0)
+	if (current != KEYWORD || strcmp(lexer->YYText(), "TO") != 0)
 	{
-		Error("To attendu après l'assignation du FOR");
+		Error("TO attendu après l'assignation du FOR");
 	}
 
 	current = TOKEN(lexer->yylex());
@@ -360,8 +381,7 @@ void BlockStatement()
 void Statement(void){
 	if (strcmp(lexer->YYText(), "IF") == 0)
 	{
-		//IfStatement();
-		exit(1);
+		IfStatement();
 	}
 	else if (strcmp(lexer->YYText(), "WHILE") == 0)
 	{

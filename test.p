@@ -2,7 +2,7 @@
 a := 0;
 b := 0;
 
-FOR i := 0 To 5 DO
+FOR i := 0 TO 5 DO
 BEGIN
     a := a + i;
     i := i + 1
@@ -13,4 +13,10 @@ WHILE i < 5 DO
 BEGIN
     b := b + i;
     i := i + 1
-END.
+END;
+
+IF a == b THEN
+    i := 1
+ELSE
+    i := 0
+.
