@@ -301,6 +301,29 @@ void AssignementStatement(void){
 
 void Statement();
 
+// ForStatement := "FOR" AssignementStatement "To" Expression "DO" Statement
+void ForStatement()
+{
+	current = TOKEN(lexer->yylex());
+	AssignementStatement();
+
+	if (current != KEYWORD || strcmp(lexer->YYText(), "To") != 0)
+	{
+		Error("To attendu après l'assignation du FOR");
+	}
+
+	current = TOKEN(lexer->yylex());
+	Expression();
+
+	if (current != KEYWORD || strcmp(lexer->YYText(), "DO") != 0)
+	{
+		Error("DO attendu après expression du FOR");
+	}
+
+	current = TOKEN(lexer->yylex());
+	Statement();
+}
+
 // BlockStatement := "BEGIN" Statement { ";" Statement } "END"
 void BlockStatement()
 {
@@ -332,8 +355,7 @@ void Statement(void){
 	}
 	else if (strcmp(lexer->YYText(), "FOR") == 0)
 	{
-		//ForStatement();
-		exit(3);
+		ForStatement();
 	}
 	else if (strcmp(lexer->YYText(), "BEGIN") == 0)
 	{
