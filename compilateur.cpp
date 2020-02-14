@@ -72,21 +72,36 @@ bool IsDeclared(const char *id){
 // RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
 // Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
 // Letter := "a"|...|"z"
-	
+
+enum IdentifierType
+{
+	UNSIGNED_INT
+};
+
+enum FactorType
+{
+	FACTOR_EXPRESSION,
+	FACTOR_NUMBER,
+	FACTOR_IDENTIFIER
+};
 		
-void Identifier(void){
+IdentifierType Identifier(void){
 	cout << "\tpush "<<lexer->YYText()<<endl;
 	current=(TOKEN) lexer->yylex();
+
+	return UNSIGNED_INT;
 }
 
-void Number(void){
+IdentifierType Number(void){
 	cout <<"\tpush $"<<atoi(lexer->YYText())<<endl;
 	current=(TOKEN) lexer->yylex();
+
+	return UNSIGNED_INT;
 }
 
 void Expression(void);			// Called by Term() and calls Term()
 
-void Factor(void){
+FactorType Factor(void){
 	if(current==RPARENT){
 		current=(TOKEN) lexer->yylex();
 		Expression();
@@ -94,15 +109,23 @@ void Factor(void){
 			Error("')' était attendu");		// ")" expected
 		else
 			current=(TOKEN) lexer->yylex();
+
+		return FACTOR_EXPRESSION;
 	}
-	else 
-		if (current==NUMBER)
-			Number();
-	     	else
-				if(current==ID)
-					Identifier();
-				else
-					Error("'(' ou chiffre ou lettre attendue");
+	
+	if (current==NUMBER)
+	{
+		Number();
+		return FACTOR_NUMBER;
+	}
+
+	if(current==ID)
+	{
+		Identifier();
+		return FACTOR_IDENTIFIER;
+	}
+	
+	Error("'(' ou chiffre ou lettre attendue");
 }
 
 // MultiplicativeOperator := "*" | "/" | "%" | "&&"
@@ -122,12 +145,18 @@ OPMUL MultiplicativeOperator(void){
 }
 
 // Term := Factor {MultiplicativeOperator Factor}
-void Term(void){
+FactorType Term(void){
 	OPMUL mulop;
-	Factor();
+	const FactorType first_type = Factor();
 	while(current==MULOP){
 		mulop=MultiplicativeOperator();		// Save operator in local variable
-		Factor();
+		const FactorType nth_type = Factor();
+
+		if (first_type != nth_type)
+		{
+			Error("Type mismatch in multiplicative operator operands");
+		}
+
 		cout << "\tpop %rbx"<<endl;	// get first operand
 		cout << "\tpop %rax"<<endl;	// get second operand
 		switch(mulop){
@@ -153,6 +182,8 @@ void Term(void){
 				Error("opérateur multiplicatif attendu");
 		}
 	}
+
+	return first_type;
 }
 
 // AdditiveOperator := "+" | "-" | "||"
@@ -170,12 +201,18 @@ OPADD AdditiveOperator(void){
 }
 
 // SimpleExpression := Term {AdditiveOperator Term}
-void SimpleExpression(void){
+FactorType SimpleExpression(void){
 	OPADD adop;
-	Term();
+	const FactorType first_type = Term();
 	while(current==ADDOP){
 		adop=AdditiveOperator();		// Save operator in local variable
-		Term();
+		const FactorType nth_type = Term();
+
+		if (first_type != nth_type)
+		{
+			Error("Mismatch in additive operator operands");
+		}
+
 		cout << "\tpop %rbx"<<endl;	// get first operand
 		cout << "\tpop %rax"<<endl;	// get second operand
 		switch(adop){
@@ -194,6 +231,7 @@ void SimpleExpression(void){
 		cout << "\tpush %rax"<<endl;			// store result
 	}
 
+	return first_type;
 }
 
 // DeclarationPart := "[" Ident {"," Ident} "]"
@@ -243,12 +281,18 @@ OPREL RelationalOperator(void){
 }
 
 // Expression := SimpleExpression [RelationalOperator SimpleExpression]
-void Expression(void){
+FactorType Expression(void){
 	OPREL oprel;
-	SimpleExpression();
+	const FactorType first_type = SimpleExpression();
 	if(current==RELOP){
 		oprel=RelationalOperator();
-		SimpleExpression();
+		const FactorType nth_type = SimpleExpression();
+
+		if (first_type != nth_type)
+		{
+			Error("Mismatch in relational operator operands");
+		}
+
 		cout << "\tpop %rax"<<endl;
 		cout << "\tpop %rbx"<<endl;
 		cout << "\tcmpq %rax, %rbx"<<endl;
@@ -279,6 +323,8 @@ void Expression(void){
 		cout << "Vrai"<<TagNumber<<":\tpush $0xFFFFFFFFFFFFFFFF\t\t# True"<<endl;	
 		cout << "Suite"<<TagNumber<<":"<<endl;
 	}
+
+	return first_type;
 }
 
 // AssignementStatement := Identifier ":=" Expression
