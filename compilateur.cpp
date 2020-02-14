@@ -49,7 +49,7 @@ bool IsDeclared(const char *id){
 }
 
 
-void Error(string s){
+[[noreturn]] void Error(string s){
 	cerr << "Ligne n°"<<lexer->lineno()<<", lu : '"<<lexer->YYText()<<"'("<<current<<"), mais ";
 	cerr<< s << endl;
 	exit(-1);
