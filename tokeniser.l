@@ -19,6 +19,7 @@ using namespace std;
 %option c++
 %option yylineno
 
+keyword (BEGIN|END)
 stringconst  \"[^\n"]+\"
 ws      [ \t\n\r]+
 alpha   [A-Za-z]
@@ -32,6 +33,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 
 %%
 
+{keyword} return KEYWORD;
 {addop}		return ADDOP;
 {mulop}		return MULOP;
 {relop}		return RELOP;

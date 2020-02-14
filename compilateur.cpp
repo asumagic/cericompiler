@@ -299,9 +299,50 @@ void AssignementStatement(void){
 	cout << "\tpop "<<variable<<endl;
 }
 
+void Statement();
+
+// BlockStatement := "BEGIN" Statement { ";" Statement } "END"
+void BlockStatement()
+{
+	do
+	{
+		current = TOKEN(lexer->yylex());
+		Statement();
+	} while (current == SEMICOLON);
+
+	if (current != KEYWORD || strcmp(lexer->YYText(), "END") != 0)
+	{
+		Error("END attendu à la fin du bloc");
+	}
+
+	current = TOKEN(lexer->yylex());
+}
+
 // Statement := AssignementStatement
 void Statement(void){
-	AssignementStatement();
+	if (strcmp(lexer->YYText(), "IF") == 0)
+	{
+		//IfStatement();
+		exit(1);
+	}
+	else if (strcmp(lexer->YYText(), "WHILE") == 0)
+	{
+		//WhileStatement();
+		exit(2);
+	}
+	else if (strcmp(lexer->YYText(), "FOR") == 0)
+	{
+		//ForStatement();
+		exit(3);
+	}
+	else if (strcmp(lexer->YYText(), "BEGIN") == 0)
+	{
+		BlockStatement();
+	}
+	else
+	{
+		AssignementStatement();
+	}
 }
 
 // StatementPart := Statement {";" Statement} "."
