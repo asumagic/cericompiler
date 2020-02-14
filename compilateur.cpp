@@ -307,6 +307,13 @@ void IfStatement()
 	current = TOKEN(lexer->yylex());
 	Expression();
 
+	const auto tag = ++TagNumber;
+
+	cout << "\tpopq %rax\n";
+	cout << "\tcmpq $0, %rax\n";
+	cout << "\tje IfFalse" << tag << "\n";
+	cout << "IfTrue" << tag << ":\n";
+
 	if (current != KEYWORD || strcmp(lexer->YYText(), "THEN"))
 	{
 		Error("THEN attendu après expression du IF");
@@ -317,9 +324,17 @@ void IfStatement()
 
 	if (current == KEYWORD && strcmp(lexer->YYText(), "ELSE") == 0)
 	{
+		cout << "\tjmp Suite" << tag << '\n';
+		cout << "IfFalse" << tag << ":\n";
 		current = TOKEN(lexer->yylex());
 		Statement();
 	}
+	else
+	{
+		cout << "IfFalse" << tag << ":\n";
+	}
+
+	cout << "Suite" << tag << ":\n";
 }
 
 // WhileStatement := "WHILE" Expression DO Statement
