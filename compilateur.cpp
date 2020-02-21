@@ -15,17 +15,15 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// Build with "make compilateur"
+#include "tokeniser.h"
+#include "compilateur.hpp"
 
+#include <FlexLexer.h>
 
+#include <cstring>
+#include <set>
 #include <string>
 #include <iostream>
-#include <cstdlib>
-#include <set>
-#include <FlexLexer.h>
-#include "tokeniser.h"
-#include <cstring>
-#include "compilateur.hpp"
 
 using namespace std;
 
