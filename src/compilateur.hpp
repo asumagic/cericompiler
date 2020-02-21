@@ -64,7 +64,9 @@ enum FactorType
 
 bool IsDeclared(const char* id);
 
-[[noreturn]] void Error(const std::string& s);
+[[noreturn]] void Error(const char* s);
+
+TOKEN read_token();
 
 [[nodiscard]] IdentifierType Identifier();
 [[nodiscard]] IdentifierType Number();

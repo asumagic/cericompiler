@@ -39,17 +39,19 @@ unsigned long TagNumber = 0;
 
 bool IsDeclared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
 
-void Error(const std::string& s)
+void Error(const char* s)
 {
 	cerr << "Ligne n°" << lexer->lineno() << ", lu : '" << lexer->YYText() << "'(" << current << "), mais ";
 	cerr << s << endl;
 	exit(-1);
 }
 
+TOKEN read_token() { return (current = TOKEN(lexer->yylex())); }
+
 IdentifierType Identifier()
 {
 	cout << "\tpush " << lexer->YYText() << endl;
-	current = (TOKEN)lexer->yylex();
+	read_token();
 
 	return UNSIGNED_INT;
 }
@@ -57,7 +59,7 @@ IdentifierType Identifier()
 IdentifierType Number()
 {
 	cout << "\tpush $" << atoi(lexer->YYText()) << endl;
-	current = (TOKEN)lexer->yylex();
+	read_token();
 
 	return UNSIGNED_INT;
 }
@@ -66,12 +68,12 @@ FactorType Factor()
 {
 	if (current == RPARENT)
 	{
-		current = (TOKEN)lexer->yylex();
+		read_token();
 		Expression();
 		if (current != LPARENT)
 			Error("')' était attendu"); // ")" expected
 		else
-			current = (TOKEN)lexer->yylex();
+			read_token();
 
 		return FACTOR_EXPRESSION;
 	}
@@ -104,7 +106,7 @@ OPMUL MultiplicativeOperator()
 		opmul = AND;
 	else
 		opmul = WTFM;
-	current = (TOKEN)lexer->yylex();
+	read_token();
 	return opmul;
 }
 
@@ -162,7 +164,7 @@ OPADD AdditiveOperator()
 		opadd = OR;
 	else
 		opadd = WTFA;
-	current = (TOKEN)lexer->yylex();
+	read_token();
 	return opadd;
 }
 
@@ -208,24 +210,24 @@ void DeclarationPart()
 	cout << "\t.data" << endl;
 	cout << "\t.align 8" << endl;
 
-	current = (TOKEN)lexer->yylex();
+	read_token();
 	if (current != ID)
 		Error("Un identificater était attendu");
 	cout << lexer->YYText() << ":\t.quad 0" << endl;
 	DeclaredVariables.insert(lexer->YYText());
-	current = (TOKEN)lexer->yylex();
+	read_token();
 	while (current == COMMA)
 	{
-		current = (TOKEN)lexer->yylex();
+		read_token();
 		if (current != ID)
 			Error("Un identificateur était attendu");
 		cout << lexer->YYText() << ":\t.quad 0" << endl;
 		DeclaredVariables.insert(lexer->YYText());
-		current = (TOKEN)lexer->yylex();
+		read_token();
 	}
 	if (current != LBRACKET)
 		Error("caractère ']' attendu");
-	current = (TOKEN)lexer->yylex();
+	read_token();
 }
 
 OPREL RelationalOperator()
@@ -245,7 +247,7 @@ OPREL RelationalOperator()
 		oprel = SUPE;
 	else
 		oprel = WTFR;
-	current = (TOKEN)lexer->yylex();
+	read_token();
 	return oprel;
 }
 
@@ -296,10 +298,10 @@ void AssignementStatement()
 		exit(-1);
 	}
 	variable = lexer->YYText();
-	current  = (TOKEN)lexer->yylex();
+	read_token();
 	if (current != ASSIGN)
 		Error("caractères ':=' attendus");
-	current = (TOKEN)lexer->yylex();
+	read_token();
 	Expression();
 	cout << "\tpop " << variable << endl;
 }
@@ -437,12 +439,12 @@ void StatementPart()
 	Statement();
 	while (current == SEMICOLON)
 	{
-		current = (TOKEN)lexer->yylex();
+		read_token();
 		Statement();
 	}
 	if (current != DOT)
 		Error("caractère '.' attendu");
-	current = (TOKEN)lexer->yylex();
+	read_token();
 }
 
 void Program()
@@ -457,7 +459,7 @@ int main()
 	// Header for gcc assembler / linker
 	cout << "\t\t\t# This code was produced by the CERI Compiler" << endl;
 	// Let's proceed to the analysis and code production
-	current = (TOKEN)lexer->yylex();
+	read_token();
 	Program();
 	// Trailer for the gcc assembler / linker
 	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top" << endl;
