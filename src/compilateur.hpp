@@ -51,6 +51,12 @@ enum OPMUL
 	WTFM
 };
 
+struct VariableAssignment
+{
+	const char* variable;
+	Type        type;
+};
+
 bool IsDeclared(const char* id);
 
 void              PrintErrorPreamble();
@@ -86,7 +92,7 @@ void DeclarationPart();
 [[nodiscard]] Type Expression();
 
 // AssignementStatement := Identifier ":=" Expression
-void AssignementStatement();
+VariableAssignment AssignementStatement();
 
 // IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 void IfStatement();

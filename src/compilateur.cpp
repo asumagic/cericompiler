@@ -61,7 +61,7 @@ void TypeCheck(Type a, Type b)
 {
 	if (a != b)
 	{
-		Error(("types incompatibles: "s + name(a) + ", " + name(b)).c_str());
+		Error(("incompatible types: "s + name(a) + ", " + name(b)).c_str());
 	}
 }
 
@@ -90,7 +90,7 @@ Type Factor()
 		read_token();
 		Type type = Expression();
 		if (current != LPARENT)
-			Error("')' était attendu"); // ")" expected
+			Error("expected ')'");
 		else
 			read_token();
 
@@ -107,7 +107,7 @@ Type Factor()
 		return Identifier();
 	}
 
-	Error("'(' ou chiffre ou lettre attendue");
+	Error("expected '(', number or identifier");
 }
 
 OPMUL MultiplicativeOperator()
@@ -160,7 +160,8 @@ Type Term()
 			cout << "\tdiv %rbx" << endl;         // remainder goes to %rdx
 			cout << "\tpush %rdx\t# MOD" << endl; // store result
 			break;
-		default: Error("opérateur multiplicatif attendu");
+		case WTFM:
+		default: Error("unknown multiplicative operator");
 		}
 	}
 
@@ -206,7 +207,8 @@ Type SimpleExpression()
 		case SUB:
 			cout << "\tsubq	%rbx, %rax\t# SUB" << endl; // substract both operands
 			break;
-		default: Error("opérateur additif inconnu");
+		case WTFA:
+		default: Error("unknown additive operator");
 		}
 		cout << "\tpush %rax" << endl; // store result
 	}
@@ -217,13 +219,13 @@ Type SimpleExpression()
 void DeclarationPart()
 {
 	if (current != RBRACKET)
-		Error("caractère '[' attendu");
+		Error("expected '[' to begin variable declaration block");
 	cout << "\t.data" << endl;
 	cout << "\t.align 8" << endl;
 
 	read_token();
 	if (current != ID)
-		Error("Un identificater était attendu");
+		Error("expected an identifier");
 	cout << lexer->YYText() << ":\t.quad 0" << endl;
 	DeclaredVariables.insert(lexer->YYText());
 	read_token();
@@ -231,13 +233,13 @@ void DeclarationPart()
 	{
 		read_token();
 		if (current != ID)
-			Error("Un identificateur était attendu");
+			Error("expected an identifier");
 		cout << lexer->YYText() << ":\t.quad 0" << endl;
 		DeclaredVariables.insert(lexer->YYText());
 		read_token();
 	}
 	if (current != LBRACKET)
-		Error("caractère ']' attendu");
+		Error("expected ']' to end variable declaration block");
 	read_token();
 }
 
@@ -284,40 +286,45 @@ Type Expression()
 		case INFE: cout << "\tjbe Vrai" << ++TagNumber << "\t# If below or equal" << endl; break;
 		case INF: cout << "\tjb Vrai" << ++TagNumber << "\t# If below" << endl; break;
 		case SUP: cout << "\tja Vrai" << ++TagNumber << "\t# If above" << endl; break;
-		default: Error("Opérateur de comparaison inconnu");
+		case WTFR:
+		default: Error("unknown comparison operator");
 		}
 		cout << "\tpush $0\t\t# False" << endl;
 		cout << "\tjmp Suite" << TagNumber << endl;
 		cout << "Vrai" << TagNumber << ":\tpush $0xFFFFFFFFFFFFFFFF\t\t# True" << endl;
 		cout << "Suite" << TagNumber << ":" << endl;
+
+		return Type::BOOLEAN;
 	}
 
 	return first_type;
 }
 
-void AssignementStatement()
+VariableAssignment AssignementStatement()
 {
 	string variable;
 	if (current != ID)
-		Error("Identificateur attendu");
+		Error("expected an identifier");
 	if (!IsDeclared(lexer->YYText()))
 	{
-		cerr << "Erreur : Variable '" << lexer->YYText() << "' non déclarée" << endl;
+		cerr << "Variable '" << lexer->YYText() << "' not found" << endl;
 		exit(-1);
 	}
 	variable = lexer->YYText();
 	read_token();
 	if (current != ASSIGN)
-		Error("caractères ':=' attendus");
+		Error("expected ':=' in variable assignment");
 	read_token();
-	Expression();
+	Type type = Expression();
 	cout << "\tpop " << variable << endl;
+
+	return {variable.c_str(), type};
 }
 
 void IfStatement()
 {
 	current = TOKEN(lexer->yylex());
-	Expression();
+	TypeCheck(Expression(), Type::BOOLEAN);
 
 	const auto tag = ++TagNumber;
 
@@ -328,7 +335,7 @@ void IfStatement()
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "THEN"))
 	{
-		Error("THEN attendu après expression du IF");
+		Error("expected 'THEN' after conditional expression of 'IF' statement");
 	}
 
 	current = TOKEN(lexer->yylex());
@@ -354,7 +361,7 @@ void WhileStatement()
 	const auto tag = ++TagNumber;
 
 	current = TOKEN(lexer->yylex());
-	Expression();
+	TypeCheck(Expression(), Type::BOOLEAN);
 
 	cout << "WhileBegin" << tag << ":\n";
 	cout << "\tpop %rax\n";
@@ -363,7 +370,7 @@ void WhileStatement()
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "DO"))
 	{
-		Error("DO attendu après expression du WHILE");
+		Error("expected 'DO' after conditional expression of 'WHILE' statement");
 	}
 
 	current = TOKEN(lexer->yylex());
@@ -394,8 +401,7 @@ void ForStatement()
 	current = TOKEN(lexer->yylex());
 	Statement();
 
-	cerr << "Unimplemented codegen for ForStatement\n";
-	exit(-1);
+	Error("unimplemented codegen for ForStatement");
 }
 
 void BlockStatement()
@@ -408,7 +414,7 @@ void BlockStatement()
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "END") != 0)
 	{
-		Error("END attendu à la fin du bloc");
+		Error("expected 'END' to finish block statement");
 	}
 
 	current = TOKEN(lexer->yylex());
@@ -451,7 +457,7 @@ void StatementPart()
 		Statement();
 	}
 	if (current != DOT)
-		Error("caractère '.' attendu (avez-vous oublié un ';'?)");
+		Error("expected '.' (did you forget a ';'?)");
 	read_token();
 }
 
@@ -474,7 +480,7 @@ int main()
 	cout << "\tret\t\t\t# Return from main function" << endl;
 	if (current != FEOF)
 	{
-		cerr << "Caractères en trop à la fin du programme : [" << current << "]";
+		cerr << "extraneous characters at end of file: [" << current << "]";
 		Error("."); // unexpected characters at the end of program
 	}
 }
