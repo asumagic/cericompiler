@@ -25,12 +25,9 @@
 #include <FlexLexer.h>
 #include "tokeniser.h"
 #include <cstring>
+#include "compilateur.hpp"
 
 using namespace std;
-
-enum OPREL {EQU, DIFF, INF, SUP, INFE, SUPE, WTFR};
-enum OPADD {ADD, SUB, OR, WTFA};
-enum OPMUL {MUL, DIV, MOD, AND ,WTFM};
 
 TOKEN current;				// Current token
 
@@ -49,59 +46,27 @@ bool IsDeclared(const char *id){
 }
 
 
-[[noreturn]] void Error(string s){
+void Error(const std::string& s){
 	cerr << "Ligne n°"<<lexer->lineno()<<", lu : '"<<lexer->YYText()<<"'("<<current<<"), mais ";
 	cerr<< s << endl;
 	exit(-1);
 }
-
-// Program := [DeclarationPart] StatementPart
-// DeclarationPart := "[" Letter {"," Letter} "]"
-// StatementPart := Statement {";" Statement} "."
-// Statement := AssignementStatement
-// AssignementStatement := Letter "=" Expression
-
-// Expression := SimpleExpression [RelationalOperator SimpleExpression]
-// SimpleExpression := Term {AdditiveOperator Term}
-// Term := Factor {MultiplicativeOperator Factor}
-// Factor := Number | Letter | "(" Expression ")"| "!" Factor
-// Number := Digit{Digit}
-
-// AdditiveOperator := "+" | "-" | "||"
-// MultiplicativeOperator := "*" | "/" | "%" | "&&"
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
-// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
-// Letter := "a"|...|"z"
-
-enum IdentifierType
-{
-	UNSIGNED_INT
-};
-
-enum FactorType
-{
-	FACTOR_EXPRESSION,
-	FACTOR_NUMBER,
-	FACTOR_IDENTIFIER
-};
 		
-IdentifierType Identifier(void){
+IdentifierType Identifier(){
 	cout << "\tpush "<<lexer->YYText()<<endl;
 	current=(TOKEN) lexer->yylex();
 
 	return UNSIGNED_INT;
 }
 
-IdentifierType Number(void){
+IdentifierType Number(){
 	cout <<"\tpush $"<<atoi(lexer->YYText())<<endl;
 	current=(TOKEN) lexer->yylex();
 
 	return UNSIGNED_INT;
 }
 
-void Expression(void);			// Called by Term() and calls Term()
-
-FactorType Factor(void){
+FactorType Factor(){
 	if(current==RPARENT){
 		current=(TOKEN) lexer->yylex();
 		Expression();
@@ -128,8 +93,7 @@ FactorType Factor(void){
 	Error("'(' ou chiffre ou lettre attendue");
 }
 
-// MultiplicativeOperator := "*" | "/" | "%" | "&&"
-OPMUL MultiplicativeOperator(void){
+OPMUL MultiplicativeOperator(){
 	OPMUL opmul;
 	if(strcmp(lexer->YYText(),"*")==0)
 		opmul=MUL;
@@ -144,8 +108,7 @@ OPMUL MultiplicativeOperator(void){
 	return opmul;
 }
 
-// Term := Factor {MultiplicativeOperator Factor}
-FactorType Term(void){
+FactorType Term(){
 	OPMUL mulop;
 	const FactorType first_type = Factor();
 	while(current==MULOP){
@@ -186,8 +149,7 @@ FactorType Term(void){
 	return first_type;
 }
 
-// AdditiveOperator := "+" | "-" | "||"
-OPADD AdditiveOperator(void){
+OPADD AdditiveOperator(){
 	OPADD opadd;
 	if(strcmp(lexer->YYText(),"+")==0)
 		opadd=ADD;
@@ -200,8 +162,7 @@ OPADD AdditiveOperator(void){
 	return opadd;
 }
 
-// SimpleExpression := Term {AdditiveOperator Term}
-FactorType SimpleExpression(void){
+FactorType SimpleExpression(){
 	OPADD adop;
 	const FactorType first_type = Term();
 	while(current==ADDOP){
@@ -234,8 +195,7 @@ FactorType SimpleExpression(void){
 	return first_type;
 }
 
-// DeclarationPart := "[" Ident {"," Ident} "]"
-void DeclarationPart(void){
+void DeclarationPart(){
 	if(current!=RBRACKET)
 		Error("caractère '[' attendu");
 	cout << "\t.data"<<endl;
@@ -260,8 +220,7 @@ void DeclarationPart(void){
 	current=(TOKEN) lexer->yylex();
 }
 
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
-OPREL RelationalOperator(void){
+OPREL RelationalOperator(){
 	OPREL oprel;
 	if(strcmp(lexer->YYText(),"==")==0)
 		oprel=EQU;
@@ -280,8 +239,7 @@ OPREL RelationalOperator(void){
 	return oprel;
 }
 
-// Expression := SimpleExpression [RelationalOperator SimpleExpression]
-FactorType Expression(void){
+FactorType Expression(){
 	OPREL oprel;
 	const FactorType first_type = SimpleExpression();
 	if(current==RELOP){
@@ -327,8 +285,7 @@ FactorType Expression(void){
 	return first_type;
 }
 
-// AssignementStatement := Identifier ":=" Expression
-void AssignementStatement(void){
+void AssignementStatement(){
 	string variable;
 	if(current!=ID)
 		Error("Identificateur attendu");
@@ -345,9 +302,6 @@ void AssignementStatement(void){
 	cout << "\tpop "<<variable<<endl;
 }
 
-void Statement();
-
-// IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 void IfStatement()
 {
 	current = TOKEN(lexer->yylex());
@@ -383,7 +337,6 @@ void IfStatement()
 	cout << "Suite" << tag << ":\n";
 }
 
-// WhileStatement := "WHILE" Expression DO Statement
 void WhileStatement()
 {
 	const auto tag = ++TagNumber;
@@ -408,7 +361,6 @@ void WhileStatement()
 	cout << "\tSuite" << tag << ":\n";
 }
 
-// ForStatement := "FOR" AssignementStatement "TO" Expression "DO" Statement
 void ForStatement()
 {
 	current = TOKEN(lexer->yylex());
@@ -434,7 +386,6 @@ void ForStatement()
 	exit(-1);
 }
 
-// BlockStatement := "BEGIN" Statement { ";" Statement } "END"
 void BlockStatement()
 {
 	do
@@ -451,8 +402,7 @@ void BlockStatement()
 	current = TOKEN(lexer->yylex());
 }
 
-// Statement := AssignementStatement
-void Statement(void){
+void Statement(){
 	if (strcmp(lexer->YYText(), "IF") == 0)
 	{
 		IfStatement();
@@ -475,8 +425,7 @@ void Statement(void){
 	}
 }
 
-// StatementPart := Statement {";" Statement} "."
-void StatementPart(void){
+void StatementPart() {
 	cout << "\t.text\t\t# The following lines contain the program"<<endl;
 	cout << "\t.globl main\t# The main function must be visible from outside"<<endl;
 	cout << "main:\t\t\t# The main function body :"<<endl;
@@ -491,14 +440,13 @@ void StatementPart(void){
 	current=(TOKEN) lexer->yylex();
 }
 
-// Program := [DeclarationPart] StatementPart
-void Program(void){
+void Program(){
 	if(current==RBRACKET)
 		DeclarationPart();
 	StatementPart();	
 }
 
-int main(void){	// First version : Source code on standard input and assembly code on standard output
+int main(){	// First version : Source code on standard input and assembly code on standard output
 	// Header for gcc assembler / linker
 	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
 	// Let's proceed to the analysis and code production
