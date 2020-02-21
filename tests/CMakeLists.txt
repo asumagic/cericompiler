@@ -28,6 +28,7 @@ expect_compiles("simple-arithmetic")
 expect_compiles("flow-control-while")
 expect_diagnostic("fail-case-mismatch-binop" ".*incompatible type.*")
 expect_diagnostic("fail-case-while-non-boolean" ".*incompatible type.*")
+expect_diagnostic("fail-case-if-non-boolean" ".*incompatible type.*")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL
