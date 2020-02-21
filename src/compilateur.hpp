@@ -52,7 +52,8 @@ enum OPMUL
 
 enum IdentifierType
 {
-	UNSIGNED_INT
+	UNSIGNED_INT,
+	BOOLEAN
 };
 
 enum FactorType
@@ -64,7 +65,10 @@ enum FactorType
 
 bool IsDeclared(const char* id);
 
+void              PrintErrorPreamble();
 [[noreturn]] void Error(const char* s);
+
+void TypeCheck(FactorType a, FactorType b);
 
 TOKEN read_token();
 

@@ -30,6 +30,8 @@ using std::cout;
 using std::endl;
 using std::string;
 
+using namespace std::string_literals;
+
 TOKEN current; // Current token
 
 FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
@@ -42,11 +44,24 @@ unsigned long    TagNumber = 0;
 
 bool IsDeclared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
 
+void PrintErrorPreamble() { cerr << "source:" << lexer->lineno() << ": "; }
+
 void Error(const char* s)
 {
-	cerr << "Ligne n°" << lexer->lineno() << ", lu : '" << lexer->YYText() << "'(" << current << "), mais ";
-	cerr << s << endl;
+	PrintErrorPreamble();
+	cerr << "error: " << s << '\n';
+
+	PrintErrorPreamble();
+	cerr << "note: when reading token '" << lexer->YYText() << "'\n";
 	exit(-1);
+}
+
+void TypeCheck(FactorType a, FactorType b)
+{
+	if (a != b)
+	{
+		Error(("types incompatibles: "s + std::to_string(a) + ", " + std::to_string(b)).c_str());
+	}
 }
 
 TOKEN read_token() { return (current = TOKEN(lexer->yylex())); }
@@ -122,10 +137,7 @@ FactorType Term()
 		mulop                     = MultiplicativeOperator(); // Save operator in local variable
 		const FactorType nth_type = Factor();
 
-		if (first_type != nth_type)
-		{
-			Error("Type mismatch in multiplicative operator operands");
-		}
+		TypeCheck(first_type, nth_type);
 
 		cout << "\tpop %rbx" << endl; // get first operand
 		cout << "\tpop %rax" << endl; // get second operand
@@ -180,10 +192,7 @@ FactorType SimpleExpression()
 		adop                      = AdditiveOperator(); // Save operator in local variable
 		const FactorType nth_type = Term();
 
-		if (first_type != nth_type)
-		{
-			Error("Mismatch in additive operator operands");
-		}
+		TypeCheck(first_type, nth_type);
 
 		cout << "\tpop %rbx" << endl; // get first operand
 		cout << "\tpop %rax" << endl; // get second operand
@@ -263,10 +272,7 @@ FactorType Expression()
 		oprel                     = RelationalOperator();
 		const FactorType nth_type = SimpleExpression();
 
-		if (first_type != nth_type)
-		{
-			Error("Mismatch in relational operator operands");
-		}
+		TypeCheck(first_type, nth_type);
 
 		cout << "\tpop %rax" << endl;
 		cout << "\tpop %rbx" << endl;
