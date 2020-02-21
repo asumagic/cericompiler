@@ -29,9 +29,17 @@ if action == "compile_and_pray":
 
     (stdin, stderr) = compiler_process.communicate()
 
+    if compiler_process.returncode != 0:
+        sys.exit(compiler_process.returncode)
+
     linker_process = Popen(
         [linker_path, "-o" + exec_path, asm_path, "-no-pie"]
     )
+
+    (stdin, stderr) = linker_process.communicate()
+
+    if linker_process.returncode != 0:
+        sys.exit(linker_process.returncode)
 
 elif action == "compile_and_match_diagnostic":
     diagnostic_pattern = sys.argv[4]
