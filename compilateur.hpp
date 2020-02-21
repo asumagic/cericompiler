@@ -40,30 +40,30 @@ bool IsDeclared(const char *id);
 
 [[noreturn]] void Error(const std::string& s);
 
-IdentifierType Identifier();
-IdentifierType Number();
-FactorType Factor();
+[[nodiscard]] IdentifierType Identifier();
+[[nodiscard]] IdentifierType Number();
+[[nodiscard]] FactorType Factor();
 
 // MultiplicativeOperator := "*" | "/" | "%" | "&&"
-OPMUL MultiplicativeOperator();
+[[nodiscard]] OPMUL MultiplicativeOperator();
 
 // Term := Factor {MultiplicativeOperator Factor}
-FactorType Term();
+[[nodiscard]] FactorType Term();
 
 // AdditiveOperator := "+" | "-" | "||"
-OPADD AdditiveOperator();
+[[nodiscard]] OPADD AdditiveOperator();
 
 // SimpleExpression := Term {AdditiveOperator Term}
-FactorType SimpleExpression();
+[[nodiscard]] FactorType SimpleExpression();
 
 // DeclarationPart := "[" Ident {"," Ident} "]"
 void DeclarationPart();
 
 // RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
-OPREL RelationalOperator();
+[[nodiscard]] OPREL RelationalOperator();
 
 // Expression := SimpleExpression [RelationalOperator SimpleExpression]
-FactorType Expression();
+[[nodiscard]] FactorType Expression();
 
 // AssignementStatement := Identifier ":=" Expression
 void AssignementStatement();
