@@ -8,7 +8,7 @@
 // lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
 // and lexer->YYText() returns the lexicon entry as a string
 
-#include "tokeniser.h"
+#include "tokeniser.hpp"
 #include <iostream>
 
 using namespace std;

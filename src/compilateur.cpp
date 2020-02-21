@@ -15,7 +15,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "tokeniser.h"
+#include "tokeniser.hpp"
 #include "compilateur.hpp"
 
 #include <FlexLexer.h>
@@ -446,7 +446,7 @@ void Program(){
 
 int main(){	// First version : Source code on standard input and assembly code on standard output
 	// Header for gcc assembler / linker
-	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
+	cout << "\t\t\t# This code was produced by the CERI Compiler"<<endl;
 	// Let's proceed to the analysis and code production
 	current=(TOKEN) lexer->yylex();
 	Program();
