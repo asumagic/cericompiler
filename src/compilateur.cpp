@@ -25,7 +25,10 @@
 #include <set>
 #include <string>
 
-using namespace std;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
 
 TOKEN current; // Current token
 
@@ -34,8 +37,8 @@ FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
 // lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
 // and lexer->YYText() returns the lexicon entry as a string
 
-set<string>   DeclaredVariables;
-unsigned long TagNumber = 0;
+std::set<string> DeclaredVariables;
+unsigned long    TagNumber = 0;
 
 bool IsDeclared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
 
