@@ -1,5 +1,7 @@
 #pragma once
 
+#include "tokeniser.hpp"
+
 #include <string>
 
 // Program := [DeclarationPart] StatementPart
@@ -11,46 +13,68 @@
 // Expression := SimpleExpression [RelationalOperator SimpleExpression]
 // SimpleExpression := Term {AdditiveOperator Term}
 // Term := Factor {MultiplicativeOperator Factor}
-// Factor := Number | Letter | "(" Expression ")"| "!" Factor
+// Factor := Number | Letter | "(" Expression ")"| "!" Factor
 // Number := Digit{Digit}
 
-// AdditiveOperator := "+" | "-" | "||"
-// MultiplicativeOperator := "*" | "/" | "%" | "&&"
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
+// AdditiveOperator := "+" | "-" | "||"
+// MultiplicativeOperator := "*" | "/" | "%" | "&&"
+// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
 // Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
 // Letter := "a"|...|"z"
 
-enum OPREL {EQU, DIFF, INF, SUP, INFE, SUPE, WTFR};
-enum OPADD {ADD, SUB, OR, WTFA};
-enum OPMUL {MUL, DIV, MOD, AND ,WTFM};
+enum OPREL
+{
+	EQU,
+	DIFF,
+	INF,
+	SUP,
+	INFE,
+	SUPE,
+	WTFR
+};
+enum OPADD
+{
+	ADD,
+	SUB,
+	OR,
+	WTFA
+};
+enum OPMUL
+{
+	MUL,
+	DIV,
+	MOD,
+	AND,
+	WTFM
+};
 
 enum IdentifierType
 {
-    UNSIGNED_INT
+	UNSIGNED_INT
 };
 
 enum FactorType
 {
-    FACTOR_EXPRESSION,
-    FACTOR_NUMBER,
-    FACTOR_IDENTIFIER
+	FACTOR_EXPRESSION,
+	FACTOR_NUMBER,
+	FACTOR_IDENTIFIER
 };
 
-bool IsDeclared(const char *id);
+bool IsDeclared(const char* id);
 
 [[noreturn]] void Error(const std::string& s);
 
 [[nodiscard]] IdentifierType Identifier();
 [[nodiscard]] IdentifierType Number();
-[[nodiscard]] FactorType Factor();
+[[nodiscard]] FactorType     Factor();
 
-// MultiplicativeOperator := "*" | "/" | "%" | "&&"
+// MultiplicativeOperator := "*" | "/" | "%" | "&&"
 [[nodiscard]] OPMUL MultiplicativeOperator();
 
 // Term := Factor {MultiplicativeOperator Factor}
 [[nodiscard]] FactorType Term();
 
-// AdditiveOperator := "+" | "-" | "||"
+// AdditiveOperator := "+" | "-" | "||"
 [[nodiscard]] OPADD AdditiveOperator();
 
 // SimpleExpression := Term {AdditiveOperator Term}
@@ -59,7 +83,7 @@ bool IsDeclared(const char *id);
 // DeclarationPart := "[" Ident {"," Ident} "]"
 void DeclarationPart();
 
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
+// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
 [[nodiscard]] OPREL RelationalOperator();
 
 // Expression := SimpleExpression [RelationalOperator SimpleExpression]
