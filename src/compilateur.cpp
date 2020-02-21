@@ -379,31 +379,42 @@ void WhileStatement()
 	Statement();
 
 	cout << "\tjmp WhileBegin" << tag << '\n';
-	cout << "\tSuite" << tag << ":\n";
+	cout << "Suite" << tag << ":\n";
 }
 
 void ForStatement()
 {
-	current = TOKEN(lexer->yylex());
-	AssignementStatement();
+	const auto tag = ++TagNumber;
+
+	read_token();
+	const auto assignment = AssignementStatement();
+	TypeCheck(assignment.type, Type::UNSIGNED_INT);
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "TO") != 0)
 	{
-		Error("TO attendu après l'assignation du FOR");
+		Error("expected 'TO' after assignement in 'FOR' statement");
 	}
 
-	current = TOKEN(lexer->yylex());
-	Expression();
+	cout << "ForBegin" << tag << ":\n";
+
+	read_token();
+	TypeCheck(Expression(), Type::UNSIGNED_INT);
+
+	cout << "\tpop %rax\n";
+	// we branch *out* if %rax > var, mind the op order in at&t
+	cout << "\tcmpq " << assignment.variable << ", %rax\n";
+	cout << "\tjg Suite" << tag << '\n';
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "DO") != 0)
 	{
-		Error("DO attendu après expression du FOR");
+		Error("expected 'DO' after max expression in 'FOR' statement");
 	}
 
-	current = TOKEN(lexer->yylex());
+	read_token();
 	Statement();
 
-	Error("unimplemented codegen for ForStatement");
+	cout << "\tjmp ForBegin" << tag << '\n';
+	cout << "Suite" << tag << ":\n";
 }
 
 void BlockStatement()

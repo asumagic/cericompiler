@@ -53,7 +53,7 @@ enum OPMUL
 
 struct VariableAssignment
 {
-	const char* variable;
+	std::string variable;
 	Type        type;
 };
 
