@@ -1,4 +1,4 @@
-function(expect_success name)
+function(expect_compiles name)
 	add_test(
 		NAME ${name}
 		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_test.py
@@ -24,8 +24,8 @@ function(expect_diagnostic name diagnostic_regex)
 	)
 endfunction()
 
-expect_success("simple-arithmetic")
-expect_success("flow-control")
+expect_compiles("simple-arithmetic")
+expect_compiles("flow-control")
 expect_diagnostic("fail-case-mismatch" ".*incompatible type.*")
 
 # Force tests to occur after compilation
