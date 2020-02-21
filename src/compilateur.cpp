@@ -57,11 +57,11 @@ void Error(const char* s)
 	exit(-1);
 }
 
-void TypeCheck(FactorType a, FactorType b)
+void TypeCheck(Type a, Type b)
 {
 	if (a != b)
 	{
-		Error(("types incompatibles: "s + std::to_string(a) + ", " + std::to_string(b)).c_str());
+		Error(("types incompatibles: "s + name(a) + ", " + name(b)).c_str());
 	}
 }
 
@@ -83,30 +83,28 @@ Type Number()
 	return Type::UNSIGNED_INT;
 }
 
-FactorType Factor()
+Type Factor()
 {
 	if (current == RPARENT)
 	{
 		read_token();
-		Expression();
+		Type type = Expression();
 		if (current != LPARENT)
 			Error("')' était attendu"); // ")" expected
 		else
 			read_token();
 
-		return FACTOR_EXPRESSION;
+		return type;
 	}
 
 	if (current == NUMBER)
 	{
-		Number();
-		return FACTOR_NUMBER;
+		return Number();
 	}
 
 	if (current == ID)
 	{
-		Identifier();
-		return FACTOR_IDENTIFIER;
+		return Identifier();
 	}
 
 	Error("'(' ou chiffre ou lettre attendue");
@@ -129,14 +127,14 @@ OPMUL MultiplicativeOperator()
 	return opmul;
 }
 
-FactorType Term()
+Type Term()
 {
-	OPMUL            mulop;
-	const FactorType first_type = Factor();
+	OPMUL      mulop;
+	const Type first_type = Factor();
 	while (current == MULOP)
 	{
-		mulop                     = MultiplicativeOperator(); // Save operator in local variable
-		const FactorType nth_type = Factor();
+		mulop               = MultiplicativeOperator(); // Save operator in local variable
+		const Type nth_type = Factor();
 
 		TypeCheck(first_type, nth_type);
 
@@ -184,14 +182,14 @@ OPADD AdditiveOperator()
 	return opadd;
 }
 
-FactorType SimpleExpression()
+Type SimpleExpression()
 {
-	OPADD            adop;
-	const FactorType first_type = Term();
+	OPADD      adop;
+	const Type first_type = Term();
 	while (current == ADDOP)
 	{
-		adop                      = AdditiveOperator(); // Save operator in local variable
-		const FactorType nth_type = Term();
+		adop                = AdditiveOperator(); // Save operator in local variable
+		const Type nth_type = Term();
 
 		TypeCheck(first_type, nth_type);
 
@@ -264,14 +262,14 @@ OPREL RelationalOperator()
 	return oprel;
 }
 
-FactorType Expression()
+Type Expression()
 {
-	OPREL            oprel;
-	const FactorType first_type = SimpleExpression();
+	OPREL      oprel;
+	const Type first_type = SimpleExpression();
 	if (current == RELOP)
 	{
-		oprel                     = RelationalOperator();
-		const FactorType nth_type = SimpleExpression();
+		oprel               = RelationalOperator();
+		const Type nth_type = SimpleExpression();
 
 		TypeCheck(first_type, nth_type);
 

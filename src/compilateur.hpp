@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tokeniser.hpp"
+#include "types.hpp"
 
 #include <string>
 
@@ -50,43 +51,30 @@ enum OPMUL
 	WTFM
 };
 
-enum class Type
-{
-	UNSIGNED_INT,
-	BOOLEAN
-};
-
-enum FactorType
-{
-	FACTOR_EXPRESSION,
-	FACTOR_NUMBER,
-	FACTOR_IDENTIFIER
-};
-
 bool IsDeclared(const char* id);
 
 void              PrintErrorPreamble();
 [[noreturn]] void Error(const char* s);
 
-void TypeCheck(FactorType a, FactorType b);
+void TypeCheck(Type a, Type b);
 
 TOKEN read_token();
 
-[[nodiscard]] Type       Identifier();
-[[nodiscard]] Type       Number();
-[[nodiscard]] FactorType Factor();
+[[nodiscard]] Type Identifier();
+[[nodiscard]] Type Number();
+[[nodiscard]] Type Factor();
 
 // MultiplicativeOperator := "*" | "/" | "%" | "&&"
 [[nodiscard]] OPMUL MultiplicativeOperator();
 
 // Term := Factor {MultiplicativeOperator Factor}
-[[nodiscard]] FactorType Term();
+[[nodiscard]] Type Term();
 
 // AdditiveOperator := "+" | "-" | "||"
 [[nodiscard]] OPADD AdditiveOperator();
 
 // SimpleExpression := Term {AdditiveOperator Term}
-[[nodiscard]] FactorType SimpleExpression();
+[[nodiscard]] Type SimpleExpression();
 
 // DeclarationPart := "[" Ident {"," Ident} "]"
 void DeclarationPart();
@@ -95,7 +83,7 @@ void DeclarationPart();
 [[nodiscard]] OPREL RelationalOperator();
 
 // Expression := SimpleExpression [RelationalOperator SimpleExpression]
-[[nodiscard]] FactorType Expression();
+[[nodiscard]] Type Expression();
 
 // AssignementStatement := Identifier ":=" Expression
 void AssignementStatement();

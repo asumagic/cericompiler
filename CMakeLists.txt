@@ -7,6 +7,7 @@ FLEX_TARGET(tokeniser "src/tokeniser.l" "${CMAKE_CURRENT_BINARY_DIR}/tokeniser.c
 
 add_executable(${PROJECT_NAME}
 	"src/compilateur.cpp"
+	"src/types.cpp"
 	"tokeniser.cpp"
 )
 
