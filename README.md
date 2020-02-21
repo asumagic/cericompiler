@@ -1,55 +1,26 @@
 # CERIcompiler
 
 A simple compiler.
-From : Pascal-like imperative LL(k) langage
-To : 64 bit 80x86 assembly langage (AT&T)
+From: Pascal-like imperative LL(k) langage
+To: 64 bit 80x86 assembly langage (AT&T)
 
-**Download the repository :**
+## Requirements
 
-> git clone git@framagit.org:jourlin/cericompiler.git
+- CMake 3.5 or later
+- A C++11 compatible compiler
+- (optional) Python 3 for running tests
 
-**Build the compiler and test it :**
+## Building
 
-> make test
+```sh
+mkdir build
+cd build
+cmake ..
+make -j
+```
 
-**Have a look at the output :**
+## Usage
 
-> gedit test.s
+`ceri-compiler` reads the source from `stdin` and writes at&t x86-64 assembly to `stdout`.
 
-**Debug the executable :**
-
-> ddd ./test
-
-**Commit the new version :**
-
-> git commit -a -m "What's new..."
-
-**Send to your framagit :**
-
-> git push -u origin master
-
-**Get from your framagit :**
-
-> git pull -u origin master
-
-**This version Can handle :**
-
-// Program := [DeclarationPart] StatementPart
-// DeclarationPart := "[" Identifier {"," Identifier} "]"
-// StatementPart := Statement {";" Statement} "."
-// Statement := AssignementStatement
-// AssignementStatement := Identifier ":=" Expression
-
-// Expression := SimpleExpression [RelationalOperator SimpleExpression]
-// SimpleExpression := Term {AdditiveOperator Term}
-// Term := Factor {MultiplicativeOperator Factor}
-// Factor := Number | Letter | "(" Expression ")"| "!" Factor
-// Number := Digit{Digit}
-// Identifier := Letter {(Letter|Digit)}
-
-// AdditiveOperator := "+" | "-" | "||"
-// MultiplicativeOperator := "*" | "/" | "%" | "&&"
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="  
-// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
-// Letter := "a"|...|"z"
-
+Building should run tests, some of which dump the assembly files in the `tests/` subdirectory *within your build directory*.
