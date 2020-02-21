@@ -32,6 +32,7 @@ enum OPREL
 	SUPE,
 	WTFR
 };
+
 enum OPADD
 {
 	ADD,
@@ -39,6 +40,7 @@ enum OPADD
 	OR,
 	WTFA
 };
+
 enum OPMUL
 {
 	MUL,
