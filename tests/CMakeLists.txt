@@ -14,4 +14,4 @@ assembler_test("flow-control")
 
 add_custom_target(run_unit_test ALL
 	COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-	DEPENDS ${UNIT_TEST})
+	DEPENDS ${UNIT_TEST} ${PROJECT_NAME})
