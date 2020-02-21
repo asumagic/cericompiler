@@ -452,7 +452,7 @@ void StatementPart()
 		Statement();
 	}
 	if (current != DOT)
-		Error("caractère '.' attendu");
+		Error("caractère '.' attendu (avez-vous oublié un ';'?)");
 	read_token();
 }
 
