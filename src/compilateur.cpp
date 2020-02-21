@@ -360,10 +360,12 @@ void WhileStatement()
 {
 	const auto tag = ++TagNumber;
 
-	current = TOKEN(lexer->yylex());
-	TypeCheck(Expression(), Type::BOOLEAN);
-
 	cout << "WhileBegin" << tag << ":\n";
+
+	read_token();
+	const Type type = Expression();
+	TypeCheck(type, Type::BOOLEAN);
+
 	cout << "\tpop %rax\n";
 	cout << "\ttest $0, %rax\n";
 	cout << "\tjz Suite" << tag << '\n';
