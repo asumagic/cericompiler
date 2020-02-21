@@ -50,7 +50,7 @@ enum OPMUL
 	WTFM
 };
 
-enum IdentifierType
+enum class Type
 {
 	UNSIGNED_INT,
 	BOOLEAN
@@ -72,9 +72,9 @@ void TypeCheck(FactorType a, FactorType b);
 
 TOKEN read_token();
 
-[[nodiscard]] IdentifierType Identifier();
-[[nodiscard]] IdentifierType Number();
-[[nodiscard]] FactorType     Factor();
+[[nodiscard]] Type       Identifier();
+[[nodiscard]] Type       Number();
+[[nodiscard]] FactorType Factor();
 
 // MultiplicativeOperator := "*" | "/" | "%" | "&&"
 [[nodiscard]] OPMUL MultiplicativeOperator();

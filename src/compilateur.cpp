@@ -20,6 +20,7 @@
 
 #include <FlexLexer.h>
 
+#include <array>
 #include <cstring>
 #include <iostream>
 #include <set>
@@ -66,20 +67,20 @@ void TypeCheck(FactorType a, FactorType b)
 
 TOKEN read_token() { return (current = TOKEN(lexer->yylex())); }
 
-IdentifierType Identifier()
+Type Identifier()
 {
 	cout << "\tpush " << lexer->YYText() << endl;
 	read_token();
 
-	return UNSIGNED_INT;
+	return Type::UNSIGNED_INT;
 }
 
-IdentifierType Number()
+Type Number()
 {
 	cout << "\tpush $" << atoi(lexer->YYText()) << endl;
 	read_token();
 
-	return UNSIGNED_INT;
+	return Type::UNSIGNED_INT;
 }
 
 FactorType Factor()
