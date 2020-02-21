@@ -15,6 +15,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "codegen.hpp"
 #include "compilateur.hpp"
 #include "tokeniser.hpp"
 
@@ -459,10 +460,8 @@ void Statement()
 
 void StatementPart()
 {
-	cout << "\t.text\t\t# The following lines contain the program" << endl;
-	cout << "\t.globl main\t# The main function must be visible from outside" << endl;
-	cout << "main:\t\t\t# The main function body :" << endl;
-	cout << "\tmovq %rsp, %rbp\t# Save the position of the stack's top" << endl;
+	emit_main_preamble();
+
 	Statement();
 	while (current == SEMICOLON)
 	{
@@ -482,9 +481,11 @@ void Program()
 }
 
 int main()
-{ // First version : Source code on standard input and assembly code on standard output
-	// Header for gcc assembler / linker
-	cout << "\t\t\t# This code was produced by the CERI Compiler" << endl;
+{
+	// Read the source from stdin, output the assembly to stdout
+
+	cout << "# This code was produced by the CERI Compiler\n";
+
 	// Let's proceed to the analysis and code production
 	read_token();
 	Program();
