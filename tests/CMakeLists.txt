@@ -1,6 +1,6 @@
 function(assembler_test name)
 	add_test(
-		NAME test_${name}
+		NAME ${name}
 		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
 		    $<TARGET_FILE:${PROJECT_NAME}>        # Path to compiler
 			${CMAKE_CURRENT_SOURCE_DIR}/${name}.p # Path to source
@@ -9,7 +9,8 @@ function(assembler_test name)
 	)
 endfunction()
 
-assembler_test("test")
+assembler_test("simple-arithmetic")
+assembler_test("flow-control")
 
 add_custom_target(run_unit_test ALL
 	COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
