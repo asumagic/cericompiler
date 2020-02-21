@@ -323,7 +323,7 @@ VariableAssignment AssignementStatement()
 
 void IfStatement()
 {
-	current = TOKEN(lexer->yylex());
+	read_token();
 	TypeCheck(Expression(), Type::BOOLEAN);
 
 	const auto tag = ++TagNumber;
@@ -338,14 +338,14 @@ void IfStatement()
 		Error("expected 'THEN' after conditional expression of 'IF' statement");
 	}
 
-	current = TOKEN(lexer->yylex());
+	read_token();
 	Statement();
 
 	if (current == KEYWORD && strcmp(lexer->YYText(), "ELSE") == 0)
 	{
 		cout << "\tjmp Suite" << tag << '\n';
 		cout << "IfFalse" << tag << ":\n";
-		current = TOKEN(lexer->yylex());
+		read_token();
 		Statement();
 	}
 	else
@@ -375,7 +375,7 @@ void WhileStatement()
 		Error("expected 'DO' after conditional expression of 'WHILE' statement");
 	}
 
-	current = TOKEN(lexer->yylex());
+	read_token();
 	Statement();
 
 	cout << "\tjmp WhileBegin" << tag << '\n';
@@ -410,7 +410,7 @@ void BlockStatement()
 {
 	do
 	{
-		current = TOKEN(lexer->yylex());
+		read_token();
 		Statement();
 	} while (current == SEMICOLON);
 
@@ -419,7 +419,7 @@ void BlockStatement()
 		Error("expected 'END' to finish block statement");
 	}
 
-	current = TOKEN(lexer->yylex());
+	read_token();
 }
 
 void Statement()
