@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(compiler)
+project(ceri-compiler)
 
 find_package(FLEX)
 FLEX_TARGET(tokeniser "src/tokeniser.l" "${CMAKE_CURRENT_BINARY_DIR}/tokeniser.cpp")
