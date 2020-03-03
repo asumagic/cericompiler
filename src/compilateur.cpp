@@ -15,8 +15,8 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "codegen.hpp"
 #include "compilateur.hpp"
+#include "codegen.hpp"
 #include "tokeniser.hpp"
 
 #include <FlexLexer.h>
@@ -246,21 +246,20 @@ void DeclarationPart()
 
 OPREL RelationalOperator()
 {
-	OPREL oprel;
+	OPREL oprel = OPREL::WTFR;
 	if (strcmp(lexer->YYText(), "==") == 0)
-		oprel = EQU;
+		oprel = OPREL::EQU;
 	else if (strcmp(lexer->YYText(), "!=") == 0)
-		oprel = DIFF;
+		oprel = OPREL::DIFF;
 	else if (strcmp(lexer->YYText(), "<") == 0)
-		oprel = INF;
+		oprel = OPREL::INF;
 	else if (strcmp(lexer->YYText(), ">") == 0)
-		oprel = SUP;
+		oprel = OPREL::SUP;
 	else if (strcmp(lexer->YYText(), "<=") == 0)
-		oprel = INFE;
+		oprel = OPREL::INFE;
 	else if (strcmp(lexer->YYText(), ">=") == 0)
-		oprel = SUPE;
-	else
-		oprel = WTFR;
+		oprel = OPREL::SUPE;
+
 	read_token();
 	return oprel;
 }
@@ -281,13 +280,13 @@ Type Expression()
 		cout << "\tcmpq %rax, %rbx" << endl;
 		switch (oprel)
 		{
-		case EQU: cout << "\tje Vrai" << ++TagNumber << "\t# If equal" << endl; break;
-		case DIFF: cout << "\tjne Vrai" << ++TagNumber << "\t# If different" << endl; break;
-		case SUPE: cout << "\tjae Vrai" << ++TagNumber << "\t# If above or equal" << endl; break;
-		case INFE: cout << "\tjbe Vrai" << ++TagNumber << "\t# If below or equal" << endl; break;
-		case INF: cout << "\tjb Vrai" << ++TagNumber << "\t# If below" << endl; break;
-		case SUP: cout << "\tja Vrai" << ++TagNumber << "\t# If above" << endl; break;
-		case WTFR:
+		case OPREL::EQU: cout << "\tje Vrai" << ++TagNumber << "\t# If equal" << endl; break;
+		case OPREL::DIFF: cout << "\tjne Vrai" << ++TagNumber << "\t# If different" << endl; break;
+		case OPREL::SUPE: cout << "\tjae Vrai" << ++TagNumber << "\t# If above or equal" << endl; break;
+		case OPREL::INFE: cout << "\tjbe Vrai" << ++TagNumber << "\t# If below or equal" << endl; break;
+		case OPREL::INF: cout << "\tjb Vrai" << ++TagNumber << "\t# If below" << endl; break;
+		case OPREL::SUP: cout << "\tja Vrai" << ++TagNumber << "\t# If above" << endl; break;
+		case OPREL::WTFR:
 		default: Error("unknown comparison operator");
 		}
 		cout << "\tpush $0\t\t# False" << endl;
