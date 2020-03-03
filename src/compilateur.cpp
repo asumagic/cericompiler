@@ -29,7 +29,6 @@
 
 using std::cerr;
 using std::cout;
-using std::endl;
 using std::string;
 
 using namespace std::string_literals;
@@ -70,7 +69,7 @@ TOKEN read_token() { return (current = TOKEN(lexer->yylex())); }
 
 Type Identifier()
 {
-	cout << "\tpush " << lexer->YYText() << endl;
+	cout << "\tpush " << lexer->YYText() << '\n';
 	read_token();
 
 	return Type::UNSIGNED_INT;
@@ -78,7 +77,7 @@ Type Identifier()
 
 Type Number()
 {
-	cout << "\tpush $" << atoi(lexer->YYText()) << endl;
+	cout << "\tpush $" << atoi(lexer->YYText()) << '\n';
 	read_token();
 
 	return Type::UNSIGNED_INT;
@@ -139,27 +138,27 @@ Type Term()
 
 		TypeCheck(first_type, nth_type);
 
-		cout << "\tpop %rbx" << endl; // get first operand
-		cout << "\tpop %rax" << endl; // get second operand
+		cout << "\tpop %rbx\n"; // get first operand
+		cout << "\tpop %rax\n"; // get second operand
 		switch (mulop)
 		{
 		case AND:
-			cout << "\tmulq	%rbx" << endl;        // a * b -> %rdx:%rax
-			cout << "\tpush %rax\t# AND" << endl; // store result
+			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
+			cout << "\tpush %rax\t# AND\n"; // store result
 			break;
 		case MUL:
-			cout << "\tmulq	%rbx" << endl;        // a * b -> %rdx:%rax
-			cout << "\tpush %rax\t# MUL" << endl; // store result
+			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
+			cout << "\tpush %rax\t# MUL\n"; // store result
 			break;
 		case DIV:
-			cout << "\tmovq $0, %rdx" << endl;    // Higher part of numerator
-			cout << "\tdiv %rbx" << endl;         // quotient goes to %rax
-			cout << "\tpush %rax\t# DIV" << endl; // store result
+			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
+			cout << "\tdiv %rbx\n";         // quotient goes to %rax
+			cout << "\tpush %rax\t# DIV\n"; // store result
 			break;
 		case MOD:
-			cout << "\tmovq $0, %rdx" << endl;    // Higher part of numerator
-			cout << "\tdiv %rbx" << endl;         // remainder goes to %rdx
-			cout << "\tpush %rdx\t# MOD" << endl; // store result
+			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
+			cout << "\tdiv %rbx\n";         // remainder goes to %rdx
+			cout << "\tpush %rdx\t# MOD\n"; // store result
 			break;
 		case WTFM:
 		default: Error("unknown multiplicative operator");
@@ -195,23 +194,23 @@ Type SimpleExpression()
 
 		TypeCheck(first_type, nth_type);
 
-		cout << "\tpop %rbx" << endl; // get first operand
-		cout << "\tpop %rax" << endl; // get second operand
+		cout << "\tpop %rbx\n"; // get first operand
+		cout << "\tpop %rax\n"; // get second operand
 		switch (adop)
 		{
 		case OR:
-			cout << "\taddq	%rbx, %rax\t# OR" << endl; // operand1 OR operand2
+			cout << "\taddq	%rbx, %rax\t# OR\n"; // operand1 OR operand2
 			break;
 		case ADD:
-			cout << "\taddq	%rbx, %rax\t# ADD" << endl; // add both operands
+			cout << "\taddq	%rbx, %rax\t# ADD\n"; // add both operands
 			break;
 		case SUB:
-			cout << "\tsubq	%rbx, %rax\t# SUB" << endl; // substract both operands
+			cout << "\tsubq	%rbx, %rax\t# SUB\n"; // substract both operands
 			break;
 		case WTFA:
 		default: Error("unknown additive operator");
 		}
-		cout << "\tpush %rax" << endl; // store result
+		cout << "\tpush %rax\n"; // store result
 	}
 
 	return first_type;
@@ -221,13 +220,13 @@ void DeclarationPart()
 {
 	if (current != RBRACKET)
 		Error("expected '[' to begin variable declaration block");
-	cout << "\t.data" << endl;
-	cout << "\t.align 8" << endl;
+	cout << "\t.data\n";
+	cout << "\t.align 8\n";
 
 	read_token();
 	if (current != ID)
 		Error("expected an identifier");
-	cout << lexer->YYText() << ":\t.quad 0" << endl;
+	cout << lexer->YYText() << ":\t.quad 0\n";
 	DeclaredVariables.insert(lexer->YYText());
 	read_token();
 	while (current == COMMA)
@@ -235,7 +234,7 @@ void DeclarationPart()
 		read_token();
 		if (current != ID)
 			Error("expected an identifier");
-		cout << lexer->YYText() << ":\t.quad 0" << endl;
+		cout << lexer->YYText() << ":\t.quad 0\n";
 		DeclaredVariables.insert(lexer->YYText());
 		read_token();
 	}
@@ -275,24 +274,24 @@ Type Expression()
 
 		TypeCheck(first_type, nth_type);
 
-		cout << "\tpop %rax" << endl;
-		cout << "\tpop %rbx" << endl;
-		cout << "\tcmpq %rax, %rbx" << endl;
+		cout << "\tpop %rax\n";
+		cout << "\tpop %rbx\n";
+		cout << "\tcmpq %rax, %rbx\n";
 		switch (oprel)
 		{
-		case OPREL::EQU: cout << "\tje Vrai" << ++TagNumber << "\t# If equal" << endl; break;
-		case OPREL::DIFF: cout << "\tjne Vrai" << ++TagNumber << "\t# If different" << endl; break;
-		case OPREL::SUPE: cout << "\tjae Vrai" << ++TagNumber << "\t# If above or equal" << endl; break;
-		case OPREL::INFE: cout << "\tjbe Vrai" << ++TagNumber << "\t# If below or equal" << endl; break;
-		case OPREL::INF: cout << "\tjb Vrai" << ++TagNumber << "\t# If below" << endl; break;
-		case OPREL::SUP: cout << "\tja Vrai" << ++TagNumber << "\t# If above" << endl; break;
+		case OPREL::EQU: cout << "\tje Vrai" << ++TagNumber << "\t# If equal\n"; break;
+		case OPREL::DIFF: cout << "\tjne Vrai" << ++TagNumber << "\t# If different\n"; break;
+		case OPREL::SUPE: cout << "\tjae Vrai" << ++TagNumber << "\t# If above or equal\n"; break;
+		case OPREL::INFE: cout << "\tjbe Vrai" << ++TagNumber << "\t# If below or equal\n"; break;
+		case OPREL::INF: cout << "\tjb Vrai" << ++TagNumber << "\t# If below\n"; break;
+		case OPREL::SUP: cout << "\tja Vrai" << ++TagNumber << "\t# If above\n"; break;
 		case OPREL::WTFR:
 		default: Error("unknown comparison operator");
 		}
-		cout << "\tpush $0\t\t# False" << endl;
-		cout << "\tjmp Suite" << TagNumber << endl;
-		cout << "Vrai" << TagNumber << ":\tpush $0xFFFFFFFFFFFFFFFF\t\t# True" << endl;
-		cout << "Suite" << TagNumber << ":" << endl;
+		cout << "\tpush $0\t\t# False\n";
+		cout << "\tjmp Suite" << TagNumber << '\n';
+		cout << "Vrai" << TagNumber << ":\tpush $0xFFFFFFFFFFFFFFFF\t\t# True\n";
+		cout << "Suite" << TagNumber << ":\n";
 
 		return Type::BOOLEAN;
 	}
@@ -307,7 +306,7 @@ VariableAssignment AssignementStatement()
 		Error("expected an identifier");
 	if (!IsDeclared(lexer->YYText()))
 	{
-		cerr << "Variable '" << lexer->YYText() << "' not found" << endl;
+		cerr << "Variable '" << lexer->YYText() << "' not found\n";
 		exit(-1);
 	}
 	variable = lexer->YYText();
@@ -316,7 +315,7 @@ VariableAssignment AssignementStatement()
 		Error("expected ':=' in variable assignment");
 	read_token();
 	Type type = Expression();
-	cout << "\tpop " << variable << endl;
+	cout << "\tpop " << variable << '\n';
 
 	return {variable.c_str(), type};
 }
@@ -330,7 +329,7 @@ void IfStatement()
 
 	cout << "\tpopq %rax\n";
 	cout << "\ttest %rax, %rax\n";
-	cout << "\tjz IfFalse" << tag << "\n";
+	cout << "\tjz IfFalse" << tag << '\n';
 	cout << "IfTrue" << tag << ":\n";
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "THEN"))
@@ -489,8 +488,8 @@ int main()
 	read_token();
 	Program();
 	// Trailer for the gcc assembler / linker
-	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top" << endl;
-	cout << "\tret\t\t\t# Return from main function" << endl;
+	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top\n";
+	cout << "\tret\t\t\t# Return from main function\n";
 	if (current != FEOF)
 	{
 		cerr << "extraneous characters at end of file: [" << current << "]";
