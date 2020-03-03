@@ -2,8 +2,14 @@
 
 enum class Type
 {
-	UNSIGNED_INT,
+	// Concrete types
+	CONCRETE_BEGIN,
+	UNSIGNED_INT = CONCRETE_BEGIN,
 	BOOLEAN,
+
+	// Type concepts
+	CONCEPT_BEGIN,
+	ARITHMETIC = CONCEPT_BEGIN,
 
 	TOTAL
 };

@@ -31,6 +31,7 @@ expect_compiles("flow-control-for")
 expect_diagnostic("fail-case-mismatch-binop" ".*incompatible type.*")
 expect_diagnostic("fail-case-while-non-boolean" ".*incompatible type.*")
 expect_diagnostic("fail-case-if-non-boolean" ".*incompatible type.*")
+expect_diagnostic("fail-case-mismatch-variable" ".*incompatible type.*")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL

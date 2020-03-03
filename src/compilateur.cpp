@@ -22,6 +22,7 @@
 #include <FlexLexer.h>
 
 #include <array>
+#include <cassert>
 #include <cstring>
 #include <iostream>
 #include <set>
@@ -59,7 +60,23 @@ void Error(const char* s)
 
 void TypeCheck(Type a, Type b)
 {
-	if (a != b)
+	assert(int(a) < int(Type::CONCEPT_BEGIN) && "Only the second operand of TypeCheck may be a type concept");
+
+	bool match = true;
+
+	if (b == Type::ARITHMETIC)
+	{
+		if (a != Type::UNSIGNED_INT)
+		{
+			match = false;
+		}
+	}
+	else if (a != b)
+	{
+		match = false;
+	}
+
+	if (!match)
 	{
 		Error(("incompatible types: "s + name(a) + ", " + name(b)).c_str());
 	}
@@ -143,19 +160,23 @@ Type Term()
 		switch (mulop)
 		{
 		case AND:
+			TypeCheck(first_type, Type::BOOLEAN);
 			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
 			cout << "\tpush %rax\t# AND\n"; // store result
 			break;
 		case MUL:
+			TypeCheck(first_type, Type::ARITHMETIC);
 			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
 			cout << "\tpush %rax\t# MUL\n"; // store result
 			break;
 		case DIV:
+			TypeCheck(first_type, Type::ARITHMETIC);
 			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
 			cout << "\tdiv %rbx\n";         // quotient goes to %rax
 			cout << "\tpush %rax\t# DIV\n"; // store result
 			break;
 		case MOD:
+			TypeCheck(first_type, Type::ARITHMETIC);
 			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
 			cout << "\tdiv %rbx\n";         // remainder goes to %rdx
 			cout << "\tpush %rdx\t# MOD\n"; // store result
@@ -199,12 +220,15 @@ Type SimpleExpression()
 		switch (adop)
 		{
 		case OR:
+			TypeCheck(first_type, Type::BOOLEAN);
 			cout << "\taddq	%rbx, %rax\t# OR\n"; // operand1 OR operand2
 			break;
 		case ADD:
+			TypeCheck(first_type, Type::ARITHMETIC);
 			cout << "\taddq	%rbx, %rax\t# ADD\n"; // add both operands
 			break;
 		case SUB:
+			TypeCheck(first_type, Type::ARITHMETIC);
 			cout << "\tsubq	%rbx, %rax\t# SUB\n"; // substract both operands
 			break;
 		case WTFA:
@@ -317,7 +341,9 @@ VariableAssignment AssignementStatement()
 	Type type = Expression();
 	cout << "\tpop " << variable << '\n';
 
-	return {variable.c_str(), type};
+	TypeCheck(type, Type::UNSIGNED_INT);
+
+	return {variable, type};
 }
 
 void IfStatement()
