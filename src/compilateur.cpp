@@ -517,7 +517,6 @@ int main()
 	cout << "\tret\t\t\t# Return from main function\n";
 	if (current != FEOF)
 	{
-		cerr << "extraneous characters at end of file: [" << current << "]";
-		Error("."); // unexpected characters at the end of program
+		Error((string("extraneous characters at end of file: [") + std::to_string(current) + "]").c_str());
 	}
 }
