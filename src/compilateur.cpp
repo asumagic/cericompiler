@@ -330,8 +330,7 @@ VariableAssignment AssignementStatement()
 		Error("expected an identifier");
 	if (!IsDeclared(lexer->YYText()))
 	{
-		cerr << "Variable '" << lexer->YYText() << "' not found\n";
-		exit(-1);
+		Error((std::string("variable '") + lexer->YYText() + "' not found").c_str());
 	}
 	variable = lexer->YYText();
 	read_token();
