@@ -25,6 +25,7 @@ function(expect_diagnostic name diagnostic_regex)
 endfunction()
 
 expect_compiles("simple-arithmetic")
+expect_compiles("test-arithmetic-operators")
 expect_compiles("flow-control-while")
 expect_compiles("flow-control-for")
 expect_diagnostic("fail-case-mismatch-binop" ".*incompatible type.*")
