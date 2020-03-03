@@ -34,6 +34,7 @@ expect_diagnostic("fail-case-if-non-boolean" ".*incompatible type.*")
 expect_diagnostic("fail-case-mismatch-variable" ".*incompatible type.*")
 expect_diagnostic("fail-case-unknown-variable" ".*variable '.*' not found.*")
 expect_diagnostic("fail-case-invalid-dot" ".*extraneous characters at end of file.*")
+expect_diagnostic("fail-case-mismatch-boolean-in-arithmetic" ".*incompatible type.*")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL
