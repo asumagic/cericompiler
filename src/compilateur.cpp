@@ -244,8 +244,6 @@ void DeclarationPart()
 {
 	if (current != RBRACKET)
 		Error("expected '[' to begin variable declaration block");
-	cout << "\t.data\n";
-	cout << "\t.align 8\n";
 
 	read_token();
 	if (current != ID)
@@ -457,6 +455,32 @@ void BlockStatement()
 	read_token();
 }
 
+void DisplayStatement()
+{
+	read_token();
+	const Type type = Expression();
+
+	cout << "\tpop %rdx # Value to be displayed\n";
+
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		cout << "\tmovq $__cc_format_string, %rsi\n";
+		break;
+	}
+
+	default:
+	{
+		Error("unimplemented DISPLAY statement for this type, sorry");
+	}
+	}
+
+	cout << "\tmovl $1, %edi\n";
+	cout << "\tmovl $0, %eax\n";
+	cout << "\tcall __printf_chk@PLT\n";
+}
+
 void Statement()
 {
 	if (strcmp(lexer->YYText(), "IF") == 0)
@@ -474,6 +498,10 @@ void Statement()
 	else if (strcmp(lexer->YYText(), "BEGIN") == 0)
 	{
 		BlockStatement();
+	}
+	else if (strcmp(lexer->YYText(), "DISPLAY") == 0)
+	{
+		DisplayStatement();
 	}
 	else
 	{
@@ -498,6 +526,10 @@ void StatementPart()
 
 void Program()
 {
+	cout << "\t.data\n";
+	cout << "\t.align 8\n";
+	cout << "__cc_format_string: .string \"%llu\\n\"\n";
+
 	if (current == RBRACKET)
 		DeclarationPart();
 	StatementPart();

@@ -1,3 +1,5 @@
+# Compile and link the test ${name}.
+# If the compiler or the linker returns an error code, the test fails.
 function(expect_compiles name)
 	add_test(
 		NAME ${name}
@@ -7,10 +9,12 @@ function(expect_compiles name)
 			${CMAKE_CURRENT_SOURCE_DIR}/${name}.p # Path to source
 			${CMAKE_CURRENT_BINARY_DIR}/${name}.s # Path to output assembly
 			${CMAKE_CURRENT_BINARY_DIR}/${name}   # Path to output binary
-			${action}
 	)
 endfunction()
 
+# Compile the test ${name}, but do not link it.
+# The diagnostic output of the compiler must match against ${diagnostic_regex},
+# otherwise the test fails.
 function(expect_diagnostic name diagnostic_regex)
 	add_test(
 		NAME ${name}
@@ -21,6 +25,22 @@ function(expect_diagnostic name diagnostic_regex)
 			$<TARGET_FILE:${PROJECT_NAME}>        # Path to compiler
 			${CMAKE_CURRENT_SOURCE_DIR}/${name}.p # Path to source
 			${diagnostic_regex}
+	)
+endfunction()
+
+# Compile and link the test ${name}.
+# The output of the program must match against ${program_output_regex},
+# otherwise the test fails.
+function(expect_output name program_output_regex)
+	add_test(
+		NAME ${name}
+		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_test.py
+		    "compile_and_match_output"
+			$<TARGET_FILE:${PROJECT_NAME}>        # Path to compiler
+			${CMAKE_CURRENT_SOURCE_DIR}/${name}.p # Path to source
+			${CMAKE_CURRENT_BINARY_DIR}/${name}.s # Path to output assembly
+			${CMAKE_CURRENT_BINARY_DIR}/${name}   # Path to output binary
+			${program_output_regex}
 	)
 endfunction()
 
@@ -35,6 +55,9 @@ expect_diagnostic("fail-case-mismatch-variable" ".*incompatible type.*")
 expect_diagnostic("fail-case-unknown-variable" ".*variable '.*' not found.*")
 expect_diagnostic("fail-case-invalid-dot" ".*extraneous characters at end of file.*")
 expect_diagnostic("fail-case-mismatch-boolean-in-arithmetic" ".*incompatible type.*")
+expect_output("display" "0\\n")
+expect_output("display-arithmetic-tests" "10\\n10")
+expect_output("display-if-test" "1\n1\n")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL

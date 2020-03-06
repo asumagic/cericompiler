@@ -106,6 +106,9 @@ void ForStatement();
 // BlockStatement := "BEGIN" Statement { ";" Statement } "END"
 void BlockStatement();
 
+// DisplayStatement := "DISPLAY" Expression
+void DisplayStatement();
+
 // Statement := AssignementStatement
 void Statement();
 
