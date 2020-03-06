@@ -476,7 +476,7 @@ void DisplayStatement()
 	}
 
 	cout << "\tpop %rsi # Value to be displayed\n";
-	cout << "\tmovl $0, %rax # Number of floating point parameters (varargs)\n";
+	cout << "\tmovb $0, %al # Number of floating point parameters (varargs)\n";
 	cout << "\tcall printf\n";
 }
 
