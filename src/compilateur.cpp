@@ -423,9 +423,9 @@ void ForStatement()
 	TypeCheck(Expression(), Type::UNSIGNED_INT);
 
 	cout << "\tpop %rax\n";
-	// we branch *out* if %rax > var, mind the op order in at&t
+	// we branch *out* if var < %rax, mind the op order in at&t
 	cout << "\tcmpq " << assignment.variable << ", %rax\n";
-	cout << "\tjg Suite" << tag << '\n';
+	cout << "\tjl Suite" << tag << '\n';
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "DO") != 0)
 	{
@@ -435,6 +435,7 @@ void ForStatement()
 	read_token();
 	Statement();
 
+	cout << "\taddq $1, " << assignment.variable << '\n';
 	cout << "\tjmp ForBegin" << tag << '\n';
 	cout << "Suite" << tag << ":\n";
 }
