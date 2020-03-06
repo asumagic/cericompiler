@@ -461,13 +461,11 @@ void DisplayStatement()
 	read_token();
 	const Type type = Expression();
 
-	cout << "\tpop %rdx # Value to be displayed\n";
-
 	switch (type)
 	{
 	case Type::UNSIGNED_INT:
 	{
-		cout << "\tmovq $__cc_format_string, %rsi\n";
+		cout << "\tmovq $__cc_format_string, %rdi\n";
 		break;
 	}
 
@@ -477,9 +475,9 @@ void DisplayStatement()
 	}
 	}
 
-	cout << "\tmovl $1, %edi\n";
-	cout << "\tmovl $0, %eax\n";
-	cout << "\tcall __printf_chk@PLT\n";
+	cout << "\tpop %rsi # Value to be displayed\n";
+	cout << "\tmovl $0, %rax # Number of floating point parameters (varargs)\n";
+	cout << "\tcall printf\n";
 }
 
 void Statement()
