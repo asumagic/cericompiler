@@ -46,7 +46,7 @@ if action == "compile_and_pray":
 elif action == "compile_and_match_output":
     asm_path = sys.argv[4]
     exec_path = sys.argv[5]
-    output_pattern = sys.argv[6]
+    output_pattern = sys.argv[6] + '$'
 
     linker_path = "gcc"
 
