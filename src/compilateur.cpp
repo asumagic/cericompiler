@@ -33,11 +33,11 @@ using std::string;
 
 using namespace std::string_literals;
 
-bool Compiler::is_declared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
+bool Compiler::is_declared(const char* id) const { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
 
-void Compiler::print_error_preamble() { cerr << "source:" << lexer->lineno() << ": "; }
+void Compiler::print_error_preamble() const { cerr << "source:" << lexer->lineno() << ": "; }
 
-void Compiler::error(const char* s)
+void Compiler::error(const char* s) const
 {
 	print_error_preamble();
 	cerr << "error: " << s << '\n';
@@ -47,7 +47,7 @@ void Compiler::error(const char* s)
 	exit(-1);
 }
 
-void Compiler::check_type(Type a, Type b)
+void Compiler::check_type(Type a, Type b) const
 {
 	assert(int(a) < int(Type::CONCEPT_BEGIN) && "Only the second operand of TypeCheck may be a type concept");
 
@@ -73,7 +73,7 @@ void Compiler::check_type(Type a, Type b)
 
 TOKEN Compiler::read_token() { return (current = TOKEN(lexer->yylex())); }
 
-bool Compiler::match_keyword(const char* keyword)
+bool Compiler::match_keyword(const char* keyword) const
 {
 	return (current == KEYWORD && std::strcmp(lexer->YYText(), keyword) == 0);
 }

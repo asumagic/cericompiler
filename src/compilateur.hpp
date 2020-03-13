@@ -25,6 +25,17 @@ class Compiler
 	public:
 	void operator()();
 
+	private:
+	TOKEN current; // Current token
+
+	FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
+	// tokens can be read using lexer->yylex()
+	// lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
+	// and lexer->YYText() returns the lexicon entry as a string
+
+	std::unordered_map<std::string, VariableType> DeclaredVariables;
+	unsigned long                                 TagNumber = 0;
+
 	// Letter := "a"|...|"z"
 	[[nodiscard]] Type parse_identifier();
 
@@ -87,25 +98,14 @@ class Compiler
 	// Program := [DeclarationPart] StatementPart
 	void parse_program();
 
-	private:
-	TOKEN current; // Current token
-
-	FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
-	// tokens can be read using lexer->yylex()
-	// lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
-	// and lexer->YYText() returns the lexicon entry as a string
-
-	std::unordered_map<std::string, VariableType> DeclaredVariables;
-	unsigned long                                 TagNumber = 0;
-
 	bool is_declared(const char* id);
 
-	void              print_error_preamble();
-	[[noreturn]] void error(const char* s);
+	void              print_error_preamble() const;
+	[[noreturn]] void error(const char* s) const;
 
-	void check_type(Type a, Type b);
+	void check_type(Type a, Type b) const;
 
 	TOKEN read_token();
 
-	[[nodiscard]] bool match_keyword(const char* keyword);
+	[[nodiscard]] bool match_keyword(const char* keyword) const;
 };
