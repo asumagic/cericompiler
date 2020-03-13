@@ -250,30 +250,33 @@ void parse_declaration_block()
 		return;
 	}
 
-	std::vector<std::string> current_declarations;
-
 	do
 	{
+		std::vector<std::string> current_declarations;
+
+		do
+		{
+			read_token();
+			current_declarations.push_back(lexer->YYText());
+			read_token();
+		} while (current == COMMA);
+
+		if (current != COLON)
+		{
+			Error("expected ':' after variable name list in declaration block");
+		}
+
 		read_token();
-		current_declarations.push_back(lexer->YYText());
+
+		const Type type = parse_type();
+
+		for (auto& name : current_declarations)
+		{
+			DeclaredVariables.emplace(std::move(name), Variable{type});
+		}
+
 		read_token();
-	} while (current == COMMA);
-
-	if (current != COLON)
-	{
-		Error("expected ':' after variable name list in declaration block");
-	}
-
-	read_token();
-
-	const Type type = parse_type();
-
-	for (auto& name : current_declarations)
-	{
-		DeclaredVariables.emplace(std::move(name), Variable{type});
-	}
-
-	read_token();
+	} while (current == SEMICOLON);
 
 	if (current != DOT)
 	{
