@@ -2,6 +2,7 @@
 
 #include "tokeniser.hpp"
 #include "types.hpp"
+#include "operators.hpp"
 
 #include <string>
 
@@ -22,34 +23,6 @@
 // RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
 // Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
 // Letter := "a"|...|"z"
-
-enum class RelationalOperator
-{
-	EQU,
-	DIFF,
-	INF,
-	SUP,
-	INFE,
-	SUPE,
-	WTFR
-};
-
-enum class AdditiveOperator
-{
-	ADD,
-	SUB,
-	OR,
-	WTFA
-};
-
-enum class MultiplicativeOperator
-{
-	MUL,
-	DIV,
-	MOD,
-	AND,
-	WTFM
-};
 
 struct VariableType
 {
