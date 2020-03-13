@@ -78,6 +78,8 @@ bool Compiler::match_keyword(const char* keyword) const
 	return (current == KEYWORD && std::strcmp(lexer.YYText(), keyword) == 0);
 }
 
+Compiler::Compiler(std::istream& input, std::ostream& output) : lexer{input, output} {}
+
 void Compiler::operator()()
 {
 	cout << "# This code was produced by the CERI Compiler\n";

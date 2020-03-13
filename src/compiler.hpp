@@ -4,6 +4,7 @@
 #include "tokeniser.hpp"
 #include "types.hpp"
 
+#include <iosfwd>
 #include <string>
 #include <unordered_map>
 
@@ -23,6 +24,8 @@ struct VariableAssignment
 class Compiler
 {
 	public:
+	Compiler(std::istream& = std::cin, std::ostream& = std::cout);
+
 	void operator()();
 
 	private:
