@@ -14,4 +14,4 @@ enum class Type
 	TOTAL
 };
 
-const char* name(Type type);
+const char* type_name(Type type);

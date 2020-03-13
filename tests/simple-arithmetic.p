@@ -1,4 +1,4 @@
-[a, b, c]
+VAR a, b, c : INTEGER.
 
 a := 6;
 b := 7;

@@ -1,4 +1,4 @@
-[i, x]
+VAR i, x : INTEGER.
 
 x := 1;
 

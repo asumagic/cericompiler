@@ -57,6 +57,11 @@ struct VariableAssignment
 	Type        type;
 };
 
+struct Variable
+{
+	Type type;
+};
+
 bool IsDeclared(const char* id);
 
 void              PrintErrorPreamble();
@@ -65,6 +70,8 @@ void              PrintErrorPreamble();
 void TypeCheck(Type a, Type b);
 
 TOKEN read_token();
+
+[[nodiscard]] bool match_keyword(const char* keyword);
 
 [[nodiscard]] Type Identifier();
 [[nodiscard]] Type Number();
@@ -82,8 +89,12 @@ TOKEN read_token();
 // SimpleExpression := Term {AdditiveOperator Term}
 [[nodiscard]] Type SimpleExpression();
 
-// DeclarationPart := "[" Ident {"," Ident} "]"
-void DeclarationPart();
+// DeclarationPart := "VAR" VarDeclaration {";" VarDeclaration} "."
+// Declaration := Ident {"," Ident} ":" Type
+void parse_declaration_block();
+
+// Type := "INTEGER" | "BOOLEAN"
+[[nodiscard]] Type parse_type();
 
 // RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
 [[nodiscard]] OPREL RelationalOperator();

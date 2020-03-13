@@ -25,8 +25,9 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
-#include <set>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 using std::cerr;
 using std::cout;
@@ -41,8 +42,8 @@ FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
 // lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
 // and lexer->YYText() returns the lexicon entry as a string
 
-std::set<string> DeclaredVariables;
-unsigned long    TagNumber = 0;
+std::unordered_map<std::string, Variable> DeclaredVariables;
+unsigned long                             TagNumber = 0;
 
 bool IsDeclared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
 
@@ -78,11 +79,13 @@ void TypeCheck(Type a, Type b)
 
 	if (!match)
 	{
-		Error(("incompatible types: "s + name(a) + ", " + name(b)).c_str());
+		Error(("incompatible types: "s + type_name(a) + ", " + type_name(b)).c_str());
 	}
 }
 
 TOKEN read_token() { return (current = TOKEN(lexer->yylex())); }
+
+bool match_keyword(const char* keyword) { return (current == KEYWORD && std::strcmp(lexer->YYText(), keyword) == 0); }
 
 Type Identifier()
 {
@@ -240,29 +243,66 @@ Type SimpleExpression()
 	return first_type;
 }
 
-void DeclarationPart()
+void parse_declaration_block()
 {
-	if (current != RBRACKET)
-		Error("expected '[' to begin variable declaration block");
+	if (!match_keyword("VAR"))
+	{
+		return;
+	}
 
-	read_token();
-	if (current != ID)
-		Error("expected an identifier");
-	cout << lexer->YYText() << ":\t.quad 0\n";
-	DeclaredVariables.insert(lexer->YYText());
-	read_token();
-	while (current == COMMA)
+	std::vector<std::string> current_declarations;
+
+	do
 	{
 		read_token();
-		if (current != ID)
-			Error("expected an identifier");
-		cout << lexer->YYText() << ":\t.quad 0\n";
-		DeclaredVariables.insert(lexer->YYText());
+		current_declarations.push_back(lexer->YYText());
 		read_token();
+	} while (current == COMMA);
+
+	if (current != COLON)
+	{
+		Error("expected ':' after variable name list in declaration block");
 	}
-	if (current != LBRACKET)
-		Error("expected ']' to end variable declaration block");
+
 	read_token();
+
+	const Type type = parse_type();
+
+	for (auto& name : current_declarations)
+	{
+		DeclaredVariables.emplace(std::move(name), Variable{type});
+	}
+
+	read_token();
+
+	if (current != DOT)
+	{
+		Error("expected '.' at end of declaration block");
+	}
+
+	read_token();
+}
+
+Type parse_type()
+{
+	if (current != TYPE)
+	{
+		Error("expected type");
+	}
+
+	const char* name = lexer->YYText();
+
+	if (std::strcmp(name, "INTEGER") == 0)
+	{
+		return Type::UNSIGNED_INT;
+	}
+
+	if (std::strcmp(name, "BOOLEAN") == 0)
+	{
+		return Type::BOOLEAN;
+	}
+
+	Error("unrecognized type; this is a compiler bug");
 }
 
 OPREL RelationalOperator()
@@ -529,8 +569,16 @@ void Program()
 	cout << "\t.align 8\n";
 	cout << "__cc_format_string: .string \"%llu\\n\"\n";
 
-	if (current == RBRACKET)
-		DeclarationPart();
+	parse_declaration_block();
+
+	for (const auto& it : DeclaredVariables)
+	{
+		const auto& name = it.first;
+		const Variable& variable = it.second;
+
+		cout << name << ":\t.quad 0 # type: " << type_name(variable.type) << '\n';
+	}
+
 	StatementPart();
 }
 

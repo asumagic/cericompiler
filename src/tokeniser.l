@@ -1,7 +1,7 @@
 %{
-// This is our Lexical tokeniser 
+// This is our Lexical tokeniser
 // It should be compiled into cpp with :
-// flex++ -d -otokeniser.cpp tokeniser.l 
+// flex++ -d -otokeniser.cpp tokeniser.l
 // And then compiled into object with
 // g++ -c tokeniser.cpp
 // tokens can be read using lexer->yylex()
@@ -19,7 +19,8 @@ using namespace std;
 %option c++
 %option yylineno
 
-keyword (BEGIN|END|WHILE|FOR|TO|DO|IF|THEN|ELSE|DISPLAY)
+keyword (BEGIN|END|WHILE|FOR|TO|DO|IF|THEN|ELSE|DISPLAY|VAR)
+type (INTEGER|BOOLEAN)
 stringconst  \"[^\n"]+\"
 ws      [ \t\n\r]+
 alpha   [A-Za-z]
@@ -33,7 +34,8 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 
 %%
 
-{keyword} return KEYWORD;
+{keyword}   return KEYWORD;
+{type}      return TYPE;
 {addop}		return ADDOP;
 {mulop}		return MULOP;
 {relop}		return RELOP;
@@ -43,6 +45,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "["		return RBRACKET;
 "]"		return LBRACKET;
 ","		return COMMA;
+":"     return COLON;
 ";"		return SEMICOLON;
 "."		return DOT;
 ":="		return ASSIGN;
@@ -54,12 +57,12 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "(*"    { /* Skip comments between '(*' and '*)' */
 		int c;
 		while((c = yyinput()) != 0){
-     			if(c == '*'){
-     	    			if((c = yyinput()) == ')')
-    	        			break;
-    	     			else
-  	          			unput(c);
-  	   		}	
+				if(c == '*'){
+						if((c = yyinput()) == ')')
+							break;
+						else
+						unput(c);
+			}
 		}
 	};
 

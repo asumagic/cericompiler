@@ -1,4 +1,4 @@
-[a,b,i]
+VAR a, b, i : INTEGER.
 
 a := 15;
 
