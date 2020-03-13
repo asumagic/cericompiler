@@ -1,10 +1,13 @@
 #pragma once
 
+#include "operators.hpp"
 #include "tokeniser.hpp"
 #include "types.hpp"
-#include "operators.hpp"
 
 #include <string>
+#include <unordered_map>
+
+#include <FlexLexer.h>
 
 struct VariableType
 {
@@ -13,79 +16,96 @@ struct VariableType
 
 struct VariableAssignment
 {
-	std::string name;
+	std::string  name;
 	VariableType type;
 };
 
-bool is_declared(const char* id);
+class Compiler
+{
+	public:
+	void operator()();
 
-void              print_error_preamble();
-[[noreturn]] void error(const char* s);
+	// Letter := "a"|...|"z"
+	[[nodiscard]] Type parse_identifier();
 
-void check_type(Type a, Type b);
+	// Number := Digit{Digit}
+	// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
+	[[nodiscard]] Type parse_number();
 
-TOKEN read_token();
+	// Factor := Number | Letter | "(" Expression ")"| "!" Factor
+	[[nodiscard]] Type parse_factor();
 
-[[nodiscard]] bool match_keyword(const char* keyword);
+	// MultiplicativeOperator := "*" | "/" | "%" | "&&"
+	[[nodiscard]] MultiplicativeOperator parse_multiplicative_operator();
 
-// Letter := "a"|...|"z"
-[[nodiscard]] Type parse_identifier();
+	// Term := Factor {MultiplicativeOperator Factor}
+	[[nodiscard]] Type parse_term();
 
-// Number := Digit{Digit}
-// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
-[[nodiscard]] Type parse_number();
+	// AdditiveOperator := "+" | "-" | "||"
+	[[nodiscard]] AdditiveOperator parse_additive_operator();
 
-// Factor := Number | Letter | "(" Expression ")"| "!" Factor
-[[nodiscard]] Type parse_factor();
+	// SimpleExpression := Term {AdditiveOperator Term}
+	[[nodiscard]] Type parse_simple_expression();
 
-// MultiplicativeOperator := "*" | "/" | "%" | "&&"
-[[nodiscard]] MultiplicativeOperator parse_multiplicative_operator();
+	// DeclarationPart := "VAR" VarDeclaration {";" VarDeclaration} "."
+	// Declaration := Ident {"," Ident} ":" Type
+	void parse_declaration_block();
 
-// Term := Factor {MultiplicativeOperator Factor}
-[[nodiscard]] Type parse_term();
+	// Type := "INTEGER" | "BOOLEAN"
+	[[nodiscard]] Type parse_type();
 
-// AdditiveOperator := "+" | "-" | "||"
-[[nodiscard]] AdditiveOperator parse_additive_operator();
+	// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
+	[[nodiscard]] RelationalOperator parse_relational_operator();
 
-// SimpleExpression := Term {AdditiveOperator Term}
-[[nodiscard]] Type parse_simple_expression();
+	// Expression := SimpleExpression [RelationalOperator SimpleExpression]
+	[[nodiscard]] Type parse_expression();
 
-// DeclarationPart := "VAR" VarDeclaration {";" VarDeclaration} "."
-// Declaration := Ident {"," Ident} ":" Type
-void parse_declaration_block();
+	// AssignementStatement := Identifier ":=" Expression
+	VariableAssignment parse_assignment_statement();
 
-// Type := "INTEGER" | "BOOLEAN"
-[[nodiscard]] Type parse_type();
+	// IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
+	void parse_if_statement();
 
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
-[[nodiscard]] RelationalOperator parse_relational_operator();
+	// WhileStatement := "WHILE" Expression DO Statement
+	void parse_while_statement();
 
-// Expression := SimpleExpression [RelationalOperator SimpleExpression]
-[[nodiscard]] Type parse_expression();
+	// ForStatement := "FOR" AssignementStatement "TO" Expression "DO" Statement
+	void parse_for_statement();
 
-// AssignementStatement := Identifier ":=" Expression
-VariableAssignment parse_assignment_statement();
+	// BlockStatement := "BEGIN" Statement { ";" Statement } "END"
+	void parse_block_statement();
 
-// IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
-void parse_if_statement();
+	// DisplayStatement := "DISPLAY" Expression
+	void parse_display_statement();
 
-// WhileStatement := "WHILE" Expression DO Statement
-void parse_while_statement();
+	// Statement := AssignementStatement
+	void parse_statement();
 
-// ForStatement := "FOR" AssignementStatement "TO" Expression "DO" Statement
-void parse_for_statement();
+	// StatementPart := Statement {";" Statement} "."
+	void parse_statement_part();
 
-// BlockStatement := "BEGIN" Statement { ";" Statement } "END"
-void parse_block_statement();
+	// Program := [DeclarationPart] StatementPart
+	void parse_program();
 
-// DisplayStatement := "DISPLAY" Expression
-void parse_display_statement();
+	private:
+	TOKEN current; // Current token
 
-// Statement := AssignementStatement
-void parse_statement();
+	FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
+	// tokens can be read using lexer->yylex()
+	// lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
+	// and lexer->YYText() returns the lexicon entry as a string
 
-// StatementPart := Statement {";" Statement} "."
-void parse_statement_part();
+	std::unordered_map<std::string, VariableType> DeclaredVariables;
+	unsigned long                                 TagNumber = 0;
 
-// Program := [DeclarationPart] StatementPart
-void parse_program();
+	bool is_declared(const char* id);
+
+	void              print_error_preamble();
+	[[noreturn]] void error(const char* s);
+
+	void check_type(Type a, Type b);
+
+	TOKEN read_token();
+
+	[[nodiscard]] bool match_keyword(const char* keyword);
+};

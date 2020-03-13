@@ -19,8 +19,6 @@
 #include "codegen.hpp"
 #include "tokeniser.hpp"
 
-#include <FlexLexer.h>
-
 #include <array>
 #include <cassert>
 #include <cstring>
@@ -35,21 +33,11 @@ using std::string;
 
 using namespace std::string_literals;
 
-TOKEN current; // Current token
+bool Compiler::is_declared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
 
-FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
-// tokens can be read using lexer->yylex()
-// lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
-// and lexer->YYText() returns the lexicon entry as a string
+void Compiler::print_error_preamble() { cerr << "source:" << lexer->lineno() << ": "; }
 
-std::unordered_map<std::string, VariableType> DeclaredVariables;
-unsigned long                                 TagNumber = 0;
-
-bool is_declared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
-
-void print_error_preamble() { cerr << "source:" << lexer->lineno() << ": "; }
-
-void error(const char* s)
+void Compiler::error(const char* s)
 {
 	print_error_preamble();
 	cerr << "error: " << s << '\n';
@@ -59,7 +47,7 @@ void error(const char* s)
 	exit(-1);
 }
 
-void check_type(Type a, Type b)
+void Compiler::check_type(Type a, Type b)
 {
 	assert(int(a) < int(Type::CONCEPT_BEGIN) && "Only the second operand of TypeCheck may be a type concept");
 
@@ -83,11 +71,32 @@ void check_type(Type a, Type b)
 	}
 }
 
-TOKEN read_token() { return (current = TOKEN(lexer->yylex())); }
+TOKEN Compiler::read_token() { return (current = TOKEN(lexer->yylex())); }
 
-bool match_keyword(const char* keyword) { return (current == KEYWORD && std::strcmp(lexer->YYText(), keyword) == 0); }
+bool Compiler::match_keyword(const char* keyword)
+{
+	return (current == KEYWORD && std::strcmp(lexer->YYText(), keyword) == 0);
+}
 
-Type parse_identifier()
+void Compiler::operator()()
+{
+	cout << "# This code was produced by the CERI Compiler\n";
+
+	// Let's proceed to the analysis and code production
+
+	read_token();
+	parse_program();
+	// Trailer for the gcc assembler / linker
+	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top\n";
+	cout << "\tret\t\t\t# Return from main function\n";
+	if (current != FEOF)
+	{
+		// FIXME: this is not printing the right stuff
+		error((string("extraneous characters at end of file: [") + std::to_string(current) + "]").c_str());
+	}
+}
+
+Type Compiler::parse_identifier()
 {
 	const std::string name = lexer->YYText();
 
@@ -105,7 +114,7 @@ Type parse_identifier()
 	return variable.type;
 }
 
-Type parse_number()
+Type Compiler::parse_number()
 {
 	cout << "\tpush $" << atoi(lexer->YYText()) << '\n';
 	read_token();
@@ -113,7 +122,7 @@ Type parse_number()
 	return Type::UNSIGNED_INT;
 }
 
-Type parse_factor()
+Type Compiler::parse_factor()
 {
 	// TODO: implement boolean negation '!'
 
@@ -142,7 +151,7 @@ Type parse_factor()
 	error("expected '(', number or identifier");
 }
 
-MultiplicativeOperator parse_multiplicative_operator()
+MultiplicativeOperator Compiler::parse_multiplicative_operator()
 {
 	MultiplicativeOperator opmul;
 	if (strcmp(lexer->YYText(), "*") == 0)
@@ -159,7 +168,7 @@ MultiplicativeOperator parse_multiplicative_operator()
 	return opmul;
 }
 
-Type parse_term()
+Type Compiler::parse_term()
 {
 	MultiplicativeOperator mulop;
 	const Type             first_type = parse_factor();
@@ -204,7 +213,7 @@ Type parse_term()
 	return first_type;
 }
 
-AdditiveOperator parse_additive_operator()
+AdditiveOperator Compiler::parse_additive_operator()
 {
 	AdditiveOperator opadd;
 	if (strcmp(lexer->YYText(), "+") == 0)
@@ -219,7 +228,7 @@ AdditiveOperator parse_additive_operator()
 	return opadd;
 }
 
-Type parse_simple_expression()
+Type Compiler::parse_simple_expression()
 {
 	AdditiveOperator adop;
 	const Type       first_type = parse_term();
@@ -255,7 +264,7 @@ Type parse_simple_expression()
 	return first_type;
 }
 
-void parse_declaration_block()
+void Compiler::parse_declaration_block()
 {
 	if (!match_keyword("VAR"))
 	{
@@ -298,7 +307,7 @@ void parse_declaration_block()
 	read_token();
 }
 
-Type parse_type()
+Type Compiler::parse_type()
 {
 	if (current != TYPE)
 	{
@@ -320,7 +329,7 @@ Type parse_type()
 	error("unrecognized type; this is a compiler bug");
 }
 
-RelationalOperator parse_relational_operator()
+RelationalOperator Compiler::parse_relational_operator()
 {
 	RelationalOperator oprel = RelationalOperator::WTFR;
 	if (strcmp(lexer->YYText(), "==") == 0)
@@ -340,7 +349,7 @@ RelationalOperator parse_relational_operator()
 	return oprel;
 }
 
-Type parse_expression()
+Type Compiler::parse_expression()
 {
 	RelationalOperator oprel;
 	const Type         first_type = parse_simple_expression();
@@ -376,7 +385,7 @@ Type parse_expression()
 	return first_type;
 }
 
-VariableAssignment parse_assignment_statement()
+VariableAssignment Compiler::parse_assignment_statement()
 {
 	if (current != ID)
 		error("expected an identifier");
@@ -403,7 +412,7 @@ VariableAssignment parse_assignment_statement()
 	return {name, type};
 }
 
-void parse_if_statement()
+void Compiler::parse_if_statement()
 {
 	read_token();
 	check_type(parse_expression(), Type::BOOLEAN);
@@ -438,7 +447,7 @@ void parse_if_statement()
 	cout << "Suite" << tag << ":\n";
 }
 
-void parse_while_statement()
+void Compiler::parse_while_statement()
 {
 	const auto tag = ++TagNumber;
 
@@ -464,7 +473,7 @@ void parse_while_statement()
 	cout << "Suite" << tag << ":\n";
 }
 
-void parse_for_statement()
+void Compiler::parse_for_statement()
 {
 	const auto tag = ++TagNumber;
 
@@ -500,7 +509,7 @@ void parse_for_statement()
 	cout << "Suite" << tag << ":\n";
 }
 
-void parse_block_statement()
+void Compiler::parse_block_statement()
 {
 	do
 	{
@@ -516,7 +525,7 @@ void parse_block_statement()
 	read_token();
 }
 
-void parse_display_statement()
+void Compiler::parse_display_statement()
 {
 	read_token();
 	const Type type = parse_expression();
@@ -540,7 +549,7 @@ void parse_display_statement()
 	cout << "\tcall printf\n";
 }
 
-void parse_statement()
+void Compiler::parse_statement()
 {
 	if (strcmp(lexer->YYText(), "IF") == 0)
 	{
@@ -568,7 +577,7 @@ void parse_statement()
 	}
 }
 
-void parse_statement_part()
+void Compiler::parse_statement_part()
 {
 	emit_main_preamble();
 
@@ -583,7 +592,7 @@ void parse_statement_part()
 	read_token();
 }
 
-void parse_program()
+void Compiler::parse_program()
 {
 	cout << "\t.data\n";
 	cout << "\t.align 8\n";
@@ -606,17 +615,6 @@ int main()
 {
 	// Read the source from stdin, output the assembly to stdout
 
-	cout << "# This code was produced by the CERI Compiler\n";
-
-	// Let's proceed to the analysis and code production
-	read_token();
-	parse_program();
-	// Trailer for the gcc assembler / linker
-	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top\n";
-	cout << "\tret\t\t\t# Return from main function\n";
-	if (current != FEOF)
-	{
-		// FIXME: this is not printing the right stuff
-		error((string("extraneous characters at end of file: [") + std::to_string(current) + "]").c_str());
-	}
+	Compiler compiler;
+	compiler();
 }
