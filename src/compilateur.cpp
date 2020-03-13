@@ -366,24 +366,29 @@ Type Expression()
 
 VariableAssignment AssignementStatement()
 {
-	string variable;
 	if (current != ID)
 		Error("expected an identifier");
-	if (!IsDeclared(lexer->YYText()))
+
+	const std::string name = lexer->YYText();
+	const auto it = DeclaredVariables.find(name);
+
+	if (it == DeclaredVariables.end())
 	{
-		Error((std::string("variable '") + lexer->YYText() + "' not found").c_str());
+		Error((std::string("variable '") + name + "' not found").c_str());
 	}
-	variable = lexer->YYText();
+
+	const Variable& variable = it->second;
+
 	read_token();
 	if (current != ASSIGN)
 		Error("expected ':=' in variable assignment");
 	read_token();
 	Type type = Expression();
-	cout << "\tpop " << variable << '\n';
+	cout << "\tpop " << name << '\n';
 
-	TypeCheck(type, Type::UNSIGNED_INT);
+	TypeCheck(type, variable.type);
 
-	return {variable, type};
+	return {name, type};
 }
 
 void IfStatement()
