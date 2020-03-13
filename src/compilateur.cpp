@@ -89,10 +89,20 @@ bool match_keyword(const char* keyword) { return (current == KEYWORD && std::str
 
 Type Identifier()
 {
+	const std::string name = lexer->YYText();
+
+	const auto it = DeclaredVariables.find(name);
+	if (it == DeclaredVariables.end())
+	{
+		Error((std::string("use of undeclared identifier '") + name + '\'').c_str());
+	}
+
+	const Variable& variable = it->second;
+
 	cout << "\tpush " << lexer->YYText() << '\n';
 	read_token();
 
-	return Type::UNSIGNED_INT;
+	return variable.type;
 }
 
 Type Number()
