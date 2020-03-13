@@ -144,15 +144,15 @@ MultiplicativeOperator parse_multiplicative_operator()
 {
 	MultiplicativeOperator opmul;
 	if (strcmp(lexer->YYText(), "*") == 0)
-		opmul = MUL;
+		opmul = MultiplicativeOperator::MUL;
 	else if (strcmp(lexer->YYText(), "/") == 0)
-		opmul = DIV;
+		opmul = MultiplicativeOperator::DIV;
 	else if (strcmp(lexer->YYText(), "%") == 0)
-		opmul = MOD;
+		opmul = MultiplicativeOperator::MOD;
 	else if (strcmp(lexer->YYText(), "&&") == 0)
-		opmul = AND;
+		opmul = MultiplicativeOperator::AND;
 	else
-		opmul = WTFM;
+		opmul = MultiplicativeOperator::WTFM;
 	read_token();
 	return opmul;
 }
@@ -172,29 +172,29 @@ Type parse_term()
 		cout << "\tpop %rax\n"; // get second operand
 		switch (mulop)
 		{
-		case AND:
+		case MultiplicativeOperator::AND:
 			check_type(first_type, Type::BOOLEAN);
 			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
 			cout << "\tpush %rax\t# AND\n"; // store result
 			break;
-		case MUL:
+		case MultiplicativeOperator::MUL:
 			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
 			cout << "\tpush %rax\t# MUL\n"; // store result
 			break;
-		case DIV:
+		case MultiplicativeOperator::DIV:
 			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
 			cout << "\tdiv %rbx\n";         // quotient goes to %rax
 			cout << "\tpush %rax\t# DIV\n"; // store result
 			break;
-		case MOD:
+		case MultiplicativeOperator::MOD:
 			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
 			cout << "\tdiv %rbx\n";         // remainder goes to %rdx
 			cout << "\tpush %rdx\t# MOD\n"; // store result
 			break;
-		case WTFM:
+		case MultiplicativeOperator::WTFM:
 		default: error("unknown multiplicative operator");
 		}
 	}
@@ -206,13 +206,13 @@ AdditiveOperator parse_additive_operator()
 {
 	AdditiveOperator opadd;
 	if (strcmp(lexer->YYText(), "+") == 0)
-		opadd = ADD;
+		opadd = AdditiveOperator::ADD;
 	else if (strcmp(lexer->YYText(), "-") == 0)
-		opadd = SUB;
+		opadd = AdditiveOperator::SUB;
 	else if (strcmp(lexer->YYText(), "||") == 0)
-		opadd = OR;
+		opadd = AdditiveOperator::OR;
 	else
-		opadd = WTFA;
+		opadd = AdditiveOperator::WTFA;
 	read_token();
 	return opadd;
 }
@@ -232,19 +232,19 @@ Type parse_simple_expression()
 		cout << "\tpop %rax\n"; // get second operand
 		switch (adop)
 		{
-		case OR:
+		case AdditiveOperator::OR:
 			check_type(first_type, Type::BOOLEAN);
 			cout << "\taddq	%rbx, %rax\t# OR\n"; // operand1 OR operand2
 			break;
-		case ADD:
+		case AdditiveOperator::ADD:
 			check_type(first_type, Type::ARITHMETIC);
 			cout << "\taddq	%rbx, %rax\t# ADD\n"; // add both operands
 			break;
-		case SUB:
+		case AdditiveOperator::SUB:
 			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tsubq	%rbx, %rax\t# SUB\n"; // substract both operands
 			break;
-		case WTFA:
+		case AdditiveOperator::WTFA:
 		default: error("unknown additive operator");
 		}
 		cout << "\tpush %rax\n"; // store result

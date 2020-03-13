@@ -34,7 +34,7 @@ enum class RelationalOperator
 	WTFR
 };
 
-enum AdditiveOperator
+enum class AdditiveOperator
 {
 	ADD,
 	SUB,
@@ -42,7 +42,7 @@ enum AdditiveOperator
 	WTFA
 };
 
-enum MultiplicativeOperator
+enum class MultiplicativeOperator
 {
 	MUL,
 	DIV,
