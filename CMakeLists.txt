@@ -9,6 +9,7 @@ add_executable(${PROJECT_NAME}
 	"src/codegen.cpp"
 	"src/compiler.cpp"
 	"src/types.cpp"
+	"src/operators.cpp"
 	"src/main.cpp"
 	"tokeniser.cpp"
 )

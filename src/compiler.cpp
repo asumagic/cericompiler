@@ -155,19 +155,9 @@ Type Compiler::parse_factor()
 
 MultiplicativeOperator Compiler::parse_multiplicative_operator()
 {
-	MultiplicativeOperator opmul;
-	if (strcmp(lexer.YYText(), "*") == 0)
-		opmul = MultiplicativeOperator::MUL;
-	else if (strcmp(lexer.YYText(), "/") == 0)
-		opmul = MultiplicativeOperator::DIV;
-	else if (strcmp(lexer.YYText(), "%") == 0)
-		opmul = MultiplicativeOperator::MOD;
-	else if (strcmp(lexer.YYText(), "&&") == 0)
-		opmul = MultiplicativeOperator::AND;
-	else
-		opmul = MultiplicativeOperator::WTFM;
+	const auto it = multiplicative_operator_names.find(lexer.YYText());
 	read_token();
-	return opmul;
+	return it != multiplicative_operator_names.end() ? it->second : MultiplicativeOperator::WTFM;
 }
 
 Type Compiler::parse_term()
@@ -217,17 +207,9 @@ Type Compiler::parse_term()
 
 AdditiveOperator Compiler::parse_additive_operator()
 {
-	AdditiveOperator opadd;
-	if (strcmp(lexer.YYText(), "+") == 0)
-		opadd = AdditiveOperator::ADD;
-	else if (strcmp(lexer.YYText(), "-") == 0)
-		opadd = AdditiveOperator::SUB;
-	else if (strcmp(lexer.YYText(), "||") == 0)
-		opadd = AdditiveOperator::OR;
-	else
-		opadd = AdditiveOperator::WTFA;
+	const auto it = additive_operator_names.find(lexer.YYText());
 	read_token();
-	return opadd;
+	return it != additive_operator_names.end() ? it->second : AdditiveOperator::WTFA;
 }
 
 Type Compiler::parse_simple_expression()
@@ -333,22 +315,9 @@ Type Compiler::parse_type()
 
 RelationalOperator Compiler::parse_relational_operator()
 {
-	RelationalOperator oprel = RelationalOperator::WTFR;
-	if (strcmp(lexer.YYText(), "==") == 0)
-		oprel = RelationalOperator::EQU;
-	else if (strcmp(lexer.YYText(), "!=") == 0)
-		oprel = RelationalOperator::DIFF;
-	else if (strcmp(lexer.YYText(), "<") == 0)
-		oprel = RelationalOperator::INF;
-	else if (strcmp(lexer.YYText(), ">") == 0)
-		oprel = RelationalOperator::SUP;
-	else if (strcmp(lexer.YYText(), "<=") == 0)
-		oprel = RelationalOperator::INFE;
-	else if (strcmp(lexer.YYText(), ">=") == 0)
-		oprel = RelationalOperator::SUPE;
-
+	const auto it = relational_operator_names.find(lexer.YYText());
 	read_token();
-	return oprel;
+	return it != relational_operator_names.end() ? it->second : RelationalOperator::WTFR;
 }
 
 Type Compiler::parse_expression()
