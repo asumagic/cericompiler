@@ -389,7 +389,7 @@ void WhileStatement()
 	TypeCheck(type, Type::BOOLEAN);
 
 	cout << "\tpop %rax\n";
-	cout << "\ttest $0, %rax\n";
+	cout << "\ttest %rax, %rax\n";
 	cout << "\tjz Suite" << tag << '\n';
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "DO"))
