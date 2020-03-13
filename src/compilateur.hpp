@@ -98,7 +98,7 @@ class Compiler
 	// Program := [DeclarationPart] StatementPart
 	void parse_program();
 
-	bool is_declared(const char* id);
+	bool is_declared(const char* id) const;
 
 	void              print_error_preamble() const;
 	[[noreturn]] void error(const char* s) const;
