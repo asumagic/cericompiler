@@ -115,6 +115,8 @@ Type parse_number()
 
 Type parse_factor()
 {
+	// TODO: implement boolean negation '!'
+
 	if (current == RPARENT)
 	{
 		read_token();

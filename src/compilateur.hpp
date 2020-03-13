@@ -6,24 +6,6 @@
 
 #include <string>
 
-// Program := [DeclarationPart] StatementPart
-// DeclarationPart := "[" Letter {"," Letter} "]"
-// StatementPart := Statement {";" Statement} "."
-// Statement := AssignementStatement
-// AssignementStatement := Letter "=" Expression
-
-// Expression := SimpleExpression [RelationalOperator SimpleExpression]
-// SimpleExpression := Term {AdditiveOperator Term}
-// Term := Factor {MultiplicativeOperator Factor}
-// Factor := Number | Letter | "(" Expression ")"| "!" Factor
-// Number := Digit{Digit}
-
-// AdditiveOperator := "+" | "-" | "||"
-// MultiplicativeOperator := "*" | "/" | "%" | "&&"
-// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
-// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
-// Letter := "a"|...|"z"
-
 struct VariableType
 {
 	Type type;
@@ -46,8 +28,14 @@ TOKEN read_token();
 
 [[nodiscard]] bool match_keyword(const char* keyword);
 
+// Letter := "a"|...|"z"
 [[nodiscard]] Type parse_identifier();
+
+// Number := Digit{Digit}
+// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
 [[nodiscard]] Type parse_number();
+
+// Factor := Number | Letter | "(" Expression ")"| "!" Factor
 [[nodiscard]] Type parse_factor();
 
 // MultiplicativeOperator := "*" | "/" | "%" | "&&"
