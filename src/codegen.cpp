@@ -9,7 +9,4 @@ constexpr const char* main_preamble = R"(# The following lines contain the progr
 
 )"; // two line breaks
 
-void emit_main_preamble()
-{
-    std::cout << main_preamble;
-}
+void emit_main_preamble() { std::cout << main_preamble; }

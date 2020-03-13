@@ -43,7 +43,7 @@ FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
 // and lexer->YYText() returns the lexicon entry as a string
 
 std::unordered_map<std::string, VariableType> DeclaredVariables;
-unsigned long                             TagNumber = 0;
+unsigned long                                 TagNumber = 0;
 
 bool is_declared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
 
@@ -161,8 +161,8 @@ MultiplicativeOperator parse_multiplicative_operator()
 
 Type parse_term()
 {
-	MultiplicativeOperator      mulop;
-	const Type first_type = parse_factor();
+	MultiplicativeOperator mulop;
+	const Type             first_type = parse_factor();
 	while (current == MULOP)
 	{
 		mulop               = parse_multiplicative_operator(); // Save operator in local variable
@@ -221,8 +221,8 @@ AdditiveOperator parse_additive_operator()
 
 Type parse_simple_expression()
 {
-	AdditiveOperator      adop;
-	const Type first_type = parse_term();
+	AdditiveOperator adop;
+	const Type       first_type = parse_term();
 	while (current == ADDOP)
 	{
 		adop                = parse_additive_operator(); // Save operator in local variable
@@ -342,8 +342,8 @@ RelationalOperator parse_relational_operator()
 
 Type parse_expression()
 {
-	RelationalOperator      oprel;
-	const Type first_type = parse_simple_expression();
+	RelationalOperator oprel;
+	const Type         first_type = parse_simple_expression();
 	if (current == RELOP)
 	{
 		oprel               = parse_relational_operator();
@@ -382,7 +382,7 @@ VariableAssignment parse_assignment_statement()
 		error("expected an identifier");
 
 	const std::string name = lexer->YYText();
-	const auto it = DeclaredVariables.find(name);
+	const auto        it   = DeclaredVariables.find(name);
 
 	if (it == DeclaredVariables.end())
 	{
@@ -593,7 +593,7 @@ void parse_program()
 
 	for (const auto& it : DeclaredVariables)
 	{
-		const auto& name = it.first;
+		const auto&         name     = it.first;
 		const VariableType& variable = it.second;
 
 		cout << name << ":\t.quad 0 # type: " << type_name(variable.type) << '\n';
