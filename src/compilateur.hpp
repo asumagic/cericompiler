@@ -30,8 +30,8 @@ class Compiler
 
 	yyFlexLexer lexer;
 
-	std::unordered_map<std::string, VariableType> DeclaredVariables;
-	unsigned long                                 TagNumber = 0;
+	std::unordered_map<std::string, VariableType> variables;
+	unsigned long                                 label_tag = 0;
 
 	// Letter := "a"|...|"z"
 	[[nodiscard]] Type parse_identifier();

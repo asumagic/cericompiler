@@ -33,7 +33,7 @@ using std::string;
 
 using namespace std::string_literals;
 
-bool Compiler::is_declared(const char* id) const { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
+bool Compiler::is_declared(const char* id) const { return variables.find(id) != variables.end(); }
 
 void Compiler::print_error_preamble() const { cerr << "source:" << lexer.lineno() << ": "; }
 
@@ -100,8 +100,8 @@ Type Compiler::parse_identifier()
 {
 	const std::string name = lexer.YYText();
 
-	const auto it = DeclaredVariables.find(name);
-	if (it == DeclaredVariables.end())
+	const auto it = variables.find(name);
+	if (it == variables.end())
 	{
 		error((std::string("use of undeclared identifier '") + name + '\'').c_str());
 	}
@@ -293,7 +293,7 @@ void Compiler::parse_declaration_block()
 
 		for (auto& name : current_declarations)
 		{
-			DeclaredVariables.emplace(std::move(name), VariableType{type});
+			variables.emplace(std::move(name), VariableType{type});
 		}
 
 		read_token();
@@ -365,19 +365,19 @@ Type Compiler::parse_expression()
 		cout << "\tcmpq %rax, %rbx\n";
 		switch (oprel)
 		{
-		case RelationalOperator::EQU: cout << "\tje Vrai" << ++TagNumber << "\t# If equal\n"; break;
-		case RelationalOperator::DIFF: cout << "\tjne Vrai" << ++TagNumber << "\t# If different\n"; break;
-		case RelationalOperator::SUPE: cout << "\tjae Vrai" << ++TagNumber << "\t# If above or equal\n"; break;
-		case RelationalOperator::INFE: cout << "\tjbe Vrai" << ++TagNumber << "\t# If below or equal\n"; break;
-		case RelationalOperator::INF: cout << "\tjb Vrai" << ++TagNumber << "\t# If below\n"; break;
-		case RelationalOperator::SUP: cout << "\tja Vrai" << ++TagNumber << "\t# If above\n"; break;
+		case RelationalOperator::EQU: cout << "\tje Vrai" << ++label_tag << "\t# If equal\n"; break;
+		case RelationalOperator::DIFF: cout << "\tjne Vrai" << ++label_tag << "\t# If different\n"; break;
+		case RelationalOperator::SUPE: cout << "\tjae Vrai" << ++label_tag << "\t# If above or equal\n"; break;
+		case RelationalOperator::INFE: cout << "\tjbe Vrai" << ++label_tag << "\t# If below or equal\n"; break;
+		case RelationalOperator::INF: cout << "\tjb Vrai" << ++label_tag << "\t# If below\n"; break;
+		case RelationalOperator::SUP: cout << "\tja Vrai" << ++label_tag << "\t# If above\n"; break;
 		case RelationalOperator::WTFR:
 		default: error("unknown comparison operator");
 		}
 		cout << "\tpush $0\t\t# False\n";
-		cout << "\tjmp Suite" << TagNumber << '\n';
-		cout << "Vrai" << TagNumber << ":\tpush $0xFFFFFFFFFFFFFFFF\t\t# True\n";
-		cout << "Suite" << TagNumber << ":\n";
+		cout << "\tjmp Suite" << label_tag << '\n';
+		cout << "Vrai" << label_tag << ":\tpush $0xFFFFFFFFFFFFFFFF\t\t# True\n";
+		cout << "Suite" << label_tag << ":\n";
 
 		return Type::BOOLEAN;
 	}
@@ -391,9 +391,9 @@ VariableAssignment Compiler::parse_assignment_statement()
 		error("expected an identifier");
 
 	const std::string name = lexer.YYText();
-	const auto        it   = DeclaredVariables.find(name);
+	const auto        it   = variables.find(name);
 
-	if (it == DeclaredVariables.end())
+	if (it == variables.end())
 	{
 		error((std::string("variable '") + name + "' not found").c_str());
 	}
@@ -417,7 +417,7 @@ void Compiler::parse_if_statement()
 	read_token();
 	check_type(parse_expression(), Type::BOOLEAN);
 
-	const auto tag = ++TagNumber;
+	const auto tag = ++label_tag;
 
 	cout << "\tpopq %rax\n";
 	cout << "\ttest %rax, %rax\n";
@@ -449,7 +449,7 @@ void Compiler::parse_if_statement()
 
 void Compiler::parse_while_statement()
 {
-	const auto tag = ++TagNumber;
+	const auto tag = ++label_tag;
 
 	cout << "WhileBegin" << tag << ":\n";
 
@@ -475,7 +475,7 @@ void Compiler::parse_while_statement()
 
 void Compiler::parse_for_statement()
 {
-	const auto tag = ++TagNumber;
+	const auto tag = ++label_tag;
 
 	read_token();
 	const auto assignment = parse_assignment_statement();
@@ -600,7 +600,7 @@ void Compiler::parse_program()
 
 	parse_declaration_block();
 
-	for (const auto& it : DeclaredVariables)
+	for (const auto& it : variables)
 	{
 		const auto&         name     = it.first;
 		const VariableType& variable = it.second;
