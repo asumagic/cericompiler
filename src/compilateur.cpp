@@ -35,7 +35,7 @@ using namespace std::string_literals;
 
 bool Compiler::is_declared(const char* id) const { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
 
-void Compiler::print_error_preamble() const { cerr << "source:" << lexer->lineno() << ": "; }
+void Compiler::print_error_preamble() const { cerr << "source:" << lexer.lineno() << ": "; }
 
 void Compiler::error(const char* s) const
 {
@@ -43,7 +43,7 @@ void Compiler::error(const char* s) const
 	cerr << "error: " << s << '\n';
 
 	print_error_preamble();
-	cerr << "note: when reading token '" << lexer->YYText() << "'\n";
+	cerr << "note: when reading token '" << lexer.YYText() << "'\n";
 	exit(-1);
 }
 
@@ -71,11 +71,11 @@ void Compiler::check_type(Type a, Type b) const
 	}
 }
 
-TOKEN Compiler::read_token() { return (current = TOKEN(lexer->yylex())); }
+TOKEN Compiler::read_token() { return (current = TOKEN(lexer.yylex())); }
 
 bool Compiler::match_keyword(const char* keyword) const
 {
-	return (current == KEYWORD && std::strcmp(lexer->YYText(), keyword) == 0);
+	return (current == KEYWORD && std::strcmp(lexer.YYText(), keyword) == 0);
 }
 
 void Compiler::operator()()
@@ -98,7 +98,7 @@ void Compiler::operator()()
 
 Type Compiler::parse_identifier()
 {
-	const std::string name = lexer->YYText();
+	const std::string name = lexer.YYText();
 
 	const auto it = DeclaredVariables.find(name);
 	if (it == DeclaredVariables.end())
@@ -108,7 +108,7 @@ Type Compiler::parse_identifier()
 
 	const VariableType& variable = it->second;
 
-	cout << "\tpush " << lexer->YYText() << '\n';
+	cout << "\tpush " << lexer.YYText() << '\n';
 	read_token();
 
 	return variable.type;
@@ -116,7 +116,7 @@ Type Compiler::parse_identifier()
 
 Type Compiler::parse_number()
 {
-	cout << "\tpush $" << atoi(lexer->YYText()) << '\n';
+	cout << "\tpush $" << atoi(lexer.YYText()) << '\n';
 	read_token();
 
 	return Type::UNSIGNED_INT;
@@ -154,13 +154,13 @@ Type Compiler::parse_factor()
 MultiplicativeOperator Compiler::parse_multiplicative_operator()
 {
 	MultiplicativeOperator opmul;
-	if (strcmp(lexer->YYText(), "*") == 0)
+	if (strcmp(lexer.YYText(), "*") == 0)
 		opmul = MultiplicativeOperator::MUL;
-	else if (strcmp(lexer->YYText(), "/") == 0)
+	else if (strcmp(lexer.YYText(), "/") == 0)
 		opmul = MultiplicativeOperator::DIV;
-	else if (strcmp(lexer->YYText(), "%") == 0)
+	else if (strcmp(lexer.YYText(), "%") == 0)
 		opmul = MultiplicativeOperator::MOD;
-	else if (strcmp(lexer->YYText(), "&&") == 0)
+	else if (strcmp(lexer.YYText(), "&&") == 0)
 		opmul = MultiplicativeOperator::AND;
 	else
 		opmul = MultiplicativeOperator::WTFM;
@@ -216,11 +216,11 @@ Type Compiler::parse_term()
 AdditiveOperator Compiler::parse_additive_operator()
 {
 	AdditiveOperator opadd;
-	if (strcmp(lexer->YYText(), "+") == 0)
+	if (strcmp(lexer.YYText(), "+") == 0)
 		opadd = AdditiveOperator::ADD;
-	else if (strcmp(lexer->YYText(), "-") == 0)
+	else if (strcmp(lexer.YYText(), "-") == 0)
 		opadd = AdditiveOperator::SUB;
-	else if (strcmp(lexer->YYText(), "||") == 0)
+	else if (strcmp(lexer.YYText(), "||") == 0)
 		opadd = AdditiveOperator::OR;
 	else
 		opadd = AdditiveOperator::WTFA;
@@ -278,7 +278,7 @@ void Compiler::parse_declaration_block()
 		do
 		{
 			read_token();
-			current_declarations.push_back(lexer->YYText());
+			current_declarations.push_back(lexer.YYText());
 			read_token();
 		} while (current == COMMA);
 
@@ -314,7 +314,7 @@ Type Compiler::parse_type()
 		error("expected type");
 	}
 
-	const char* name = lexer->YYText();
+	const char* name = lexer.YYText();
 
 	if (std::strcmp(name, "INTEGER") == 0)
 	{
@@ -332,17 +332,17 @@ Type Compiler::parse_type()
 RelationalOperator Compiler::parse_relational_operator()
 {
 	RelationalOperator oprel = RelationalOperator::WTFR;
-	if (strcmp(lexer->YYText(), "==") == 0)
+	if (strcmp(lexer.YYText(), "==") == 0)
 		oprel = RelationalOperator::EQU;
-	else if (strcmp(lexer->YYText(), "!=") == 0)
+	else if (strcmp(lexer.YYText(), "!=") == 0)
 		oprel = RelationalOperator::DIFF;
-	else if (strcmp(lexer->YYText(), "<") == 0)
+	else if (strcmp(lexer.YYText(), "<") == 0)
 		oprel = RelationalOperator::INF;
-	else if (strcmp(lexer->YYText(), ">") == 0)
+	else if (strcmp(lexer.YYText(), ">") == 0)
 		oprel = RelationalOperator::SUP;
-	else if (strcmp(lexer->YYText(), "<=") == 0)
+	else if (strcmp(lexer.YYText(), "<=") == 0)
 		oprel = RelationalOperator::INFE;
-	else if (strcmp(lexer->YYText(), ">=") == 0)
+	else if (strcmp(lexer.YYText(), ">=") == 0)
 		oprel = RelationalOperator::SUPE;
 
 	read_token();
@@ -390,7 +390,7 @@ VariableAssignment Compiler::parse_assignment_statement()
 	if (current != ID)
 		error("expected an identifier");
 
-	const std::string name = lexer->YYText();
+	const std::string name = lexer.YYText();
 	const auto        it   = DeclaredVariables.find(name);
 
 	if (it == DeclaredVariables.end())
@@ -424,7 +424,7 @@ void Compiler::parse_if_statement()
 	cout << "\tjz IfFalse" << tag << '\n';
 	cout << "IfTrue" << tag << ":\n";
 
-	if (current != KEYWORD || strcmp(lexer->YYText(), "THEN"))
+	if (current != KEYWORD || strcmp(lexer.YYText(), "THEN"))
 	{
 		error("expected 'THEN' after conditional expression of 'IF' statement");
 	}
@@ -432,7 +432,7 @@ void Compiler::parse_if_statement()
 	read_token();
 	parse_statement();
 
-	if (current == KEYWORD && strcmp(lexer->YYText(), "ELSE") == 0)
+	if (current == KEYWORD && strcmp(lexer.YYText(), "ELSE") == 0)
 	{
 		cout << "\tjmp Suite" << tag << '\n';
 		cout << "IfFalse" << tag << ":\n";
@@ -461,7 +461,7 @@ void Compiler::parse_while_statement()
 	cout << "\ttest %rax, %rax\n";
 	cout << "\tjz Suite" << tag << '\n';
 
-	if (current != KEYWORD || strcmp(lexer->YYText(), "DO"))
+	if (current != KEYWORD || strcmp(lexer.YYText(), "DO"))
 	{
 		error("expected 'DO' after conditional expression of 'WHILE' statement");
 	}
@@ -481,7 +481,7 @@ void Compiler::parse_for_statement()
 	const auto assignment = parse_assignment_statement();
 	check_type(assignment.type.type, Type::UNSIGNED_INT);
 
-	if (current != KEYWORD || strcmp(lexer->YYText(), "TO") != 0)
+	if (current != KEYWORD || strcmp(lexer.YYText(), "TO") != 0)
 	{
 		error("expected 'TO' after assignement in 'FOR' statement");
 	}
@@ -496,7 +496,7 @@ void Compiler::parse_for_statement()
 	cout << "\tcmpq " << assignment.name << ", %rax\n";
 	cout << "\tjl Suite" << tag << '\n';
 
-	if (current != KEYWORD || strcmp(lexer->YYText(), "DO") != 0)
+	if (current != KEYWORD || strcmp(lexer.YYText(), "DO") != 0)
 	{
 		error("expected 'DO' after max expression in 'FOR' statement");
 	}
@@ -517,7 +517,7 @@ void Compiler::parse_block_statement()
 		parse_statement();
 	} while (current == SEMICOLON);
 
-	if (current != KEYWORD || strcmp(lexer->YYText(), "END") != 0)
+	if (current != KEYWORD || strcmp(lexer.YYText(), "END") != 0)
 	{
 		error("expected 'END' to finish block statement");
 	}
@@ -551,23 +551,23 @@ void Compiler::parse_display_statement()
 
 void Compiler::parse_statement()
 {
-	if (strcmp(lexer->YYText(), "IF") == 0)
+	if (strcmp(lexer.YYText(), "IF") == 0)
 	{
 		parse_if_statement();
 	}
-	else if (strcmp(lexer->YYText(), "WHILE") == 0)
+	else if (strcmp(lexer.YYText(), "WHILE") == 0)
 	{
 		parse_while_statement();
 	}
-	else if (strcmp(lexer->YYText(), "FOR") == 0)
+	else if (strcmp(lexer.YYText(), "FOR") == 0)
 	{
 		parse_for_statement();
 	}
-	else if (strcmp(lexer->YYText(), "BEGIN") == 0)
+	else if (strcmp(lexer.YYText(), "BEGIN") == 0)
 	{
 		parse_block_statement();
 	}
-	else if (strcmp(lexer->YYText(), "DISPLAY") == 0)
+	else if (strcmp(lexer.YYText(), "DISPLAY") == 0)
 	{
 		parse_display_statement();
 	}
