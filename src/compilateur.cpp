@@ -42,7 +42,7 @@ FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
 // lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
 // and lexer->YYText() returns the lexicon entry as a string
 
-std::unordered_map<std::string, Variable> DeclaredVariables;
+std::unordered_map<std::string, VariableType> DeclaredVariables;
 unsigned long                             TagNumber = 0;
 
 bool IsDeclared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
@@ -97,7 +97,7 @@ Type Identifier()
 		Error((std::string("use of undeclared identifier '") + name + '\'').c_str());
 	}
 
-	const Variable& variable = it->second;
+	const VariableType& variable = it->second;
 
 	cout << "\tpush " << lexer->YYText() << '\n';
 	read_token();
@@ -282,7 +282,7 @@ void parse_declaration_block()
 
 		for (auto& name : current_declarations)
 		{
-			DeclaredVariables.emplace(std::move(name), Variable{type});
+			DeclaredVariables.emplace(std::move(name), VariableType{type});
 		}
 
 		read_token();
@@ -387,7 +387,7 @@ VariableAssignment AssignementStatement()
 		Error((std::string("variable '") + name + "' not found").c_str());
 	}
 
-	const Variable& variable = it->second;
+	const VariableType& variable = it->second;
 
 	read_token();
 	if (current != ASSIGN)
@@ -468,7 +468,7 @@ void ForStatement()
 
 	read_token();
 	const auto assignment = AssignementStatement();
-	TypeCheck(assignment.type, Type::UNSIGNED_INT);
+	TypeCheck(assignment.type.type, Type::UNSIGNED_INT);
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "TO") != 0)
 	{
@@ -482,7 +482,7 @@ void ForStatement()
 
 	cout << "\tpop %rax\n";
 	// we branch *out* if var < %rax, mind the op order in at&t
-	cout << "\tcmpq " << assignment.variable << ", %rax\n";
+	cout << "\tcmpq " << assignment.name << ", %rax\n";
 	cout << "\tjl Suite" << tag << '\n';
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "DO") != 0)
@@ -493,7 +493,7 @@ void ForStatement()
 	read_token();
 	Statement();
 
-	cout << "\taddq $1, " << assignment.variable << '\n';
+	cout << "\taddq $1, " << assignment.name << '\n';
 	cout << "\tjmp ForBegin" << tag << '\n';
 	cout << "Suite" << tag << ":\n";
 }
@@ -592,7 +592,7 @@ void Program()
 	for (const auto& it : DeclaredVariables)
 	{
 		const auto& name = it.first;
-		const Variable& variable = it.second;
+		const VariableType& variable = it.second;
 
 		cout << name << ":\t.quad 0 # type: " << type_name(variable.type) << '\n';
 	}

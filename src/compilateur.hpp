@@ -51,15 +51,15 @@ enum OPMUL
 	WTFM
 };
 
-struct VariableAssignment
-{
-	std::string variable;
-	Type        type;
-};
-
-struct Variable
+struct VariableType
 {
 	Type type;
+};
+
+struct VariableAssignment
+{
+	std::string name;
+	VariableType type;
 };
 
 bool IsDeclared(const char* id);
