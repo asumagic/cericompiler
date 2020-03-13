@@ -63,5 +63,5 @@ expect_output("display-while-test" "1\\n2\\n3\\n4\\n5\\n")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL
-	COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+	COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -j
 	DEPENDS ${UNIT_TEST} ${PROJECT_NAME})
