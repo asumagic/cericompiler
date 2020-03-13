@@ -523,7 +523,7 @@ void parse_display_statement()
 	{
 	case Type::UNSIGNED_INT:
 	{
-		cout << "\tmovq $__cc_format_string, %rdi\n";
+		cout << "\tmovq $__cc_format_string_llu, %rdi\n";
 		break;
 	}
 
@@ -585,7 +585,7 @@ void parse_program()
 {
 	cout << "\t.data\n";
 	cout << "\t.align 8\n";
-	cout << "__cc_format_string: .string \"%llu\\n\"\n";
+	cout << "__cc_format_string_llu: .string \"%llu\\n\"\n";
 
 	parse_declaration_block();
 
