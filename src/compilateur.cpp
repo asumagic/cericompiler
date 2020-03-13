@@ -45,21 +45,21 @@ FlexLexer* lexer = new yyFlexLexer; // This is the flex tokeniser
 std::unordered_map<std::string, VariableType> DeclaredVariables;
 unsigned long                             TagNumber = 0;
 
-bool IsDeclared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
+bool is_declared(const char* id) { return DeclaredVariables.find(id) != DeclaredVariables.end(); }
 
-void PrintErrorPreamble() { cerr << "source:" << lexer->lineno() << ": "; }
+void print_error_preamble() { cerr << "source:" << lexer->lineno() << ": "; }
 
-void Error(const char* s)
+void error(const char* s)
 {
-	PrintErrorPreamble();
+	print_error_preamble();
 	cerr << "error: " << s << '\n';
 
-	PrintErrorPreamble();
+	print_error_preamble();
 	cerr << "note: when reading token '" << lexer->YYText() << "'\n";
 	exit(-1);
 }
 
-void TypeCheck(Type a, Type b)
+void check_type(Type a, Type b)
 {
 	assert(int(a) < int(Type::CONCEPT_BEGIN) && "Only the second operand of TypeCheck may be a type concept");
 
@@ -79,7 +79,7 @@ void TypeCheck(Type a, Type b)
 
 	if (!match)
 	{
-		Error(("incompatible types: "s + type_name(a) + ", " + type_name(b)).c_str());
+		error(("incompatible types: "s + type_name(a) + ", " + type_name(b)).c_str());
 	}
 }
 
@@ -87,14 +87,14 @@ TOKEN read_token() { return (current = TOKEN(lexer->yylex())); }
 
 bool match_keyword(const char* keyword) { return (current == KEYWORD && std::strcmp(lexer->YYText(), keyword) == 0); }
 
-Type Identifier()
+Type parse_identifier()
 {
 	const std::string name = lexer->YYText();
 
 	const auto it = DeclaredVariables.find(name);
 	if (it == DeclaredVariables.end())
 	{
-		Error((std::string("use of undeclared identifier '") + name + '\'').c_str());
+		error((std::string("use of undeclared identifier '") + name + '\'').c_str());
 	}
 
 	const VariableType& variable = it->second;
@@ -105,7 +105,7 @@ Type Identifier()
 	return variable.type;
 }
 
-Type Number()
+Type parse_number()
 {
 	cout << "\tpush $" << atoi(lexer->YYText()) << '\n';
 	read_token();
@@ -113,14 +113,14 @@ Type Number()
 	return Type::UNSIGNED_INT;
 }
 
-Type Factor()
+Type parse_factor()
 {
 	if (current == RPARENT)
 	{
 		read_token();
-		Type type = Expression();
+		Type type = parse_expression();
 		if (current != LPARENT)
-			Error("expected ')'");
+			error("expected ')'");
 		else
 			read_token();
 
@@ -129,20 +129,20 @@ Type Factor()
 
 	if (current == NUMBER)
 	{
-		return Number();
+		return parse_number();
 	}
 
 	if (current == ID)
 	{
-		return Identifier();
+		return parse_identifier();
 	}
 
-	Error("expected '(', number or identifier");
+	error("expected '(', number or identifier");
 }
 
-OPMUL MultiplicativeOperator()
+MultiplicativeOperator parse_multiplicative_operator()
 {
-	OPMUL opmul;
+	MultiplicativeOperator opmul;
 	if (strcmp(lexer->YYText(), "*") == 0)
 		opmul = MUL;
 	else if (strcmp(lexer->YYText(), "/") == 0)
@@ -157,54 +157,54 @@ OPMUL MultiplicativeOperator()
 	return opmul;
 }
 
-Type Term()
+Type parse_term()
 {
-	OPMUL      mulop;
-	const Type first_type = Factor();
+	MultiplicativeOperator      mulop;
+	const Type first_type = parse_factor();
 	while (current == MULOP)
 	{
-		mulop               = MultiplicativeOperator(); // Save operator in local variable
-		const Type nth_type = Factor();
+		mulop               = parse_multiplicative_operator(); // Save operator in local variable
+		const Type nth_type = parse_factor();
 
-		TypeCheck(first_type, nth_type);
+		check_type(first_type, nth_type);
 
 		cout << "\tpop %rbx\n"; // get first operand
 		cout << "\tpop %rax\n"; // get second operand
 		switch (mulop)
 		{
 		case AND:
-			TypeCheck(first_type, Type::BOOLEAN);
+			check_type(first_type, Type::BOOLEAN);
 			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
 			cout << "\tpush %rax\t# AND\n"; // store result
 			break;
 		case MUL:
-			TypeCheck(first_type, Type::ARITHMETIC);
+			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
 			cout << "\tpush %rax\t# MUL\n"; // store result
 			break;
 		case DIV:
-			TypeCheck(first_type, Type::ARITHMETIC);
+			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
 			cout << "\tdiv %rbx\n";         // quotient goes to %rax
 			cout << "\tpush %rax\t# DIV\n"; // store result
 			break;
 		case MOD:
-			TypeCheck(first_type, Type::ARITHMETIC);
+			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
 			cout << "\tdiv %rbx\n";         // remainder goes to %rdx
 			cout << "\tpush %rdx\t# MOD\n"; // store result
 			break;
 		case WTFM:
-		default: Error("unknown multiplicative operator");
+		default: error("unknown multiplicative operator");
 		}
 	}
 
 	return first_type;
 }
 
-OPADD AdditiveOperator()
+AdditiveOperator parse_additive_operator()
 {
-	OPADD opadd;
+	AdditiveOperator opadd;
 	if (strcmp(lexer->YYText(), "+") == 0)
 		opadd = ADD;
 	else if (strcmp(lexer->YYText(), "-") == 0)
@@ -217,35 +217,35 @@ OPADD AdditiveOperator()
 	return opadd;
 }
 
-Type SimpleExpression()
+Type parse_simple_expression()
 {
-	OPADD      adop;
-	const Type first_type = Term();
+	AdditiveOperator      adop;
+	const Type first_type = parse_term();
 	while (current == ADDOP)
 	{
-		adop                = AdditiveOperator(); // Save operator in local variable
-		const Type nth_type = Term();
+		adop                = parse_additive_operator(); // Save operator in local variable
+		const Type nth_type = parse_term();
 
-		TypeCheck(first_type, nth_type);
+		check_type(first_type, nth_type);
 
 		cout << "\tpop %rbx\n"; // get first operand
 		cout << "\tpop %rax\n"; // get second operand
 		switch (adop)
 		{
 		case OR:
-			TypeCheck(first_type, Type::BOOLEAN);
+			check_type(first_type, Type::BOOLEAN);
 			cout << "\taddq	%rbx, %rax\t# OR\n"; // operand1 OR operand2
 			break;
 		case ADD:
-			TypeCheck(first_type, Type::ARITHMETIC);
+			check_type(first_type, Type::ARITHMETIC);
 			cout << "\taddq	%rbx, %rax\t# ADD\n"; // add both operands
 			break;
 		case SUB:
-			TypeCheck(first_type, Type::ARITHMETIC);
+			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tsubq	%rbx, %rax\t# SUB\n"; // substract both operands
 			break;
 		case WTFA:
-		default: Error("unknown additive operator");
+		default: error("unknown additive operator");
 		}
 		cout << "\tpush %rax\n"; // store result
 	}
@@ -273,7 +273,7 @@ void parse_declaration_block()
 
 		if (current != COLON)
 		{
-			Error("expected ':' after variable name list in declaration block");
+			error("expected ':' after variable name list in declaration block");
 		}
 
 		read_token();
@@ -290,7 +290,7 @@ void parse_declaration_block()
 
 	if (current != DOT)
 	{
-		Error("expected '.' at end of declaration block");
+		error("expected '.' at end of declaration block");
 	}
 
 	read_token();
@@ -300,7 +300,7 @@ Type parse_type()
 {
 	if (current != TYPE)
 	{
-		Error("expected type");
+		error("expected type");
 	}
 
 	const char* name = lexer->YYText();
@@ -315,53 +315,53 @@ Type parse_type()
 		return Type::BOOLEAN;
 	}
 
-	Error("unrecognized type; this is a compiler bug");
+	error("unrecognized type; this is a compiler bug");
 }
 
-OPREL RelationalOperator()
+RelationalOperator parse_relational_operator()
 {
-	OPREL oprel = OPREL::WTFR;
+	RelationalOperator oprel = RelationalOperator::WTFR;
 	if (strcmp(lexer->YYText(), "==") == 0)
-		oprel = OPREL::EQU;
+		oprel = RelationalOperator::EQU;
 	else if (strcmp(lexer->YYText(), "!=") == 0)
-		oprel = OPREL::DIFF;
+		oprel = RelationalOperator::DIFF;
 	else if (strcmp(lexer->YYText(), "<") == 0)
-		oprel = OPREL::INF;
+		oprel = RelationalOperator::INF;
 	else if (strcmp(lexer->YYText(), ">") == 0)
-		oprel = OPREL::SUP;
+		oprel = RelationalOperator::SUP;
 	else if (strcmp(lexer->YYText(), "<=") == 0)
-		oprel = OPREL::INFE;
+		oprel = RelationalOperator::INFE;
 	else if (strcmp(lexer->YYText(), ">=") == 0)
-		oprel = OPREL::SUPE;
+		oprel = RelationalOperator::SUPE;
 
 	read_token();
 	return oprel;
 }
 
-Type Expression()
+Type parse_expression()
 {
-	OPREL      oprel;
-	const Type first_type = SimpleExpression();
+	RelationalOperator      oprel;
+	const Type first_type = parse_simple_expression();
 	if (current == RELOP)
 	{
-		oprel               = RelationalOperator();
-		const Type nth_type = SimpleExpression();
+		oprel               = parse_relational_operator();
+		const Type nth_type = parse_simple_expression();
 
-		TypeCheck(first_type, nth_type);
+		check_type(first_type, nth_type);
 
 		cout << "\tpop %rax\n";
 		cout << "\tpop %rbx\n";
 		cout << "\tcmpq %rax, %rbx\n";
 		switch (oprel)
 		{
-		case OPREL::EQU: cout << "\tje Vrai" << ++TagNumber << "\t# If equal\n"; break;
-		case OPREL::DIFF: cout << "\tjne Vrai" << ++TagNumber << "\t# If different\n"; break;
-		case OPREL::SUPE: cout << "\tjae Vrai" << ++TagNumber << "\t# If above or equal\n"; break;
-		case OPREL::INFE: cout << "\tjbe Vrai" << ++TagNumber << "\t# If below or equal\n"; break;
-		case OPREL::INF: cout << "\tjb Vrai" << ++TagNumber << "\t# If below\n"; break;
-		case OPREL::SUP: cout << "\tja Vrai" << ++TagNumber << "\t# If above\n"; break;
-		case OPREL::WTFR:
-		default: Error("unknown comparison operator");
+		case RelationalOperator::EQU: cout << "\tje Vrai" << ++TagNumber << "\t# If equal\n"; break;
+		case RelationalOperator::DIFF: cout << "\tjne Vrai" << ++TagNumber << "\t# If different\n"; break;
+		case RelationalOperator::SUPE: cout << "\tjae Vrai" << ++TagNumber << "\t# If above or equal\n"; break;
+		case RelationalOperator::INFE: cout << "\tjbe Vrai" << ++TagNumber << "\t# If below or equal\n"; break;
+		case RelationalOperator::INF: cout << "\tjb Vrai" << ++TagNumber << "\t# If below\n"; break;
+		case RelationalOperator::SUP: cout << "\tja Vrai" << ++TagNumber << "\t# If above\n"; break;
+		case RelationalOperator::WTFR:
+		default: error("unknown comparison operator");
 		}
 		cout << "\tpush $0\t\t# False\n";
 		cout << "\tjmp Suite" << TagNumber << '\n';
@@ -374,37 +374,37 @@ Type Expression()
 	return first_type;
 }
 
-VariableAssignment AssignementStatement()
+VariableAssignment parse_assignment_statement()
 {
 	if (current != ID)
-		Error("expected an identifier");
+		error("expected an identifier");
 
 	const std::string name = lexer->YYText();
 	const auto it = DeclaredVariables.find(name);
 
 	if (it == DeclaredVariables.end())
 	{
-		Error((std::string("variable '") + name + "' not found").c_str());
+		error((std::string("variable '") + name + "' not found").c_str());
 	}
 
 	const VariableType& variable = it->second;
 
 	read_token();
 	if (current != ASSIGN)
-		Error("expected ':=' in variable assignment");
+		error("expected ':=' in variable assignment");
 	read_token();
-	Type type = Expression();
+	Type type = parse_expression();
 	cout << "\tpop " << name << '\n';
 
-	TypeCheck(type, variable.type);
+	check_type(type, variable.type);
 
 	return {name, type};
 }
 
-void IfStatement()
+void parse_if_statement()
 {
 	read_token();
-	TypeCheck(Expression(), Type::BOOLEAN);
+	check_type(parse_expression(), Type::BOOLEAN);
 
 	const auto tag = ++TagNumber;
 
@@ -415,18 +415,18 @@ void IfStatement()
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "THEN"))
 	{
-		Error("expected 'THEN' after conditional expression of 'IF' statement");
+		error("expected 'THEN' after conditional expression of 'IF' statement");
 	}
 
 	read_token();
-	Statement();
+	parse_statement();
 
 	if (current == KEYWORD && strcmp(lexer->YYText(), "ELSE") == 0)
 	{
 		cout << "\tjmp Suite" << tag << '\n';
 		cout << "IfFalse" << tag << ":\n";
 		read_token();
-		Statement();
+		parse_statement();
 	}
 	else
 	{
@@ -436,15 +436,15 @@ void IfStatement()
 	cout << "Suite" << tag << ":\n";
 }
 
-void WhileStatement()
+void parse_while_statement()
 {
 	const auto tag = ++TagNumber;
 
 	cout << "WhileBegin" << tag << ":\n";
 
 	read_token();
-	const Type type = Expression();
-	TypeCheck(type, Type::BOOLEAN);
+	const Type type = parse_expression();
+	check_type(type, Type::BOOLEAN);
 
 	cout << "\tpop %rax\n";
 	cout << "\ttest %rax, %rax\n";
@@ -452,33 +452,33 @@ void WhileStatement()
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "DO"))
 	{
-		Error("expected 'DO' after conditional expression of 'WHILE' statement");
+		error("expected 'DO' after conditional expression of 'WHILE' statement");
 	}
 
 	read_token();
-	Statement();
+	parse_statement();
 
 	cout << "\tjmp WhileBegin" << tag << '\n';
 	cout << "Suite" << tag << ":\n";
 }
 
-void ForStatement()
+void parse_for_statement()
 {
 	const auto tag = ++TagNumber;
 
 	read_token();
-	const auto assignment = AssignementStatement();
-	TypeCheck(assignment.type.type, Type::UNSIGNED_INT);
+	const auto assignment = parse_assignment_statement();
+	check_type(assignment.type.type, Type::UNSIGNED_INT);
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "TO") != 0)
 	{
-		Error("expected 'TO' after assignement in 'FOR' statement");
+		error("expected 'TO' after assignement in 'FOR' statement");
 	}
 
 	cout << "ForBegin" << tag << ":\n";
 
 	read_token();
-	TypeCheck(Expression(), Type::UNSIGNED_INT);
+	check_type(parse_expression(), Type::UNSIGNED_INT);
 
 	cout << "\tpop %rax\n";
 	// we branch *out* if var < %rax, mind the op order in at&t
@@ -487,37 +487,37 @@ void ForStatement()
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "DO") != 0)
 	{
-		Error("expected 'DO' after max expression in 'FOR' statement");
+		error("expected 'DO' after max expression in 'FOR' statement");
 	}
 
 	read_token();
-	Statement();
+	parse_statement();
 
 	cout << "\taddq $1, " << assignment.name << '\n';
 	cout << "\tjmp ForBegin" << tag << '\n';
 	cout << "Suite" << tag << ":\n";
 }
 
-void BlockStatement()
+void parse_block_statement()
 {
 	do
 	{
 		read_token();
-		Statement();
+		parse_statement();
 	} while (current == SEMICOLON);
 
 	if (current != KEYWORD || strcmp(lexer->YYText(), "END") != 0)
 	{
-		Error("expected 'END' to finish block statement");
+		error("expected 'END' to finish block statement");
 	}
 
 	read_token();
 }
 
-void DisplayStatement()
+void parse_display_statement()
 {
 	read_token();
-	const Type type = Expression();
+	const Type type = parse_expression();
 
 	switch (type)
 	{
@@ -529,7 +529,7 @@ void DisplayStatement()
 
 	default:
 	{
-		Error("unimplemented DISPLAY statement for this type, sorry");
+		error("unimplemented DISPLAY statement for this type, sorry");
 	}
 	}
 
@@ -538,50 +538,50 @@ void DisplayStatement()
 	cout << "\tcall printf\n";
 }
 
-void Statement()
+void parse_statement()
 {
 	if (strcmp(lexer->YYText(), "IF") == 0)
 	{
-		IfStatement();
+		parse_if_statement();
 	}
 	else if (strcmp(lexer->YYText(), "WHILE") == 0)
 	{
-		WhileStatement();
+		parse_while_statement();
 	}
 	else if (strcmp(lexer->YYText(), "FOR") == 0)
 	{
-		ForStatement();
+		parse_for_statement();
 	}
 	else if (strcmp(lexer->YYText(), "BEGIN") == 0)
 	{
-		BlockStatement();
+		parse_block_statement();
 	}
 	else if (strcmp(lexer->YYText(), "DISPLAY") == 0)
 	{
-		DisplayStatement();
+		parse_display_statement();
 	}
 	else
 	{
-		AssignementStatement();
+		parse_assignment_statement();
 	}
 }
 
-void StatementPart()
+void parse_statement_part()
 {
 	emit_main_preamble();
 
-	Statement();
+	parse_statement();
 	while (current == SEMICOLON)
 	{
 		read_token();
-		Statement();
+		parse_statement();
 	}
 	if (current != DOT)
-		Error("expected '.' (did you forget a ';'?)");
+		error("expected '.' (did you forget a ';'?)");
 	read_token();
 }
 
-void Program()
+void parse_program()
 {
 	cout << "\t.data\n";
 	cout << "\t.align 8\n";
@@ -597,7 +597,7 @@ void Program()
 		cout << name << ":\t.quad 0 # type: " << type_name(variable.type) << '\n';
 	}
 
-	StatementPart();
+	parse_statement_part();
 }
 
 int main()
@@ -608,13 +608,13 @@ int main()
 
 	// Let's proceed to the analysis and code production
 	read_token();
-	Program();
+	parse_program();
 	// Trailer for the gcc assembler / linker
 	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top\n";
 	cout << "\tret\t\t\t# Return from main function\n";
 	if (current != FEOF)
 	{
 		// FIXME: this is not printing the right stuff
-		Error((string("extraneous characters at end of file: [") + std::to_string(current) + "]").c_str());
+		error((string("extraneous characters at end of file: [") + std::to_string(current) + "]").c_str());
 	}
 }

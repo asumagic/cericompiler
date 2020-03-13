@@ -23,7 +23,7 @@
 // Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
 // Letter := "a"|...|"z"
 
-enum class OPREL
+enum class RelationalOperator
 {
 	EQU,
 	DIFF,
@@ -34,7 +34,7 @@ enum class OPREL
 	WTFR
 };
 
-enum OPADD
+enum AdditiveOperator
 {
 	ADD,
 	SUB,
@@ -42,7 +42,7 @@ enum OPADD
 	WTFA
 };
 
-enum OPMUL
+enum MultiplicativeOperator
 {
 	MUL,
 	DIV,
@@ -62,32 +62,32 @@ struct VariableAssignment
 	VariableType type;
 };
 
-bool IsDeclared(const char* id);
+bool is_declared(const char* id);
 
-void              PrintErrorPreamble();
-[[noreturn]] void Error(const char* s);
+void              print_error_preamble();
+[[noreturn]] void error(const char* s);
 
-void TypeCheck(Type a, Type b);
+void check_type(Type a, Type b);
 
 TOKEN read_token();
 
 [[nodiscard]] bool match_keyword(const char* keyword);
 
-[[nodiscard]] Type Identifier();
-[[nodiscard]] Type Number();
-[[nodiscard]] Type Factor();
+[[nodiscard]] Type parse_identifier();
+[[nodiscard]] Type parse_number();
+[[nodiscard]] Type parse_factor();
 
 // MultiplicativeOperator := "*" | "/" | "%" | "&&"
-[[nodiscard]] OPMUL MultiplicativeOperator();
+[[nodiscard]] MultiplicativeOperator parse_multiplicative_operator();
 
 // Term := Factor {MultiplicativeOperator Factor}
-[[nodiscard]] Type Term();
+[[nodiscard]] Type parse_term();
 
 // AdditiveOperator := "+" | "-" | "||"
-[[nodiscard]] OPADD AdditiveOperator();
+[[nodiscard]] AdditiveOperator parse_additive_operator();
 
 // SimpleExpression := Term {AdditiveOperator Term}
-[[nodiscard]] Type SimpleExpression();
+[[nodiscard]] Type parse_simple_expression();
 
 // DeclarationPart := "VAR" VarDeclaration {";" VarDeclaration} "."
 // Declaration := Ident {"," Ident} ":" Type
@@ -97,34 +97,34 @@ void parse_declaration_block();
 [[nodiscard]] Type parse_type();
 
 // RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
-[[nodiscard]] OPREL RelationalOperator();
+[[nodiscard]] RelationalOperator parse_relational_operator();
 
 // Expression := SimpleExpression [RelationalOperator SimpleExpression]
-[[nodiscard]] Type Expression();
+[[nodiscard]] Type parse_expression();
 
 // AssignementStatement := Identifier ":=" Expression
-VariableAssignment AssignementStatement();
+VariableAssignment parse_assignment_statement();
 
 // IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
-void IfStatement();
+void parse_if_statement();
 
 // WhileStatement := "WHILE" Expression DO Statement
-void WhileStatement();
+void parse_while_statement();
 
 // ForStatement := "FOR" AssignementStatement "TO" Expression "DO" Statement
-void ForStatement();
+void parse_for_statement();
 
 // BlockStatement := "BEGIN" Statement { ";" Statement } "END"
-void BlockStatement();
+void parse_block_statement();
 
 // DisplayStatement := "DISPLAY" Expression
-void DisplayStatement();
+void parse_display_statement();
 
 // Statement := AssignementStatement
-void Statement();
+void parse_statement();
 
 // StatementPart := Statement {";" Statement} "."
-void StatementPart();
+void parse_statement_part();
 
 // Program := [DeclarationPart] StatementPart
-void Program();
+void parse_program();
