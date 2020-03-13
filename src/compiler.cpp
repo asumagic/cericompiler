@@ -15,7 +15,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "compilateur.hpp"
+#include "compiler.hpp"
 #include "codegen.hpp"
 #include "tokeniser.hpp"
 
@@ -609,12 +609,4 @@ void Compiler::parse_program()
 	}
 
 	parse_statement_part();
-}
-
-int main()
-{
-	// Read the source from stdin, output the assembly to stdout
-
-	Compiler compiler;
-	compiler();
 }
