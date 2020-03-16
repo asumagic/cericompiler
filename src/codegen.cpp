@@ -118,7 +118,7 @@ bool CodeGen::convert(Type source, Type destination)
 		return true;
 	}
 
-	if (check_enum_range(source, Type::FIRST_INTEGRAL, Type::LAST_INTEGRAL))
+	if (check_enum_range(source, Type::FIRST_INTEGRAL, Type::LAST_INTEGRAL) || destination == Type::CHAR)
 	{
 		if (check_enum_range(destination, Type::FIRST_INTEGRAL, Type::LAST_INTEGRAL) || destination == Type::CHAR)
 		{
