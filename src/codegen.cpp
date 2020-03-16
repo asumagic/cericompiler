@@ -108,6 +108,14 @@ void CodeGen::alu_lower_equal_i64() { alu_compare_i64("jbe"); }
 void CodeGen::alu_greater_i64() { alu_compare_i64("ja"); }
 void CodeGen::alu_lower_i64() { alu_compare_i64("je"); }
 
+void CodeGen::debug_display_i64()
+{
+	m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
+				"\tpop %rsi\n";
+
+	debug_call_printf();
+}
+
 void CodeGen::alu_load_binop_i64()
 {
 	m_output << "\tpop %rbx\n"
@@ -135,4 +143,10 @@ void CodeGen::alu_compare_i64(string_view instruction)
 				"\tpush $0xFFFFFFFFFFFFFFFF\n";
 
 	m_output << "__next" << m_label_tag << ":\n";
+}
+
+void CodeGen::debug_call_printf()
+{
+	m_output << "\tmovb $0, %al # printf is variadic, as per the ABI we write the number of float parameters\n"
+				"\t call printf\n";
 }

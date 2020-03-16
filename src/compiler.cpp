@@ -517,7 +517,7 @@ void Compiler::parse_display_statement()
 	{
 	case Type::UNSIGNED_INT:
 	{
-		cout << "\tmovq $__cc_format_string_llu, %rdi\n";
+		codegen->debug_display_i64();
 		break;
 	}
 
@@ -526,10 +526,6 @@ void Compiler::parse_display_statement()
 		error("unimplemented DISPLAY statement for this type, sorry");
 	}
 	}
-
-	cout << "\tpop %rsi # Value to be displayed\n";
-	cout << "\tmovb $0, %al # Number of floating point parameters (varargs)\n";
-	cout << "\tcall printf\n";
 }
 
 void Compiler::parse_statement()

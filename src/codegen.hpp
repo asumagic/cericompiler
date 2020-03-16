@@ -47,10 +47,14 @@ class CodeGen
 	void alu_greater_i64();
 	void alu_lower_i64();
 
+	void debug_display_i64();
+
 	private:
 	void alu_load_binop_i64();
 
 	void alu_compare_i64(string_view instruction);
+
+	void debug_call_printf();
 
 	std::size_t m_label_tag = {};
 
