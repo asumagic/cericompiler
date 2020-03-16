@@ -577,10 +577,10 @@ void Compiler::parse_program()
 
 	for (const auto& it : variables)
 	{
-		const auto&         name     = it.first;
-		const VariableType& variable = it.second;
+		const auto&         name = it.first;
+		const VariableType& type = it.second;
 
-		cout << name << ":\t.quad 0 # type: " << type_name(variable.type) << '\n';
+		codegen->define_global_variable({name, type});
 	}
 
 	parse_statement_part();

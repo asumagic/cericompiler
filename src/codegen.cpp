@@ -1,6 +1,7 @@
 #include "codegen.hpp"
 
 #include "compiler.hpp"
+#include "types.hpp"
 
 #include <ostream>
 
@@ -31,6 +32,11 @@ void CodeGen::begin_global_data_section()
 }
 
 void CodeGen::finalize_global_data_section() {}
+
+void CodeGen::define_global_variable(const Variable& variable)
+{
+	m_output << variable.name << ":\t.quad 0 # type: " << type_name(variable.type.type) << '\n';
+}
 
 void CodeGen::load_variable(const Variable& variable) { m_output << "\tpush " << variable.name << '\n'; }
 void CodeGen::load_i64(int64_t value) { m_output << "\tpush $" << value << '\n'; }

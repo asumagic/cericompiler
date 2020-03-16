@@ -22,6 +22,8 @@ class CodeGen
 	void begin_global_data_section();
 	void finalize_global_data_section();
 
+	void define_global_variable(const Variable& variable);
+
 	void load_variable(const Variable& variable);
 	void load_i64(std::int64_t value);
 
