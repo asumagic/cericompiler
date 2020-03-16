@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types.hpp"
 #include "util/string_view.hpp"
 
 #include <cstdint>
@@ -62,6 +63,9 @@ class CodeGen
 	void alu_lower_equal_i64();
 	void alu_greater_i64();
 	void alu_lower_i64();
+
+	// HACK: using the boolean return value to return whether the conversion was supported or not
+	bool convert(Type source, Type destination);
 
 	IfStatement statement_if_prepare();
 	void        statement_if_post_check(IfStatement);

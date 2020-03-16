@@ -58,6 +58,8 @@ class Compiler
 	// Factor := Number | Letter | "(" Expression ")"| "!" Factor
 	[[nodiscard]] Type parse_factor();
 
+	[[nodiscard]] Type parse_type_cast();
+
 	// Term := Factor {MultiplicativeOperator Factor}
 	// MultiplicativeOperator := "*" | "/" | "%" | "&&"
 	[[nodiscard]] Type parse_term();

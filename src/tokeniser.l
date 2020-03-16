@@ -43,6 +43,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 
 "INTEGER" return TYPE_INTEGER;
 "BOOLEAN" return TYPE_BOOLEAN;
+"CHAR"    return TYPE_CHAR;
 
 "+"       return ADDOP_ADD;
 "-"       return ADDOP_SUB;

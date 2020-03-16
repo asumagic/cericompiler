@@ -2,6 +2,7 @@
 
 #include "compiler.hpp"
 #include "types.hpp"
+#include "util/enums.hpp"
 
 #include <fmt/core.h>
 #include <ostream>
@@ -108,6 +109,26 @@ void CodeGen::alu_greater_equal_i64() { alu_compare_i64("jae"); }
 void CodeGen::alu_lower_equal_i64() { alu_compare_i64("jbe"); }
 void CodeGen::alu_greater_i64() { alu_compare_i64("ja"); }
 void CodeGen::alu_lower_i64() { alu_compare_i64("je"); }
+
+bool CodeGen::convert(Type source, Type destination)
+{
+	if (source == destination)
+	{
+		// no-op
+		return true;
+	}
+
+	if (check_enum_range(source, Type::FIRST_INTEGRAL, Type::LAST_INTEGRAL))
+	{
+		if (check_enum_range(destination, Type::FIRST_INTEGRAL, Type::LAST_INTEGRAL) || destination == Type::CHAR)
+		{
+			// no-op possible. those are 64-bit values regardless
+			return true;
+		}
+	}
+
+	return false;
+}
 
 IfStatement CodeGen::statement_if_prepare() { return {++m_label_tag}; }
 

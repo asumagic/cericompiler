@@ -154,7 +154,42 @@ Type Compiler::parse_factor()
 		return parse_identifier();
 	}
 
+	if (is_token_type())
+	{
+		return parse_type_cast();
+	}
+
 	error("expected '(', number or identifier");
+}
+
+Type Compiler::parse_type_cast()
+{
+	const Type destination_type = parse_type();
+
+	if (current != RPARENT)
+	{
+		error("expected '(' after type for explicit type conversion");
+	}
+
+	read_token();
+	const Type source_type = parse_expression();
+
+	if (current != LPARENT)
+	{
+		error("expected ')' after expression for explicit type conversion");
+	}
+	read_token();
+
+	if (!codegen->convert(source_type, destination_type))
+	{
+		bug(fmt::format(
+			"unsupported type conversion occured: {} -> {}",
+			type_name(source_type).str(),
+			type_name(destination_type).str()));
+	}
+
+	// right now just yolo it and don't convert
+	return destination_type;
 }
 
 Type Compiler::parse_term()
@@ -278,8 +313,6 @@ void Compiler::parse_declaration_block()
 		{
 			variables.emplace(std::move(name), VariableType{type});
 		}
-
-		read_token();
 	} while (current == SEMICOLON);
 
 	if (current != DOT)
@@ -297,10 +330,15 @@ Type Compiler::parse_type()
 		error("expected type");
 	}
 
-	switch (current)
+	const TOKEN token = current;
+
+	read_token();
+
+	switch (token)
 	{
 	case TOKEN::TYPE_INTEGER: return Type::UNSIGNED_INT;
 	case TOKEN::TYPE_BOOLEAN: return Type::BOOLEAN;
+	case TOKEN::TYPE_CHAR: return Type::CHAR;
 	default: bug("unrecognized type");
 	}
 }
