@@ -12,6 +12,11 @@ struct IfStatement
 	std::size_t saved_tag;
 };
 
+struct WhileStatement
+{
+	std::size_t saved_tag;
+};
+
 class CodeGen
 {
 	public:
@@ -54,11 +59,15 @@ class CodeGen
 
 	IfStatement prepare_statement_if();
 
-	void statement_if_pre_check(IfStatement);
 	void statement_if_post_check(IfStatement);
 	void statement_if_with_else(IfStatement);
 	void statement_if_without_else(IfStatement);
 	void statement_if_finalize(IfStatement);
+
+	WhileStatement prepare_statement_while();
+
+	void statement_while_post_check(WhileStatement);
+	void statement_while_finalize(WhileStatement);
 
 	void debug_display_i64();
 

@@ -407,8 +407,6 @@ void Compiler::parse_if_statement()
 {
 	auto if_statement = codegen->prepare_statement_if();
 
-	codegen->statement_if_pre_check(if_statement);
-
 	read_token();
 	check_type(parse_expression(), Type::BOOLEAN);
 
@@ -438,17 +436,13 @@ void Compiler::parse_if_statement()
 
 void Compiler::parse_while_statement()
 {
-	const auto tag = ++label_tag;
-
-	cout << "WhileBegin" << tag << ":\n";
+	auto while_statement = codegen->prepare_statement_while();
 
 	read_token();
 	const Type type = parse_expression();
 	check_type(type, Type::BOOLEAN);
 
-	cout << "\tpop %rax\n";
-	cout << "\ttest %rax, %rax\n";
-	cout << "\tjz Suite" << tag << '\n';
+	codegen->statement_while_post_check(while_statement);
 
 	if (current != KEYWORD || strcmp(lexer.YYText(), "DO"))
 	{
@@ -458,8 +452,7 @@ void Compiler::parse_while_statement()
 	read_token();
 	parse_statement();
 
-	cout << "\tjmp WhileBegin" << tag << '\n';
-	cout << "Suite" << tag << ":\n";
+	codegen->statement_while_finalize(while_statement);
 }
 
 void Compiler::parse_for_statement()

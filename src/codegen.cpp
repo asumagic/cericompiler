@@ -110,8 +110,6 @@ void CodeGen::alu_lower_i64() { alu_compare_i64("je"); }
 
 IfStatement CodeGen::prepare_statement_if() { return {++m_label_tag}; }
 
-void CodeGen::statement_if_pre_check(IfStatement) {}
-
 void CodeGen::statement_if_post_check(IfStatement statement)
 {
 	m_output << "\tpopq %rax\n"
@@ -137,6 +135,30 @@ void CodeGen::statement_if_without_else(IfStatement statement)
 }
 
 void CodeGen::statement_if_finalize(IfStatement statement) { m_output << "__next" << statement.saved_tag << ":\n"; }
+
+WhileStatement CodeGen::prepare_statement_while()
+{
+	++m_label_tag;
+	m_output << "__while" << m_label_tag << ":\n";
+
+	return {m_label_tag};
+}
+
+void CodeGen::statement_while_post_check(WhileStatement statement)
+{
+	m_output << "\tpop %rax\n"
+				"\ttest %rax, %rax\n"
+				"\tjz __next"
+			 << statement.saved_tag << '\n';
+}
+
+void CodeGen::statement_while_finalize(WhileStatement statement)
+{
+	m_output << "\tjmp __while" << statement.saved_tag
+			 << "\n"
+				"__next"
+			 << statement.saved_tag << ":\n";
+}
 
 void CodeGen::debug_display_i64()
 {
