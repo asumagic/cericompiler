@@ -40,3 +40,41 @@ void CodeGen::define_global_variable(const Variable& variable)
 
 void CodeGen::load_variable(const Variable& variable) { m_output << "\tpush " << variable.name << '\n'; }
 void CodeGen::load_i64(int64_t value) { m_output << "\tpush $" << value << '\n'; }
+
+void CodeGen::alu_and_bool()
+{
+	alu_load_binop_i64();
+
+	m_output << "\tandq %rax, %rbx\n"
+				"\tpush %rax\n";
+}
+
+void CodeGen::alu_multiply_i64()
+{
+	alu_load_binop_i64();
+
+	m_output << "\tmulq %rbx\n"
+				"\tpush %rax\n";
+}
+
+void CodeGen::alu_divide_i64()
+{
+	alu_load_binop_i64();
+
+	m_output << "\tmovq $0, %rdx # Higher part of numerator\n"
+				"\tdiv %rbx # Quotient goes to %rax\n"
+				"\tpush %rax\n";
+}
+
+void CodeGen::alu_modulus_i64()
+{
+	m_output << "\tmovq $0, %rdx # Higher part of numerator\n"
+				"\tdiv %rbx # Remainder goes to %rdx\n"
+				"\tpush %rax\n";
+}
+
+void CodeGen::alu_load_binop_i64()
+{
+	m_output << "\tpop %rbx\n"
+				"\tpop %rax\n";
+}

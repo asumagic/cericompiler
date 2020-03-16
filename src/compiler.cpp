@@ -175,41 +175,33 @@ Type Compiler::parse_term()
 
 		check_type(first_type, nth_type);
 
-		cout << "\tpop %rbx\n"; // get first operand
-		cout << "\tpop %rax\n"; // get second operand
 		switch (mulop)
 		{
 		case MultiplicativeOperator::AND:
 		{
 			check_type(first_type, Type::BOOLEAN);
-			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
-			cout << "\tpush %rax\t# AND\n"; // store result
+			codegen->alu_and_bool();
 			break;
 		}
 
 		case MultiplicativeOperator::MUL:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
-			cout << "\tpush %rax\t# MUL\n"; // store result
+			codegen->alu_multiply_i64();
 			break;
 		}
 
 		case MultiplicativeOperator::DIV:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
-			cout << "\tdiv %rbx\n";         // quotient goes to %rax
-			cout << "\tpush %rax\t# DIV\n"; // store result
+			codegen->alu_divide_i64();
 			break;
 		}
 
 		case MultiplicativeOperator::MOD:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
-			cout << "\tdiv %rbx\n";         // remainder goes to %rdx
-			cout << "\tpush %rdx\t# MOD\n"; // store result
+			codegen->alu_modulus_i64();
 			break;
 		}
 

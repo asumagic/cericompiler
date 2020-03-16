@@ -27,6 +27,14 @@ class CodeGen
 	void load_variable(const Variable& variable);
 	void load_i64(std::int64_t value);
 
+	void alu_and_bool();
+
+	void alu_multiply_i64();
+	void alu_divide_i64();
+	void alu_modulus_i64();
+
 	private:
+	void alu_load_binop_i64();
+
 	std::ostream& m_output;
 };
