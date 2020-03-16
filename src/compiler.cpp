@@ -340,33 +340,26 @@ RelationalOperator Compiler::parse_relational_operator()
 
 Type Compiler::parse_expression()
 {
-	RelationalOperator oprel;
-	const Type         first_type = parse_simple_expression();
+	const Type first_type = parse_simple_expression();
+
 	if (current == RELOP)
 	{
-		oprel               = parse_relational_operator();
-		const Type nth_type = parse_simple_expression();
+		RelationalOperator oprel    = parse_relational_operator();
+		const Type         nth_type = parse_simple_expression();
 
 		check_type(first_type, nth_type);
 
-		cout << "\tpop %rax\n";
-		cout << "\tpop %rbx\n";
-		cout << "\tcmpq %rax, %rbx\n";
 		switch (oprel)
 		{
-		case RelationalOperator::EQU: cout << "\tje Vrai" << ++label_tag << "\t# If equal\n"; break;
-		case RelationalOperator::DIFF: cout << "\tjne Vrai" << ++label_tag << "\t# If different\n"; break;
-		case RelationalOperator::SUPE: cout << "\tjae Vrai" << ++label_tag << "\t# If above or equal\n"; break;
-		case RelationalOperator::INFE: cout << "\tjbe Vrai" << ++label_tag << "\t# If below or equal\n"; break;
-		case RelationalOperator::INF: cout << "\tjb Vrai" << ++label_tag << "\t# If below\n"; break;
-		case RelationalOperator::SUP: cout << "\tja Vrai" << ++label_tag << "\t# If above\n"; break;
+		case RelationalOperator::EQU: codegen->alu_equal_i64(); break;
+		case RelationalOperator::DIFF: codegen->alu_not_equal_i64(); break;
+		case RelationalOperator::SUPE: codegen->alu_greater_equal_i64(); break;
+		case RelationalOperator::INFE: codegen->alu_lower_equal_i64(); break;
+		case RelationalOperator::INF: codegen->alu_lower_i64(); break;
+		case RelationalOperator::SUP: codegen->alu_greater_i64(); break;
 		case RelationalOperator::WTFR:
 		default: error("unknown comparison operator");
 		}
-		cout << "\tpush $0\t\t# False\n";
-		cout << "\tjmp Suite" << label_tag << '\n';
-		cout << "Vrai" << label_tag << ":\tpush $0xFFFFFFFFFFFFFFFF\t\t# True\n";
-		cout << "Suite" << label_tag << ":\n";
 
 		return Type::BOOLEAN;
 	}

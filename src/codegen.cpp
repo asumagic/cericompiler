@@ -92,13 +92,45 @@ void CodeGen::alu_divide_i64()
 
 void CodeGen::alu_modulus_i64()
 {
+	alu_load_binop_i64();
+
 	m_output << "\tmovq $0, %rdx # Higher part of numerator\n"
 				"\tdiv %rbx # Remainder goes to %rdx\n"
 				"\tpush %rax\n";
 }
 
+void CodeGen::alu_equal_i64() { alu_compare_i64("je"); }
+void CodeGen::alu_not_equal_i64() { alu_compare_i64("jne"); }
+void CodeGen::alu_greater_equal_i64() { alu_compare_i64("jae"); }
+void CodeGen::alu_lower_equal_i64() { alu_compare_i64("jbe"); }
+void CodeGen::alu_greater_i64() { alu_compare_i64("ja"); }
+void CodeGen::alu_lower_i64() { alu_compare_i64("je"); }
+
 void CodeGen::alu_load_binop_i64()
 {
 	m_output << "\tpop %rbx\n"
 				"\tpop %rax\n";
+}
+
+void CodeGen::alu_compare_i64(string_view instruction)
+{
+	alu_load_binop_i64();
+
+	++m_label_tag;
+
+	// Multiple separate calls here because formatting wrecks the whole thing into an unreadable mess somehow
+
+	m_output << "\tcmpq %rbx, %rax\n";
+
+	m_output << "\t" << instruction << " __true" << m_label_tag << "\n";
+
+	m_output << "\tpush $0x0 # No branching: push false\n"
+				"\tjmp __next"
+			 << m_label_tag << '\n';
+
+	m_output << "__true" << m_label_tag
+			 << ":\n"
+				"\tpush $0xFFFFFFFFFFFFFFFF\n";
+
+	m_output << "__next" << m_label_tag << ":\n";
 }

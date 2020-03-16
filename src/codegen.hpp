@@ -1,5 +1,7 @@
 #pragma once
 
+#include "util/string_view.hpp"
+
 #include <cstdint>
 #include <iosfwd>
 
@@ -36,8 +38,19 @@ class CodeGen
 	void alu_divide_i64();
 	void alu_modulus_i64();
 
+	void alu_equal_i64();
+	void alu_not_equal_i64();
+	void alu_greater_equal_i64();
+	void alu_lower_equal_i64();
+	void alu_greater_i64();
+	void alu_lower_i64();
+
 	private:
 	void alu_load_binop_i64();
+
+	void alu_compare_i64(string_view instruction);
+
+	std::size_t m_label_tag = {};
 
 	std::ostream& m_output;
 };
