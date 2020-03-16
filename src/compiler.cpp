@@ -133,9 +133,13 @@ Type Compiler::parse_factor()
 		read_token();
 		Type type = parse_expression();
 		if (current != LPARENT)
+		{
 			error("expected ')'");
+		}
 		else
+		{
 			read_token();
+		}
 
 		return type;
 	}
@@ -176,29 +180,44 @@ Type Compiler::parse_term()
 		switch (mulop)
 		{
 		case MultiplicativeOperator::AND:
+		{
 			check_type(first_type, Type::BOOLEAN);
 			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
 			cout << "\tpush %rax\t# AND\n"; // store result
 			break;
+		}
+
 		case MultiplicativeOperator::MUL:
+		{
 			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tmulq	%rbx\n";        // a * b -> %rdx:%rax
 			cout << "\tpush %rax\t# MUL\n"; // store result
 			break;
+		}
+
 		case MultiplicativeOperator::DIV:
+		{
 			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
 			cout << "\tdiv %rbx\n";         // quotient goes to %rax
 			cout << "\tpush %rax\t# DIV\n"; // store result
 			break;
+		}
+
 		case MultiplicativeOperator::MOD:
+		{
 			check_type(first_type, Type::ARITHMETIC);
 			cout << "\tmovq $0, %rdx\n";    // Higher part of numerator
 			cout << "\tdiv %rbx\n";         // remainder goes to %rdx
 			cout << "\tpush %rdx\t# MOD\n"; // store result
 			break;
+		}
+
 		case MultiplicativeOperator::WTFM:
-		default: error("unknown multiplicative operator");
+		default:
+		{
+			error("unknown multiplicative operator");
+		}
 		}
 	}
 
@@ -559,8 +578,12 @@ void Compiler::parse_statement_part()
 		read_token();
 		parse_statement();
 	}
+
 	if (current != DOT)
+	{
 		error("expected '.' (did you forget a ';'?)");
+	}
+
 	read_token();
 
 	codegen->finalize_main_procedure();
