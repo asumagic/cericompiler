@@ -36,7 +36,7 @@ void Compiler::error(string_view s) const
 
 void Compiler::bug(string_view s) const
 {
-	fmt::print(stderr, fg(fmt::color::red), "source:{}: COMPILER BUG", lexer.lineno());
+	fmt::print(stderr, fg(fmt::color::red), "source:{}: error: COMPILER BUG!\n", lexer.lineno());
 
 	error(s);
 }
