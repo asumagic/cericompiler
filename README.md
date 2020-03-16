@@ -45,12 +45,12 @@ Types:
     - [ ] Integral <=> Floating-point
 
 Operators:
-- Arithmetic operators: `+`, `-`, `*`, `/`, `%`
+- [x] Arithmetic operators: `+`, `-`, `*`, `/`, `%`
     - [x] Integral
     - [ ] Floating-point
 - [x] Logical operators: `||`, `&&`
 - [ ] Boolean negation operator: `!`
-- Comparison operators: `<`, `<=`, `==`, `>`, `>=`, `!=` (or `<>`)
+- [x] Comparison operators: `<`, `<=`, `==`, `>`, `>=`, `!=` (or `<>`)
     - [x] Integral
     - [ ] Floating-point
 
