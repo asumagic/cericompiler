@@ -81,12 +81,13 @@ Procedures:
 ## Language grammar
 
 ```sf
+Identifier                := Letter{Letter|Digit}
 Letter                    := "a"|...|"z"
 
 Number                    := Digit{Digit}
 Digit                     := "0"|...|"9"
 
-Factor                    := Number | Letter | "(" Expression ")"| "!" Factor | TypeCast
+Factor                    := Number | Identifier | "(" Expression ")"| "!" Factor | TypeCast
 TypeCast                  := Type "(" Expression ")"
 
 Term                      := Factor {MultiplicativeOperator Factor}
@@ -96,7 +97,7 @@ SimpleExpression          := Term {AdditiveOperator Term}
 AdditiveOperator          := "+" | "-" | "||"
 
 DeclarationPart           := "VAR" VarDeclaration {";" VarDeclaration} "."
-VarDeclaration            := Ident {"," Ident} ":" Type
+VarDeclaration            := Identifier {"," Identifier} ":" Type
 
 Type                      := "INTEGER" | "BOOLEAN"
 
