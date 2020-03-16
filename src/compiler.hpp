@@ -1,7 +1,6 @@
 #pragma once
 
 #include "codegen.hpp"
-#include "operators.hpp"
 #include "tokeniser.hpp"
 #include "types.hpp"
 #include "util/string_view.hpp"
@@ -41,8 +40,12 @@ class Compiler
 
 	std::unique_ptr<CodeGen> codegen;
 
-	[[nodiscard]] bool is_token_type() const;
+	[[nodiscard]] bool check_token_range(TOKEN first, TOKEN last) const;
 	[[nodiscard]] bool is_token_keyword() const;
+	[[nodiscard]] bool is_token_type() const;
+	[[nodiscard]] bool is_token_addop() const;
+	[[nodiscard]] bool is_token_mulop() const;
+	[[nodiscard]] bool is_token_relop() const;
 
 	[[nodiscard]] string_view token_text() const;
 
@@ -56,16 +59,12 @@ class Compiler
 	// Factor := Number | Letter | "(" Expression ")"| "!" Factor
 	[[nodiscard]] Type parse_factor();
 
-	// MultiplicativeOperator := "*" | "/" | "%" | "&&"
-	[[nodiscard]] MultiplicativeOperator parse_multiplicative_operator();
-
 	// Term := Factor {MultiplicativeOperator Factor}
+	// MultiplicativeOperator := "*" | "/" | "%" | "&&"
 	[[nodiscard]] Type parse_term();
 
-	// AdditiveOperator := "+" | "-" | "||"
-	[[nodiscard]] AdditiveOperator parse_additive_operator();
-
 	// SimpleExpression := Term {AdditiveOperator Term}
+	// AdditiveOperator := "+" | "-" | "||"
 	[[nodiscard]] Type parse_simple_expression();
 
 	// DeclarationPart := "VAR" VarDeclaration {";" VarDeclaration} "."
@@ -75,10 +74,8 @@ class Compiler
 	// Type := "INTEGER" | "BOOLEAN"
 	[[nodiscard]] Type parse_type();
 
-	// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
-	[[nodiscard]] RelationalOperator parse_relational_operator();
-
 	// Expression := SimpleExpression [RelationalOperator SimpleExpression]
+	// RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
 	[[nodiscard]] Type parse_expression();
 
 	// AssignementStatement := Identifier ":=" Expression

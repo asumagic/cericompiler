@@ -96,15 +96,16 @@ void Compiler::operator()()
 	codegen->finalize_program();
 }
 
-bool Compiler::is_token_type() const
+bool Compiler::check_token_range(TOKEN first, TOKEN last) const
 {
-	return int(current) >= int(TOKEN::FIRST_TYPE) && int(current) <= int(TOKEN::LAST_TYPE);
+	return int(current) >= int(first) && int(current) <= int(last);
 }
 
-bool Compiler::is_token_keyword() const
-{
-	return int(current) >= int(TOKEN::FIRST_KEYWORD) && int(current) <= int(TOKEN::LAST_KEYWORD);
-}
+bool Compiler::is_token_keyword() const { return check_token_range(TOKEN::FIRST_KEYWORD, TOKEN::LAST_KEYWORD); }
+bool Compiler::is_token_type() const { return check_token_range(TOKEN::FIRST_TYPE, TOKEN::LAST_TYPE); }
+bool Compiler::is_token_addop() const { return check_token_range(TOKEN::FIRST_ADDOP, TOKEN::LAST_ADDOP); }
+bool Compiler::is_token_mulop() const { return check_token_range(TOKEN::FIRST_MULOP, TOKEN::LAST_MULOP); }
+bool Compiler::is_token_relop() const { return check_token_range(TOKEN::FIRST_RELOP, TOKEN::LAST_RELOP); }
 
 string_view Compiler::token_text() const { return lexer.YYText(); }
 
@@ -167,111 +168,90 @@ Type Compiler::parse_factor()
 	error("expected '(', number or identifier");
 }
 
-MultiplicativeOperator Compiler::parse_multiplicative_operator()
-{
-	const auto it = multiplicative_operator_names.find(token_text());
-	read_token();
-	return it != multiplicative_operator_names.end() ? it->second : MultiplicativeOperator::WTFM;
-}
-
 Type Compiler::parse_term()
 {
 	const Type first_type = parse_factor();
-
-	while (current == MULOP)
+	while (is_token_mulop())
 	{
-		MultiplicativeOperator mulop    = parse_multiplicative_operator();
-		const Type             nth_type = parse_factor();
+		const TOKEN op_token = current;
+		read_token();
 
+		const Type nth_type = parse_factor();
 		check_type(first_type, nth_type);
 
-		switch (mulop)
+		switch (op_token)
 		{
-		case MultiplicativeOperator::AND:
+		case TOKEN::MULOP_AND:
 		{
 			check_type(first_type, Type::BOOLEAN);
 			codegen->alu_and_bool();
 			break;
 		}
 
-		case MultiplicativeOperator::MUL:
+		case TOKEN::MULOP_MUL:
 		{
 			check_type(first_type, Type::ARITHMETIC);
 			codegen->alu_multiply_i64();
 			break;
 		}
 
-		case MultiplicativeOperator::DIV:
+		case TOKEN::MULOP_DIV:
 		{
 			check_type(first_type, Type::ARITHMETIC);
 			codegen->alu_divide_i64();
 			break;
 		}
 
-		case MultiplicativeOperator::MOD:
+		case TOKEN::MULOP_MOD:
 		{
 			check_type(first_type, Type::ARITHMETIC);
 			codegen->alu_modulus_i64();
 			break;
 		}
 
-		case MultiplicativeOperator::WTFM:
-		default:
-		{
-			bug("unknown multiplicative operator");
-		}
+		default: bug("unimplemented multiplicative operator");
 		}
 	}
 
 	return first_type;
 }
 
-AdditiveOperator Compiler::parse_additive_operator()
-{
-	const auto it = additive_operator_names.find(token_text());
-	read_token();
-	return it != additive_operator_names.end() ? it->second : AdditiveOperator::WTFA;
-}
-
 Type Compiler::parse_simple_expression()
 {
 	const Type first_type = parse_term();
 
-	while (current == ADDOP)
+	while (is_token_addop())
 	{
-		AdditiveOperator adop     = parse_additive_operator();
-		const Type       nth_type = parse_term();
+		const TOKEN op_token = current;
+		read_token();
 
+		const Type nth_type = parse_term();
 		check_type(first_type, nth_type);
 
-		switch (adop)
+		switch (op_token)
 		{
-		case AdditiveOperator::OR:
+		case TOKEN::ADDOP_OR:
 		{
 			check_type(first_type, Type::BOOLEAN);
 			codegen->alu_or_bool();
 			break;
 		}
 
-		case AdditiveOperator::ADD:
+		case TOKEN::ADDOP_ADD:
 		{
 			check_type(first_type, Type::ARITHMETIC);
 			codegen->alu_add_i64();
 			break;
 		}
 
-		case AdditiveOperator::SUB:
+		case TOKEN::ADDOP_SUB:
 		{
 			check_type(first_type, Type::ARITHMETIC);
 			codegen->alu_sub_i64();
 			break;
 		}
 
-		case AdditiveOperator::WTFA:
-		default:
-		{
-			bug("unknown additive operator");
-		}
+		default: bug("unimplemented additive operator");
 		}
 	}
 
@@ -336,33 +316,26 @@ Type Compiler::parse_type()
 	}
 }
 
-RelationalOperator Compiler::parse_relational_operator()
-{
-	const auto it = relational_operator_names.find(token_text());
-	read_token();
-	return it != relational_operator_names.end() ? it->second : RelationalOperator::WTFR;
-}
-
 Type Compiler::parse_expression()
 {
 	const Type first_type = parse_simple_expression();
 
-	if (current == RELOP)
+	if (is_token_relop())
 	{
-		RelationalOperator oprel    = parse_relational_operator();
-		const Type         nth_type = parse_simple_expression();
+		const TOKEN op_token = current;
+		read_token();
 
+		const Type nth_type = parse_simple_expression();
 		check_type(first_type, nth_type);
 
-		switch (oprel)
+		switch (op_token)
 		{
-		case RelationalOperator::EQU: codegen->alu_equal_i64(); break;
-		case RelationalOperator::DIFF: codegen->alu_not_equal_i64(); break;
-		case RelationalOperator::SUPE: codegen->alu_greater_equal_i64(); break;
-		case RelationalOperator::INFE: codegen->alu_lower_equal_i64(); break;
-		case RelationalOperator::INF: codegen->alu_lower_i64(); break;
-		case RelationalOperator::SUP: codegen->alu_greater_i64(); break;
-		case RelationalOperator::WTFR:
+		case TOKEN::RELOP_EQU: codegen->alu_equal_i64(); break;
+		case TOKEN::RELOP_DIFF: codegen->alu_not_equal_i64(); break;
+		case TOKEN::RELOP_SUPE: codegen->alu_greater_equal_i64(); break;
+		case TOKEN::RELOP_INFE: codegen->alu_lower_equal_i64(); break;
+		case TOKEN::RELOP_INF: codegen->alu_lower_i64(); break;
+		case TOKEN::RELOP_SUP: codegen->alu_greater_i64(); break;
 		default: bug("unknown comparison operator");
 		}
 

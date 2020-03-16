@@ -25,9 +25,6 @@ alpha   [A-Za-z]
 digit   [0-9]
 number  {digit}+
 id	{alpha}({alpha}|{digit})*
-addop	(\+|\-|\|\|)
-mulop	(\*|\/|%|\&\&)
-relop	(\<|\>|"=="|\<=|\>=|!=)
 unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 
 %%
@@ -47,9 +44,23 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "INTEGER" return TYPE_INTEGER;
 "BOOLEAN" return TYPE_BOOLEAN;
 
-{addop}		return ADDOP;
-{mulop}		return MULOP;
-{relop}		return RELOP;
+"+"       return ADDOP_ADD;
+"-"       return ADDOP_SUB;
+"||"      return ADDOP_OR;
+
+"*"       return MULOP_MUL;
+"/"       return MULOP_DIV;
+"%"       return MULOP_MOD;
+"&&"      return MULOP_AND;
+
+"<"       return RELOP_INF;
+"<="      return RELOP_INFE;
+"=="      return RELOP_EQU;
+">"       return RELOP_SUP;
+">="      return RELOP_SUPE;
+"!="      return RELOP_DIFF;
+"<>"      return RELOP_DIFF;
+
 {number}	return NUMBER;
 {id}		return ID;
 {stringconst}	return STRINGCONST;
