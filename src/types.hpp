@@ -1,5 +1,7 @@
 #pragma once
 
+#include "util/string_view.hpp"
+
 enum class Type
 {
 	// Concrete types
@@ -21,4 +23,4 @@ enum class Type
 	TOTAL
 };
 
-const char* type_name(Type type);
+string_view type_name(Type type);

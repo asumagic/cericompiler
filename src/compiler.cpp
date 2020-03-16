@@ -71,7 +71,7 @@ void Compiler::check_type(Type a, Type b) const
 
 	if (!match)
 	{
-		error(("incompatible types: "s + type_name(a) + ", " + type_name(b)).c_str());
+		error(("incompatible types: "s + type_name(a).str() + ", " + type_name(b).str()).c_str());
 	}
 }
 
