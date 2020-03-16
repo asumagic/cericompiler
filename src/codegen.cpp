@@ -108,7 +108,7 @@ void CodeGen::alu_lower_equal_i64() { alu_compare_i64("jbe"); }
 void CodeGen::alu_greater_i64() { alu_compare_i64("ja"); }
 void CodeGen::alu_lower_i64() { alu_compare_i64("je"); }
 
-IfStatement CodeGen::prepare_statement_if() { return {++m_label_tag}; }
+IfStatement CodeGen::statement_if_prepare() { return {++m_label_tag}; }
 
 void CodeGen::statement_if_post_check(IfStatement statement)
 {
@@ -136,7 +136,7 @@ void CodeGen::statement_if_without_else(IfStatement statement)
 
 void CodeGen::statement_if_finalize(IfStatement statement) { m_output << "__next" << statement.saved_tag << ":\n"; }
 
-WhileStatement CodeGen::prepare_statement_while()
+WhileStatement CodeGen::statement_while_prepare()
 {
 	++m_label_tag;
 	m_output << "__while" << m_label_tag << ":\n";

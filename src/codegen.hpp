@@ -57,17 +57,15 @@ class CodeGen
 	void alu_greater_i64();
 	void alu_lower_i64();
 
-	IfStatement prepare_statement_if();
+	IfStatement statement_if_prepare();
+	void        statement_if_post_check(IfStatement);
+	void        statement_if_with_else(IfStatement);
+	void        statement_if_without_else(IfStatement);
+	void        statement_if_finalize(IfStatement);
 
-	void statement_if_post_check(IfStatement);
-	void statement_if_with_else(IfStatement);
-	void statement_if_without_else(IfStatement);
-	void statement_if_finalize(IfStatement);
-
-	WhileStatement prepare_statement_while();
-
-	void statement_while_post_check(WhileStatement);
-	void statement_while_finalize(WhileStatement);
+	WhileStatement statement_while_prepare();
+	void           statement_while_post_check(WhileStatement);
+	void           statement_while_finalize(WhileStatement);
 
 	void debug_display_i64();
 

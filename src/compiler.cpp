@@ -405,7 +405,7 @@ Variable Compiler::parse_assignment_statement()
 
 void Compiler::parse_if_statement()
 {
-	auto if_statement = codegen->prepare_statement_if();
+	auto if_statement = codegen->statement_if_prepare();
 
 	read_token();
 	check_type(parse_expression(), Type::BOOLEAN);
@@ -436,7 +436,7 @@ void Compiler::parse_if_statement()
 
 void Compiler::parse_while_statement()
 {
-	auto while_statement = codegen->prepare_statement_while();
+	auto while_statement = codegen->statement_while_prepare();
 
 	read_token();
 	const Type type = parse_expression();
