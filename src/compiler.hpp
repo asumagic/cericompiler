@@ -52,7 +52,7 @@ class Compiler
 	[[nodiscard]] Type parse_identifier();
 
 	// Number := Digit{Digit}
-	// Digit := "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
+	// Digit := "0"|...|"9"
 	[[nodiscard]] Type parse_number();
 
 	// Factor := Number | Letter | "(" Expression ")"| "!" Factor
@@ -67,7 +67,7 @@ class Compiler
 	[[nodiscard]] Type parse_simple_expression();
 
 	// DeclarationPart := "VAR" VarDeclaration {";" VarDeclaration} "."
-	// Declaration := Ident {"," Ident} ":" Type
+	// VarDeclaration := Ident {"," Ident} ":" Type
 	void parse_declaration_block();
 
 	// Type := "INTEGER" | "BOOLEAN"

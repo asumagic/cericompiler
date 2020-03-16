@@ -1,8 +1,9 @@
 # CERIcompiler
 
-A simple compiler.
-From: Pascal-like imperative LL(k) langage
-To: x86-64 AT&T syntax assembly.
+A simple compiler for a Pascal-like language.
+
+The supported backends currently are:
+- x86-64 assembly (AT&T).
 
 ## Requirements
 
@@ -30,3 +31,40 @@ Building should run tests, some of which dump the assembly files in the `tests/`
 
 The generated assembly requires to be linked against the C standard library.
 Note that the generated assembly uses the SystemV ABI (which Windows does not use).
+
+## Language grammar
+
+```sf
+Letter                    := "a"|...|"z"
+
+Number                    := Digit{Digit}
+Digit                     := "0"|...|"9"
+
+Factor                    := Number | Letter | "(" Expression ")"| "!" Factor
+
+Term                      := Factor {MultiplicativeOperator Factor}
+MultiplicativeOperator    := "*" | "/" | "%" | "&&"
+
+SimpleExpression          := Term {AdditiveOperator Term}
+AdditiveOperator          := "+" | "-" | "||"
+
+DeclarationPart           := "VAR" VarDeclaration {";" VarDeclaration} "."
+VarDeclaration            := Ident {"," Ident} ":" Type
+
+Type                      := "INTEGER" | "BOOLEAN"
+
+Expression                := SimpleExpression [RelationalOperator SimpleExpression]
+RelationalOperator        := "==" | "!=" | "<" | ">" | "<=" | ">="
+
+AssignementStatement      := Identifier ":=" Expression
+
+IfStatement               := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
+WhileStatement            := "WHILE" Expression DO Statement
+ForStatement              := "FOR" AssignementStatement "TO" Expression "DO" Statement
+BlockStatement            := "BEGIN" Statement { ";" Statement } "END"
+DisplayStatement          := "DISPLAY" Expression
+
+Statement                 := AssignementStatement
+StatementPart             := Statement {";" Statement} "."
+Program                   := [DeclarationPart] StatementPart
+```
