@@ -34,7 +34,7 @@ using std::string;
 
 using namespace std::string_literals;
 
-bool Compiler::is_declared(const char* id) const { return variables.find(id) != variables.end(); }
+bool Compiler::is_declared(string_view id) const { return variables.find(id.str()) != variables.end(); }
 
 void Compiler::print_error_preamble() const { cerr << "source:" << lexer.lineno() << ": "; }
 

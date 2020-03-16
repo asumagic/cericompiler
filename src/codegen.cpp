@@ -1,6 +1,10 @@
+#include "codegen.hpp"
+
+#include "util/string_view.hpp"
+
 #include <iostream>
 
-constexpr const char* main_preamble = R"(# The following lines contain the program
+constexpr string_view main_preamble = R"(# The following lines contain the program
     .text
     .globl main
     main:
