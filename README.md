@@ -45,6 +45,9 @@ Types:
 - [x] Explicit type conversions
     - [x] Integral <=> Integral (e.g. no-op or `CHAR` <=> `INTEGER`)
     - [ ] Integral <=> Floating-point
+- [ ] User-defined types
+- [ ] Dynamic allocation
+- [ ] Arrays
 
 Operators:
 - [x] Arithmetic operators: `+`, `-`, `*`, `/`, `%`
@@ -66,12 +69,13 @@ Statements:
 - [x] `DISPLAY` debug statement
 
 Procedures:
-- [ ] User procedure support
+- [ ] User-defined procedure support
     - [ ] Declaration support
     - [ ] Calling support
     - [ ] Local variables
     - [ ] Parameter support
     - [ ] Return value support
+    - [ ] Generic procedures
 - [ ] C Foreign function interface
 
 ## Language grammar
