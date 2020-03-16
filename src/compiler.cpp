@@ -23,28 +23,20 @@
 
 #include <cstring>
 #include <fmt/core.h>
-#include <string>
 #include <vector>
-
-using namespace std::string_literals;
-
-void Compiler::print_error_preamble() const { fmt::print(stderr, "source:{}: ", lexer.lineno()); }
 
 void Compiler::error(string_view s) const
 {
-	print_error_preamble();
-	std::cerr << "error: " << s << '\n';
-
-	print_error_preamble();
-	std::cerr << "note: when reading token '" << token_text() << "'\n";
+	const auto source_context = fmt::format("source:{}: ", lexer.lineno());
+	fmt::print(stderr, "{}error: {}\n", source_context, s.str());
+	fmt::print(stderr, "{}note:  while reading token '{}'\n", token_text().str());
 
 	exit(-1);
 }
 
 void Compiler::bug(string_view s) const
 {
-	print_error_preamble();
-	std::cerr << "error: COMPILER BUG\n";
+	fmt::print(stderr, "source:{}: COMPILER BUG", lexer.lineno());
 
 	error(s);
 }
@@ -72,7 +64,7 @@ void Compiler::check_type(Type a, Type b) const
 
 	if (!match)
 	{
-		error(("incompatible types: "s + type_name(a).str() + ", " + type_name(b).str()).c_str());
+		error(fmt::format("incompatible types: {}, {}", type_name(a).str(), type_name(b).str()));
 	}
 }
 
@@ -92,7 +84,7 @@ void Compiler::operator()()
 	if (current != FEOF)
 	{
 		// FIXME: this is not printing the right stuff
-		error((std::string("extraneous characters at end of file: [") + std::to_string(current) + "]").c_str());
+		error(fmt::format("extraneous characters at end of file: [{}]", current));
 	}
 
 	codegen->finalize_program();
@@ -113,7 +105,7 @@ Type Compiler::parse_identifier()
 	const auto it = variables.find(name);
 	if (it == variables.end())
 	{
-		error((std::string("use of undeclared identifier '") + name + '\'').c_str());
+		error(fmt::format("use of undeclared identifier '{}'", name));
 	}
 
 	const VariableType& type = it->second;
@@ -352,7 +344,7 @@ Variable Compiler::parse_assignment_statement()
 
 	if (it == variables.end())
 	{
-		error((std::string("variable '") + name + "' not found").c_str());
+		error(fmt::format("assignment of undeclared variable '{}'", name));
 	}
 
 	const VariableType& variable_type = it->second;

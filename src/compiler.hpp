@@ -104,7 +104,6 @@ class Compiler
 	// Program := [DeclarationPart] StatementPart
 	void parse_program();
 
-	void              print_error_preamble() const;
 	[[noreturn]] void error(string_view s) const;
 	[[noreturn]] void bug(string_view s) const;
 
