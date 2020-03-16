@@ -57,6 +57,7 @@ Statements:
     - [ ] `DOWNTO` support
 - [x] `WHILE` statement
 - [ ] `CASE` statement
+- [x] `DISPLAY` debug statement
 
 Procedures:
 - [ ] User procedure support
