@@ -166,12 +166,12 @@ MultiplicativeOperator Compiler::parse_multiplicative_operator()
 
 Type Compiler::parse_term()
 {
-	MultiplicativeOperator mulop;
-	const Type             first_type = parse_factor();
+	const Type first_type = parse_factor();
+
 	while (current == MULOP)
 	{
-		mulop               = parse_multiplicative_operator(); // Save operator in local variable
-		const Type nth_type = parse_factor();
+		MultiplicativeOperator mulop    = parse_multiplicative_operator(); // Save operator in local variable
+		const Type             nth_type = parse_factor();
 
 		check_type(first_type, nth_type);
 
