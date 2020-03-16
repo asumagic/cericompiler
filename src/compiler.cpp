@@ -49,7 +49,7 @@ void Compiler::bug(string_view s) const
 
 void Compiler::check_type(Type a, Type b) const
 {
-	if (int(a) < int(Type::CONCEPT_BEGIN))
+	if (int(a) >= int(Type::CONCEPT_BEGIN))
 	{
 		bug("only the second operand of TypeCheck may be a type concept");
 	}
