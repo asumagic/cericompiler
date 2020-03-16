@@ -41,6 +41,8 @@ void CodeGen::define_global_variable(const Variable& variable)
 void CodeGen::load_variable(const Variable& variable) { m_output << "\tpush " << variable.name << '\n'; }
 void CodeGen::load_i64(int64_t value) { m_output << "\tpush $" << value << '\n'; }
 
+void CodeGen::store_variable(const Variable& variable) { m_output << "\tpop " << variable.name << '\n'; }
+
 void CodeGen::alu_and_bool()
 {
 	alu_load_binop_i64();

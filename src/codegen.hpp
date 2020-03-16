@@ -29,6 +29,8 @@ class CodeGen
 	void load_variable(const Variable& variable);
 	void load_i64(std::int64_t value);
 
+	void store_variable(const Variable& variable);
+
 	void alu_and_bool();
 	void alu_or_bool();
 

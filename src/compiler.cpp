@@ -380,16 +380,17 @@ Variable Compiler::parse_assignment_statement()
 		error((std::string("variable '") + name + "' not found").c_str());
 	}
 
-	const VariableType& variable = it->second;
+	const VariableType& variable_type = it->second;
 
 	read_token();
 	if (current != ASSIGN)
 		error("expected ':=' in variable assignment");
 	read_token();
 	Type type = parse_expression();
-	cout << "\tpop " << name << '\n';
 
-	check_type(type, variable.type);
+	codegen->store_variable({name, variable_type});
+
+	check_type(type, variable_type.type);
 
 	return {name, type};
 }
