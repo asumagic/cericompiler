@@ -103,8 +103,6 @@ class Compiler
 	// Program := [DeclarationPart] StatementPart
 	void parse_program();
 
-	bool is_declared(string_view id) const;
-
 	void              print_error_preamble() const;
 	[[noreturn]] void error(const char* s) const;
 
