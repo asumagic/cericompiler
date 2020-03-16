@@ -49,6 +49,7 @@ Operators:
     - [x] Integral
     - [ ] Floating-point
 - [x] Logical operators: `||`, `&&`
+- [ ] Boolean negation operator: `!`
 - Comparison operators: `<`, `<=`, `==`, `>`, `>=`, `!=` (or `<>`)
     - [x] Integral
     - [ ] Floating-point
@@ -79,7 +80,7 @@ Letter                    := "a"|...|"z"
 Number                    := Digit{Digit}
 Digit                     := "0"|...|"9"
 
-Factor                    := Number | Letter | "(" Expression ")"| "!" Factor
+Factor                    := Number | Letter | "(" Expression ")"| "!" Factor | Type "(" Expression ")"
 
 Term                      := Factor {MultiplicativeOperator Factor}
 MultiplicativeOperator    := "*" | "/" | "%" | "&&"
