@@ -45,6 +45,14 @@ void Compiler::error(string_view s) const
 	exit(-1);
 }
 
+void Compiler::bug(string_view s) const
+{
+	print_error_preamble();
+	std::cerr << "error: COMPILER BUG\n";
+
+	error(s);
+}
+
 void Compiler::check_type(Type a, Type b) const
 {
 	assert(int(a) < int(Type::CONCEPT_BEGIN) && "Only the second operand of TypeCheck may be a type concept");
@@ -206,7 +214,7 @@ Type Compiler::parse_term()
 		case MultiplicativeOperator::WTFM:
 		default:
 		{
-			error("unknown multiplicative operator");
+			bug("unknown multiplicative operator");
 		}
 		}
 	}
@@ -258,7 +266,7 @@ Type Compiler::parse_simple_expression()
 		case AdditiveOperator::WTFA:
 		default:
 		{
-			error("unknown additive operator");
+			bug("unknown additive operator");
 		}
 		}
 	}
@@ -328,7 +336,7 @@ Type Compiler::parse_type()
 		return Type::BOOLEAN;
 	}
 
-	error("unrecognized type; this is a compiler bug");
+	bug("unrecognized type");
 }
 
 RelationalOperator Compiler::parse_relational_operator()
@@ -358,7 +366,7 @@ Type Compiler::parse_expression()
 		case RelationalOperator::INF: codegen->alu_lower_i64(); break;
 		case RelationalOperator::SUP: codegen->alu_greater_i64(); break;
 		case RelationalOperator::WTFR:
-		default: error("unknown comparison operator");
+		default: bug("unknown comparison operator");
 		}
 
 		return Type::BOOLEAN;
@@ -523,7 +531,7 @@ void Compiler::parse_display_statement()
 
 	default:
 	{
-		error("unimplemented DISPLAY statement for this type, sorry");
+		bug("DISPLAY statement not yet implemented for this type");
 	}
 	}
 }

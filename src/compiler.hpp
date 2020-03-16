@@ -105,6 +105,7 @@ class Compiler
 
 	void              print_error_preamble() const;
 	[[noreturn]] void error(string_view s) const;
+	[[noreturn]] void bug(string_view s) const;
 
 	void check_type(Type a, Type b) const;
 
