@@ -123,12 +123,26 @@ Type Compiler::parse_identifier()
 	return type.type;
 }
 
-Type Compiler::parse_number()
+Type Compiler::parse_integer_literal()
 {
-	codegen->load_i64(std::stoi(token_text()));
+	codegen->load_i64(std::stoull(token_text()));
 	read_token();
 
 	return Type::UNSIGNED_INT;
+}
+
+Type Compiler::parse_float_literal()
+{
+	static_assert(sizeof(double) == sizeof(std::int64_t), "double must be 64-bit on the compiler platform");
+
+	double        source = std::stod(token_text());
+	std::uint64_t target;
+	std::memcpy(&target, &source, sizeof(target));
+
+	codegen->load_i64(target);
+	read_token();
+
+	return Type::DOUBLE;
 }
 
 Type Compiler::parse_factor()
@@ -151,9 +165,14 @@ Type Compiler::parse_factor()
 		return type;
 	}
 
-	if (current == NUMBER)
+	if (current == INTEGER_LITERAL)
 	{
-		return parse_number();
+		return parse_integer_literal();
+	}
+
+	if (current == FLOAT_LITERAL)
+	{
+		return parse_float_literal();
 	}
 
 	if (current == ID)

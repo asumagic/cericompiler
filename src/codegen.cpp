@@ -43,7 +43,7 @@ void CodeGen::define_global_variable(const Variable& variable)
 }
 
 void CodeGen::load_variable(const Variable& variable) { m_output << fmt::format("\tpush {}\n", variable.name); }
-void CodeGen::load_i64(int64_t value) { m_output << fmt::format("\tpush ${}\n", value); }
+void CodeGen::load_i64(uint64_t value) { m_output << fmt::format("\tpush ${}\n", value); }
 
 void CodeGen::store_variable(const Variable& variable) { m_output << fmt::format("\tpop {}\n", variable.name); }
 

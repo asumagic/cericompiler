@@ -49,7 +49,8 @@ class Compiler
 	[[nodiscard]] string_view token_text() const;
 
 	[[nodiscard]] Type parse_identifier();
-	[[nodiscard]] Type parse_number();
+	[[nodiscard]] Type parse_integer_literal();
+	[[nodiscard]] Type parse_float_literal();
 	[[nodiscard]] Type parse_factor();
 	[[nodiscard]] Type parse_type_cast();
 	[[nodiscard]] Type parse_term();

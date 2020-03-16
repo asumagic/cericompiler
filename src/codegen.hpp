@@ -50,7 +50,7 @@ class CodeGen
 	void define_global_variable(const Variable& variable);
 
 	void load_variable(const Variable& variable);
-	void load_i64(std::int64_t value);
+	void load_i64(uint64_t value);
 
 	void store_variable(const Variable& variable);
 

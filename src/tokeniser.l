@@ -20,10 +20,10 @@ using namespace std;
 %option yylineno
 
 stringconst  \"[^\n"]+\"
-ws      [ \t\n\r]+
 alpha   [A-Za-z]
 digit   [0-9]
-number  {digit}+
+floatliteral    {digit}+\.{digit}+
+integerliteral  {digit}+
 id	{alpha}({alpha}|{digit})*
 unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 
@@ -46,6 +46,11 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "BOOLEAN" return TYPE_BOOLEAN;
 "CHAR"    return TYPE_CHAR;
 
+{floatliteral}   return FLOAT_LITERAL;
+{integerliteral} return INTEGER_LITERAL;
+{id}             return ID;
+{stringconst}    return STRINGCONST;
+
 "+"       return ADDOP_ADD;
 "-"       return ADDOP_SUB;
 "||"      return ADDOP_OR;
@@ -63,21 +68,18 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "!="      return RELOP_DIFF;
 "<>"      return RELOP_DIFF;
 
-{number}	return NUMBER;
-{id}		return ID;
-{stringconst}	return STRINGCONST;
-"["		return RBRACKET;
-"]"		return LBRACKET;
-","		return COMMA;
-":"     return COLON;
-";"		return SEMICOLON;
-"."		return DOT;
-":="		return ASSIGN;
-"("		return RPARENT;
-")"		return LPARENT;
-"!"		return NOT;
-<<EOF>>		return FEOF;
-{ws}    {/* skip blanks and tabs */};
+"["       return RBRACKET;
+"]"       return LBRACKET;
+","       return COMMA;
+":"       return COLON;
+";"       return SEMICOLON;
+"."       return DOT;
+":="      return ASSIGN;
+"("       return RPARENT;
+")"       return LPARENT;
+"!"       return NOT;
+<<EOF>>   return FEOF;
+
 "(*"    { /* Skip comments between '(*' and '*)' */
 		int c;
 		while((c = yyinput()) != 0){
