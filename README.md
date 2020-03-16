@@ -37,7 +37,9 @@ Note that the generated assembly uses the SystemV ABI (which Windows does not us
 Types:
 - [x] Typed variables
 - [x] `INTEGER` type
+    - [x] Integer literals
 - [ ] `CHAR` type
+    - [ ] Character literals
 - [ ] `DOUBLE` type
 - [x] `BOOLEAN` type
 - [x] Explicit type conversions
