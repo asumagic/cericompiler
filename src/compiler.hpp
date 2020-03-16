@@ -37,7 +37,6 @@ class Compiler
 	yyFlexLexer lexer;
 
 	std::unordered_map<std::string, VariableType> variables;
-	unsigned long                                 label_tag = 0;
 
 	std::unique_ptr<CodeGen> codegen;
 
