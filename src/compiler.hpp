@@ -1,10 +1,12 @@
 #pragma once
 
+#include "codegen.hpp"
 #include "operators.hpp"
 #include "tokeniser.hpp"
 #include "types.hpp"
 
 #include <iosfwd>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -35,6 +37,8 @@ class Compiler
 
 	std::unordered_map<std::string, VariableType> variables;
 	unsigned long                                 label_tag = 0;
+
+	std::unique_ptr<CodeGen> codegen;
 
 	// Letter := "a"|...|"z"
 	[[nodiscard]] Type parse_identifier();

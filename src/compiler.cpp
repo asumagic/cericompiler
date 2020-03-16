@@ -45,6 +45,7 @@ void Compiler::error(const char* s) const
 
 	print_error_preamble();
 	cerr << "note: when reading token '" << lexer.YYText() << "'\n";
+
 	exit(-1);
 }
 
@@ -79,7 +80,9 @@ bool Compiler::match_keyword(const char* keyword) const
 	return (current == KEYWORD && std::strcmp(lexer.YYText(), keyword) == 0);
 }
 
-Compiler::Compiler(std::istream& input, std::ostream& output) : lexer{input, output} {}
+Compiler::Compiler(std::istream& input, std::ostream& output) :
+	lexer{input, output}, codegen{std::make_unique<CodeGen>(output)}
+{}
 
 void Compiler::operator()()
 {
@@ -551,7 +554,8 @@ void Compiler::parse_statement()
 
 void Compiler::parse_statement_part()
 {
-	emit_main_preamble();
+	codegen->begin_executable();
+	codegen->begin_main_procedure();
 
 	parse_statement();
 	while (current == SEMICOLON)
@@ -562,15 +566,16 @@ void Compiler::parse_statement_part()
 	if (current != DOT)
 		error("expected '.' (did you forget a ';'?)");
 	read_token();
+
+	codegen->finalize_main_procedure();
+	codegen->finalize_executable();
 }
 
 void Compiler::parse_program()
 {
-	cout << "\t.data\n";
-	cout << "\t.align 8\n";
-	cout << "__cc_format_string_llu: .string \"%llu\\n\"\n";
-
+	codegen->begin_global_data();
 	parse_declaration_block();
+	codegen->finalize_global_data();
 
 	for (const auto& it : variables)
 	{

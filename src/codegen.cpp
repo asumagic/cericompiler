@@ -1,16 +1,25 @@
 #include "codegen.hpp"
 
-#include "util/string_view.hpp"
+#include <ostream>
 
-#include <iostream>
+void CodeGen::begin_executable() { m_output << ".text\n"; }
+void CodeGen::finalize_executable() {}
 
-constexpr string_view main_preamble = R"(# The following lines contain the program
-    .text
-    .globl main
-    main:
-    # Save hte position of the top of the stack
-    movq %rsp, %rbp
+void CodeGen::begin_main_procedure()
+{
+	m_output << ".globl main\n"
+				"main:\n"
+				"\t# Save the position of the top of the stack\n"
+				"\tmovq %rsp, %rbp\n";
+}
 
-)"; // two line breaks
+void CodeGen::finalize_main_procedure() {}
 
-void emit_main_preamble() { std::cout << main_preamble; }
+void CodeGen::begin_global_data()
+{
+	m_output << ".data\n"
+				".align 8\n"
+				"__cc_format_string_llu: .string \"%llu\\n\"\n";
+}
+
+void CodeGen::finalize_global_data() {}
