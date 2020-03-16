@@ -40,7 +40,6 @@ class Compiler
 
 	std::unique_ptr<CodeGen> codegen;
 
-	[[nodiscard]] bool check_token_range(TOKEN first, TOKEN last) const;
 	[[nodiscard]] bool is_token_keyword() const;
 	[[nodiscard]] bool is_token_type() const;
 	[[nodiscard]] bool is_token_addop() const;

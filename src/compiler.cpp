@@ -18,6 +18,7 @@
 #include "compiler.hpp"
 #include "codegen.hpp"
 #include "tokeniser.hpp"
+#include "util/enums.hpp"
 #include "util/string_view.hpp"
 
 #include <cstring>
@@ -49,7 +50,7 @@ void Compiler::bug(string_view s) const
 
 void Compiler::check_type(Type a, Type b) const
 {
-	if (int(a) >= int(Type::CONCEPT_BEGIN))
+	if (check_enum_range(a, Type::FIRST_CONCEPT, Type::LAST_CONCEPT))
 	{
 		bug("only the second operand of TypeCheck may be a type concept");
 	}
@@ -58,7 +59,7 @@ void Compiler::check_type(Type a, Type b) const
 
 	if (b == Type::ARITHMETIC)
 	{
-		if (a != Type::UNSIGNED_INT)
+		if (!check_enum_range(a, Type::FIRST_ARITHMETIC, Type::LAST_ARITHMETIC))
 		{
 			match = false;
 		}
@@ -96,16 +97,11 @@ void Compiler::operator()()
 	codegen->finalize_program();
 }
 
-bool Compiler::check_token_range(TOKEN first, TOKEN last) const
-{
-	return int(current) >= int(first) && int(current) <= int(last);
-}
-
-bool Compiler::is_token_keyword() const { return check_token_range(TOKEN::FIRST_KEYWORD, TOKEN::LAST_KEYWORD); }
-bool Compiler::is_token_type() const { return check_token_range(TOKEN::FIRST_TYPE, TOKEN::LAST_TYPE); }
-bool Compiler::is_token_addop() const { return check_token_range(TOKEN::FIRST_ADDOP, TOKEN::LAST_ADDOP); }
-bool Compiler::is_token_mulop() const { return check_token_range(TOKEN::FIRST_MULOP, TOKEN::LAST_MULOP); }
-bool Compiler::is_token_relop() const { return check_token_range(TOKEN::FIRST_RELOP, TOKEN::LAST_RELOP); }
+bool Compiler::is_token_keyword() const { return check_enum_range(current, TOKEN::FIRST_KEYWORD, TOKEN::LAST_KEYWORD); }
+bool Compiler::is_token_type() const { return check_enum_range(current, TOKEN::FIRST_TYPE, TOKEN::LAST_TYPE); }
+bool Compiler::is_token_addop() const { return check_enum_range(current, TOKEN::FIRST_ADDOP, TOKEN::LAST_ADDOP); }
+bool Compiler::is_token_mulop() const { return check_enum_range(current, TOKEN::FIRST_MULOP, TOKEN::LAST_MULOP); }
+bool Compiler::is_token_relop() const { return check_enum_range(current, TOKEN::FIRST_RELOP, TOKEN::LAST_RELOP); }
 
 string_view Compiler::token_text() const { return lexer.YYText(); }
 
