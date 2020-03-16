@@ -32,6 +32,41 @@ Building should run tests, some of which dump the assembly files in the `tests/`
 The generated assembly requires to be linked against the C standard library.
 Note that the generated assembly uses the SystemV ABI (which Windows does not use).
 
+## Implementation status
+
+Types:
+- [x] Typed variables
+- [x] `INTEGER` type
+- [ ] `CHAR` type
+- [ ] `DOUBLE` type
+- [x] `BOOLEAN` type
+
+Operators:
+- Arithmetic operators: `+`, `-`, `*`, `/`, `%`
+    - [x] Integral
+    - [ ] Floating-point
+- [x] Logical operators: `||`, `&&`
+- Comparison operators: `<`, `<=`, `==`, `>`, `>=`, `!=` (or `<>`)
+    - [x] Integral
+    - [ ] Floating-point
+
+Statements:
+- [x] `IF` statement
+- [x] `FOR` statement
+    - [x] `TO` support
+    - [ ] `DOWNTO` support
+- [x] `WHILE` statement
+- [ ] `CASE` statement
+
+Procedures:
+- [ ] User procedure support
+    - [ ] Declaration support
+    - [ ] Calling support
+    - [ ] Local variables
+    - [ ] Parameter support
+    - [ ] Return value support
+- [ ] C Foreign function interface
+
 ## Language grammar
 
 ```sf
