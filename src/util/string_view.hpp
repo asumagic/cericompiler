@@ -28,6 +28,8 @@ class string_view
 
 	std::string str() const { return {m_data, m_data + m_size}; }
 
+	operator std::string() const { return str(); }
+
 	friend std::ostream& operator<<(std::ostream& os, const string_view& view)
 	{
 		os.write(view.m_data, view.m_size);

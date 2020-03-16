@@ -34,7 +34,7 @@ void Compiler::error(string_view s) const
 	std::cerr << "error: " << s << '\n';
 
 	print_error_preamble();
-	std::cerr << "note: when reading token '" << lexer.YYText() << "'\n";
+	std::cerr << "note: when reading token '" << token_text() << "'\n";
 
 	exit(-1);
 }
@@ -76,10 +76,7 @@ void Compiler::check_type(Type a, Type b) const
 
 TOKEN Compiler::read_token() { return (current = TOKEN(lexer.yylex())); }
 
-bool Compiler::match_keyword(const char* keyword) const
-{
-	return (current == KEYWORD && std::strcmp(lexer.YYText(), keyword) == 0);
-}
+bool Compiler::match_keyword(const char* keyword) const { return (current == KEYWORD && token_text() == keyword); }
 
 Compiler::Compiler(std::istream& input, std::ostream& output) :
 	lexer{input, output}, codegen{std::make_unique<CodeGen>(output)}
@@ -101,9 +98,11 @@ void Compiler::operator()()
 	codegen->finalize_program();
 }
 
+string_view Compiler::token_text() const { return lexer.YYText(); }
+
 Type Compiler::parse_identifier()
 {
-	const std::string name = lexer.YYText();
+	const std::string name = token_text();
 
 	const auto it = variables.find(name);
 	if (it == variables.end())
@@ -121,7 +120,7 @@ Type Compiler::parse_identifier()
 
 Type Compiler::parse_number()
 {
-	codegen->load_i64(std::atoi(lexer.YYText()));
+	codegen->load_i64(std::stoi(token_text()));
 	read_token();
 
 	return Type::UNSIGNED_INT;
@@ -162,7 +161,7 @@ Type Compiler::parse_factor()
 
 MultiplicativeOperator Compiler::parse_multiplicative_operator()
 {
-	const auto it = multiplicative_operator_names.find(lexer.YYText());
+	const auto it = multiplicative_operator_names.find(token_text());
 	read_token();
 	return it != multiplicative_operator_names.end() ? it->second : MultiplicativeOperator::WTFM;
 }
@@ -221,7 +220,7 @@ Type Compiler::parse_term()
 
 AdditiveOperator Compiler::parse_additive_operator()
 {
-	const auto it = additive_operator_names.find(lexer.YYText());
+	const auto it = additive_operator_names.find(token_text());
 	read_token();
 	return it != additive_operator_names.end() ? it->second : AdditiveOperator::WTFA;
 }
@@ -285,7 +284,7 @@ void Compiler::parse_declaration_block()
 		do
 		{
 			read_token();
-			current_declarations.push_back(lexer.YYText());
+			current_declarations.push_back(token_text());
 			read_token();
 		} while (current == COMMA);
 
@@ -338,7 +337,7 @@ Type Compiler::parse_type()
 
 RelationalOperator Compiler::parse_relational_operator()
 {
-	const auto it = relational_operator_names.find(lexer.YYText());
+	const auto it = relational_operator_names.find(token_text());
 	read_token();
 	return it != relational_operator_names.end() ? it->second : RelationalOperator::WTFR;
 }
@@ -377,7 +376,7 @@ Variable Compiler::parse_assignment_statement()
 	if (current != ID)
 		error("expected an identifier");
 
-	const std::string name = lexer.YYText();
+	const std::string name = token_text();
 	const auto        it   = variables.find(name);
 
 	if (it == variables.end())
@@ -409,7 +408,7 @@ void Compiler::parse_if_statement()
 
 	codegen->statement_if_post_check(if_statement);
 
-	if (current != KEYWORD || strcmp(lexer.YYText(), "THEN"))
+	if (current != KEYWORD || token_text() != "THEN")
 	{
 		error("expected 'THEN' after conditional expression of 'IF' statement");
 	}
@@ -417,7 +416,7 @@ void Compiler::parse_if_statement()
 	read_token();
 	parse_statement();
 
-	if (current == KEYWORD && strcmp(lexer.YYText(), "ELSE") == 0)
+	if (current == KEYWORD && token_text() == "ELSE")
 	{
 		codegen->statement_if_with_else(if_statement);
 		read_token();
@@ -441,7 +440,7 @@ void Compiler::parse_while_statement()
 
 	codegen->statement_while_post_check(while_statement);
 
-	if (current != KEYWORD || strcmp(lexer.YYText(), "DO"))
+	if (current != KEYWORD || token_text() != "DO")
 	{
 		error("expected 'DO' after conditional expression of 'WHILE' statement");
 	}
@@ -460,7 +459,7 @@ void Compiler::parse_for_statement()
 
 	auto for_statement = codegen->statement_for_prepare(assignment);
 
-	if (current != KEYWORD || strcmp(lexer.YYText(), "TO") != 0)
+	if (current != KEYWORD || token_text() != "TO")
 	{
 		error("expected 'TO' after assignement in 'FOR' statement");
 	}
@@ -472,7 +471,7 @@ void Compiler::parse_for_statement()
 
 	codegen->statement_for_post_check(for_statement);
 
-	if (current != KEYWORD || strcmp(lexer.YYText(), "DO") != 0)
+	if (current != KEYWORD || token_text() != "DO")
 	{
 		error("expected 'DO' after max expression in 'FOR' statement");
 	}
@@ -491,7 +490,7 @@ void Compiler::parse_block_statement()
 		parse_statement();
 	} while (current == SEMICOLON);
 
-	if (current != KEYWORD || strcmp(lexer.YYText(), "END") != 0)
+	if (current != KEYWORD || token_text() != "END")
 	{
 		error("expected 'END' to finish block statement");
 	}

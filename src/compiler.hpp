@@ -4,6 +4,7 @@
 #include "operators.hpp"
 #include "tokeniser.hpp"
 #include "types.hpp"
+#include "util/string_view.hpp"
 
 #include <iosfwd>
 #include <memory>
@@ -39,6 +40,8 @@ class Compiler
 	std::unordered_map<std::string, VariableType> variables;
 
 	std::unique_ptr<CodeGen> codegen;
+
+	[[nodiscard]] string_view token_text() const;
 
 	// Letter := "a"|...|"z"
 	[[nodiscard]] Type parse_identifier();
