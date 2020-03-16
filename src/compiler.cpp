@@ -86,20 +86,18 @@ Compiler::Compiler(std::istream& input, std::ostream& output) :
 
 void Compiler::operator()()
 {
-	cout << "# This code was produced by the CERI Compiler\n";
-
-	// Let's proceed to the analysis and code production
+	codegen->begin_program();
 
 	read_token();
 	parse_program();
-	// Trailer for the gcc assembler / linker
-	cout << "\tmovq %rbp, %rsp\t\t# Restore the position of the stack's top\n";
-	cout << "\tret\t\t\t# Return from main function\n";
+
 	if (current != FEOF)
 	{
 		// FIXME: this is not printing the right stuff
 		error((string("extraneous characters at end of file: [") + std::to_string(current) + "]").c_str());
 	}
+
+	codegen->finalize_program();
 }
 
 Type Compiler::parse_identifier()
@@ -112,17 +110,17 @@ Type Compiler::parse_identifier()
 		error((std::string("use of undeclared identifier '") + name + '\'').c_str());
 	}
 
-	const VariableType& variable = it->second;
+	const VariableType& type = it->second;
 
-	cout << "\tpush " << lexer.YYText() << '\n';
+	codegen->load_variable({name, type});
 	read_token();
 
-	return variable.type;
+	return type.type;
 }
 
 Type Compiler::parse_number()
 {
-	cout << "\tpush $" << atoi(lexer.YYText()) << '\n';
+	codegen->load_i64(std::atoi(lexer.YYText()));
 	read_token();
 
 	return Type::UNSIGNED_INT;
@@ -360,7 +358,7 @@ Type Compiler::parse_expression()
 	return first_type;
 }
 
-VariableAssignment Compiler::parse_assignment_statement()
+Variable Compiler::parse_assignment_statement()
 {
 	if (current != ID)
 		error("expected an identifier");
@@ -554,7 +552,7 @@ void Compiler::parse_statement()
 
 void Compiler::parse_statement_part()
 {
-	codegen->begin_executable();
+	codegen->begin_executable_section();
 	codegen->begin_main_procedure();
 
 	parse_statement();
@@ -568,14 +566,14 @@ void Compiler::parse_statement_part()
 	read_token();
 
 	codegen->finalize_main_procedure();
-	codegen->finalize_executable();
+	codegen->finalize_executable_section();
 }
 
 void Compiler::parse_program()
 {
-	codegen->begin_global_data();
+	codegen->begin_global_data_section();
 	parse_declaration_block();
-	codegen->finalize_global_data();
+	codegen->finalize_global_data_section();
 
 	for (const auto& it : variables)
 	{

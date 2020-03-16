@@ -14,10 +14,11 @@
 
 struct VariableType
 {
+	// This is a struct on its own in case we add metadata or anything of the sort
 	Type type;
 };
 
-struct VariableAssignment
+struct Variable
 {
 	std::string  name;
 	VariableType type;
@@ -76,7 +77,7 @@ class Compiler
 	[[nodiscard]] Type parse_expression();
 
 	// AssignementStatement := Identifier ":=" Expression
-	VariableAssignment parse_assignment_statement();
+	Variable parse_assignment_statement();
 
 	// IfStatement := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 	void parse_if_statement();
