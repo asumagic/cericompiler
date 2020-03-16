@@ -42,6 +42,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "VAR"     return KEYWORD_VAR;
 
 "INTEGER" return TYPE_INTEGER;
+"DOUBLE"  return TYPE_DOUBLE;
 "BOOLEAN" return TYPE_BOOLEAN;
 "CHAR"    return TYPE_CHAR;
 

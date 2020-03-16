@@ -82,16 +82,13 @@ class CodeGen
 	void         statement_for_post_check(ForStatement);
 	void         statement_for_finalize(ForStatement);
 
-	void debug_display_i64();
-	void debug_display_boolean();
-	void debug_display_char();
+	// HACK: return value = supported orn ot
+	bool debug_display(Type type);
 
 	private:
 	void alu_load_binop_i64();
 
 	void alu_compare_i64(string_view instruction);
-
-	void debug_call_printf();
 
 	std::size_t m_label_tag = 0;
 

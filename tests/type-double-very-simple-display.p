@@ -1,0 +1,3 @@
+VAR a : DOUBLE.
+
+DISPLAY a.

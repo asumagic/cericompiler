@@ -337,6 +337,7 @@ Type Compiler::parse_type()
 	switch (token)
 	{
 	case TOKEN::TYPE_INTEGER: return Type::UNSIGNED_INT;
+	case TOKEN::TYPE_DOUBLE: return Type::DOUBLE;
 	case TOKEN::TYPE_BOOLEAN: return Type::BOOLEAN;
 	case TOKEN::TYPE_CHAR: return Type::CHAR;
 	default: bug("unrecognized type");
@@ -504,13 +505,9 @@ void Compiler::parse_display_statement()
 	read_token();
 	const Type type = parse_expression();
 
-	switch (type)
+	if (!codegen->debug_display(type))
 	{
-	case Type::UNSIGNED_INT: codegen->debug_display_i64(); break;
-	case Type::BOOLEAN: codegen->debug_display_boolean(); break;
-	case Type::CHAR: codegen->debug_display_char(); break;
-
-	default: bug("DISPLAY statement not yet implemented for this type");
+		bug("DISPLAY statement not yet implemented for this type");
 	}
 }
 

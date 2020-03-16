@@ -31,7 +31,8 @@ void CodeGen::begin_global_data_section()
 	m_output << ".data\n"
 				".align 8\n"
 				"__cc_format_string_llu: .string \"%llu\\n\"\n"
-				"__cc_format_string_c:   .string \"%c\" # No newline; this is intended\n";
+				"__cc_format_string_c:   .string \"%c\" # No newline; this is intended\n"
+				"__cc_format_string_f:   .string \"%f\\n\"\n";
 }
 
 void CodeGen::finalize_global_data_section() {}
@@ -217,22 +218,42 @@ void CodeGen::statement_for_finalize(ForStatement statement)
 		fmt::arg("tag", statement.saved_tag));
 }
 
-void CodeGen::debug_display_i64()
+bool CodeGen::debug_display(Type type)
 {
-	m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
-				"\tpop %rsi\n";
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	case Type::BOOLEAN:
+	{
+		m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
+					"\tpop %rsi\n";
+		break;
+	}
 
-	debug_call_printf();
-}
+	case Type::CHAR:
+	{
+		m_output << "\tmovq $__cc_format_string_c, %rdi\n"
+					"\tpop %rsi\n";
+		break;
+	}
 
-void CodeGen::debug_display_boolean() { debug_display_i64(); }
+	case Type::DOUBLE:
+	{
+		m_output << "\tmovq $__cc_format_string_f, %rdi\n"
+					"\tpop %rsi\n";
+		break;
+	}
 
-void CodeGen::debug_display_char()
-{
-	m_output << "\tmovq $__cc_format_string_c, %rdi\n"
-				"\tpop %rsi\n";
+	default:
+	{
+		return false;
+	}
+	}
 
-	debug_call_printf();
+	m_output << "\tmovb $0, %al # printf is variadic, as per the ABI we write the number of float parameters\n"
+				"\t call printf\n";
+
+	return true;
 }
 
 void CodeGen::alu_load_binop_i64()
@@ -257,10 +278,4 @@ void CodeGen::alu_compare_i64(string_view instruction)
 		"__next{tag}:\n",
 		fmt::arg("jumpinstruction", instruction.str()),
 		fmt::arg("tag", m_label_tag));
-}
-
-void CodeGen::debug_call_printf()
-{
-	m_output << "\tmovb $0, %al # printf is variadic, as per the ABI we write the number of float parameters\n"
-				"\t call printf\n";
 }
