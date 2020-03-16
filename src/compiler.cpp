@@ -34,7 +34,7 @@ using namespace std::string_literals;
 
 void Compiler::print_error_preamble() const { std::cerr << "source:" << lexer.lineno() << ": "; }
 
-void Compiler::error(const char* s) const
+void Compiler::error(string_view s) const
 {
 	print_error_preamble();
 	std::cerr << "error: " << s << '\n';

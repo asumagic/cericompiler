@@ -104,7 +104,7 @@ class Compiler
 	void parse_program();
 
 	void              print_error_preamble() const;
-	[[noreturn]] void error(const char* s) const;
+	[[noreturn]] void error(string_view s) const;
 
 	void check_type(Type a, Type b) const;
 
