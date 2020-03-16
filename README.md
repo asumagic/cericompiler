@@ -40,7 +40,7 @@ Types:
     - [x] Integer literals
 - [ ] `CHAR` type
     - [ ] Character literals
-- [ ] `DOUBLE` type
+- [x] `DOUBLE` type
 - [x] `BOOLEAN` type
 - [x] Explicit type conversions
     - [x] Integral <=> Integral (e.g. no-op or `CHAR` <=> `INTEGER`)
