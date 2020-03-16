@@ -19,18 +19,18 @@ class string_view
 	string_view(string_view&&) = default;
 	string_view& operator=(string_view&&) = default;
 
-	friend bool operator==(const string_view& a, const string_view& b)
+	friend bool operator==(string_view a, string_view b)
 	{
 		return a.m_size == b.m_size && std::strncmp(a.m_data, b.m_data, a.m_size) == 0;
 	}
 
-	friend bool operator!=(const string_view& a, const string_view& b) { return !(a == b); }
+	friend bool operator!=(string_view a, string_view b) { return !(a == b); }
 
 	std::string str() const { return {m_data, m_data + m_size}; }
 
 	operator std::string() const { return str(); }
 
-	friend std::ostream& operator<<(std::ostream& os, const string_view& view)
+	friend std::ostream& operator<<(std::ostream& os, string_view view)
 	{
 		os.write(view.m_data, view.m_size);
 		return os;
@@ -60,7 +60,7 @@ namespace std
 template<>
 struct hash<::string_view>
 {
-	std::size_t operator()(const ::string_view& s) const noexcept
+	std::size_t operator()(::string_view s) const noexcept
 	{
 		// Defer to std::string's hash algorithm for now
 		return std::hash<std::string>{}(s.str());
