@@ -80,7 +80,8 @@ Letter                    := "a"|...|"z"
 Number                    := Digit{Digit}
 Digit                     := "0"|...|"9"
 
-Factor                    := Number | Letter | "(" Expression ")"| "!" Factor | Type "(" Expression ")"
+Factor                    := Number | Letter | "(" Expression ")"| "!" Factor | TypeCast
+TypeCast                  := Type "(" Expression ")"
 
 Term                      := Factor {MultiplicativeOperator Factor}
 MultiplicativeOperator    := "*" | "/" | "%" | "&&"

@@ -55,9 +55,10 @@ class Compiler
 	// Digit := "0"|...|"9"
 	[[nodiscard]] Type parse_number();
 
-	// Factor := Number | Letter | "(" Expression ")"| "!" Factor
+	// Factor := Number | Letter | "(" Expression ")" | "!" Factor | TypeCast
 	[[nodiscard]] Type parse_factor();
 
+	// TypeCast := Type "(" Expression ")"
 	[[nodiscard]] Type parse_type_cast();
 
 	// Term := Factor {MultiplicativeOperator Factor}
