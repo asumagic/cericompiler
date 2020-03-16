@@ -10,6 +10,7 @@ add_executable(${PROJECT_NAME}
 	"src/compiler.cpp"
 	"src/types.cpp"
 	"src/main.cpp"
+	"src/util/string_view.cpp"
 	"tokeniser.cpp"
 )
 

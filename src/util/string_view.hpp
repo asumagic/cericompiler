@@ -2,14 +2,15 @@
 
 #include <cstddef>
 #include <cstring>
-#include <ostream>
+#include <iosfwd>
 #include <string>
+#include <utility>
 
 //! Lightweight C++11 std::string_view-like replacement
 class string_view
 {
 	public:
-	constexpr string_view(const std::string& str) : m_data{str.data()}, m_size{str.size()} {}
+	string_view(const std::string& str);
 	constexpr string_view(const char* str) : string_view{str, constexpr_strlen(str)} {}
 	constexpr string_view(const char* str, std::size_t len) : m_data{str}, m_size{len} {}
 
@@ -19,22 +20,13 @@ class string_view
 	string_view(string_view&&) = default;
 	string_view& operator=(string_view&&) = default;
 
-	friend bool operator==(string_view a, string_view b)
-	{
-		return a.m_size == b.m_size && std::strncmp(a.m_data, b.m_data, a.m_size) == 0;
-	}
+	friend bool operator==(string_view a, string_view b);
+	friend bool operator!=(string_view a, string_view b);
 
-	friend bool operator!=(string_view a, string_view b) { return !(a == b); }
+	std::string str() const;
+				operator std::string() const;
 
-	std::string str() const { return {m_data, m_data + m_size}; }
-
-	operator std::string() const { return str(); }
-
-	friend std::ostream& operator<<(std::ostream& os, string_view view)
-	{
-		os.write(view.m_data, view.m_size);
-		return os;
-	}
+	friend std::ostream& operator<<(std::ostream& os, string_view view);
 
 	private:
 	//! Constexpr version of std::strlen as it is not constexpr in C++11
@@ -60,11 +52,7 @@ namespace std
 template<>
 struct hash<::string_view>
 {
-	std::size_t operator()(::string_view s) const noexcept
-	{
-		// Defer to std::string's hash algorithm for now
-		return std::hash<std::string>{}(s.str());
-	}
+	std::size_t operator()(::string_view s) const noexcept;
 };
 
 } // namespace std
