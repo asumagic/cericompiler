@@ -22,7 +22,7 @@ void CodeGen::begin_main_procedure()
 
 void CodeGen::finalize_main_procedure()
 {
-	m_output << "\t movq %rbp, %rsp # Restore the position of the top of the stack\n"
+	m_output << "\tmovq %rbp, %rsp # Restore the position of the top of the stack\n"
 				"\tret\n";
 }
 
@@ -43,7 +43,21 @@ void CodeGen::define_global_variable(const Variable& variable)
 }
 
 void CodeGen::load_variable(const Variable& variable) { m_output << fmt::format("\tpush {}\n", variable.name); }
-void CodeGen::load_i64(uint64_t value) { m_output << fmt::format("\tpush ${}\n", value); }
+void CodeGen::load_i64(uint64_t value)
+{
+	if ((value >> 32) != 0)
+	{
+		// The value does not fit into an imm32, so we cannot use push directly.
+		m_output << fmt::format(
+			"\tmovq $0x{:016x}, %rax\n"
+			"\tpush %rax\n",
+			value);
+	}
+	else
+	{
+		m_output << fmt::format("\tpush $0x{:016x}\n", value);
+	}
+}
 
 void CodeGen::store_variable(const Variable& variable) { m_output << fmt::format("\tpop {}\n", variable.name); }
 
@@ -382,21 +396,28 @@ void CodeGen::debug_display(Type type)
 	case Type::BOOLEAN:
 	{
 		m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
-					"\tpop %rsi\n";
+					"\tpop %rsi\n"
+					"\tmovb $0, %al # number of float parameters (varargs)\n"
+					"\tcall printf\n";
 		break;
 	}
 
 	case Type::CHAR:
 	{
 		m_output << "\tmovq $__cc_format_string_c, %rdi\n"
-					"\tpop %rsi\n";
+					"\tpop %rsi\n"
+					"\tmovb $0, %al # number of float parameters (varargs)\n"
+					"\tcall printf\n";
 		break;
 	}
 
 	case Type::DOUBLE:
 	{
-		m_output << "\tmovq $__cc_format_string_f, %rdi\n"
-					"\tpop %rsi\n";
+		m_output << "\tmovq $__cc_format_string_f, %rdi # Write 1st parameter\n"
+					"\tmovsd (%rsp), %xmm0 # Write 2nd parameter - load 64-bit double from stack to xmm0, clear "
+					"upper bits\n"
+					"\taddq $8, %rsp # Effectively pop the double from the stack.\n"
+					"\tmovb $1, %al # number of float parameters (varargs)\n";
 		break;
 	}
 
@@ -406,8 +427,10 @@ void CodeGen::debug_display(Type type)
 	}
 	}
 
-	m_output << "\tmovb $0, %al # printf is variadic, as per the ABI we write the number of float parameters\n"
-				"\t call printf\n";
+	m_output << "\taddq $-8, %rsp # Align stack to 16-byte. There is a 8-byte value on the stack already, that is, the "
+				"ret pointer.\n"
+				"\tcall printf\n"
+				"\taddq $8, %rsp # Cancel the alignement done earlier\n";
 }
 
 void CodeGen::alu_load_binop(Type type)
