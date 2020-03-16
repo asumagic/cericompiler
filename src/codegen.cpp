@@ -160,6 +160,38 @@ void CodeGen::statement_while_finalize(WhileStatement statement)
 			 << statement.saved_tag << ":\n";
 }
 
+ForStatement CodeGen::statement_for_prepare(const Variable& assignement_variable)
+{
+	return {++m_label_tag, &assignement_variable};
+}
+
+void CodeGen::statement_for_post_assignment(ForStatement statement)
+{
+	m_output << "__for" << statement.saved_tag << ":\n";
+}
+
+void CodeGen::statement_for_post_check(ForStatement statement)
+{
+	// we branch *out* if var < %rax, mind the op order in at&t
+	m_output << "\tpop %rax\n"
+				"\tcmpq "
+			 << statement.variable->name
+			 << ", %rax\n"
+				"\tjl __next"
+			 << statement.saved_tag << '\n';
+}
+
+void CodeGen::statement_for_finalize(ForStatement statement)
+{
+	m_output << "\taddq $1, " << statement.variable->name
+			 << "\n"
+				"\tjmp __for"
+			 << statement.saved_tag
+			 << "\n"
+				"__next"
+			 << statement.saved_tag << ":\n";
+}
+
 void CodeGen::debug_display_i64()
 {
 	m_output << "\tmovq $__cc_format_string_llu, %rdi\n"

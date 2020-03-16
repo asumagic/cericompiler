@@ -17,6 +17,12 @@ struct WhileStatement
 	std::size_t saved_tag;
 };
 
+struct ForStatement
+{
+	std::size_t     saved_tag;
+	const Variable* variable;
+};
+
 class CodeGen
 {
 	public:
@@ -66,6 +72,11 @@ class CodeGen
 	WhileStatement statement_while_prepare();
 	void           statement_while_post_check(WhileStatement);
 	void           statement_while_finalize(WhileStatement);
+
+	ForStatement statement_for_prepare(const Variable& assignement_variable);
+	void         statement_for_post_assignment(ForStatement);
+	void         statement_for_post_check(ForStatement);
+	void         statement_for_finalize(ForStatement);
 
 	void debug_display_i64();
 

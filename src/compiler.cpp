@@ -457,26 +457,23 @@ void Compiler::parse_while_statement()
 
 void Compiler::parse_for_statement()
 {
-	const auto tag = ++label_tag;
-
 	read_token();
 	const auto assignment = parse_assignment_statement();
 	check_type(assignment.type.type, Type::UNSIGNED_INT);
+
+	auto for_statement = codegen->statement_for_prepare(assignment);
 
 	if (current != KEYWORD || strcmp(lexer.YYText(), "TO") != 0)
 	{
 		error("expected 'TO' after assignement in 'FOR' statement");
 	}
 
-	cout << "ForBegin" << tag << ":\n";
+	codegen->statement_for_post_assignment(for_statement);
 
 	read_token();
 	check_type(parse_expression(), Type::UNSIGNED_INT);
 
-	cout << "\tpop %rax\n";
-	// we branch *out* if var < %rax, mind the op order in at&t
-	cout << "\tcmpq " << assignment.name << ", %rax\n";
-	cout << "\tjl Suite" << tag << '\n';
+	codegen->statement_for_post_check(for_statement);
 
 	if (current != KEYWORD || strcmp(lexer.YYText(), "DO") != 0)
 	{
@@ -486,9 +483,7 @@ void Compiler::parse_for_statement()
 	read_token();
 	parse_statement();
 
-	cout << "\taddq $1, " << assignment.name << '\n';
-	cout << "\tjmp ForBegin" << tag << '\n';
-	cout << "Suite" << tag << ":\n";
+	codegen->statement_for_finalize(for_statement);
 }
 
 void Compiler::parse_block_statement()
