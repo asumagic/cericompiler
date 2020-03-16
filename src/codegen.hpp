@@ -7,6 +7,11 @@
 
 class Variable;
 
+struct IfStatement
+{
+	std::size_t saved_tag;
+};
+
 class CodeGen
 {
 	public:
@@ -47,6 +52,14 @@ class CodeGen
 	void alu_greater_i64();
 	void alu_lower_i64();
 
+	IfStatement prepare_statement_if();
+
+	void statement_if_pre_check(IfStatement);
+	void statement_if_post_check(IfStatement);
+	void statement_if_with_else(IfStatement);
+	void statement_if_without_else(IfStatement);
+	void statement_if_finalize(IfStatement);
+
 	void debug_display_i64();
 
 	private:
@@ -56,7 +69,7 @@ class CodeGen
 
 	void debug_call_printf();
 
-	std::size_t m_label_tag = {};
+	std::size_t m_label_tag = 0;
 
 	std::ostream& m_output;
 };

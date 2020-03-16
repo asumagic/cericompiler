@@ -108,6 +108,36 @@ void CodeGen::alu_lower_equal_i64() { alu_compare_i64("jbe"); }
 void CodeGen::alu_greater_i64() { alu_compare_i64("ja"); }
 void CodeGen::alu_lower_i64() { alu_compare_i64("je"); }
 
+IfStatement CodeGen::prepare_statement_if() { return {++m_label_tag}; }
+
+void CodeGen::statement_if_pre_check(IfStatement) {}
+
+void CodeGen::statement_if_post_check(IfStatement statement)
+{
+	m_output << "\tpopq %rax\n"
+				"\ttest %rax, %rax\n"
+				"\tjz __false"
+			 << statement.saved_tag
+			 << "\n"
+				"\t__true"
+			 << statement.saved_tag << ":\n";
+}
+
+void CodeGen::statement_if_with_else(IfStatement statement)
+{
+	m_output << "\tjmp __next" << statement.saved_tag
+			 << "\n"
+				"\t__false"
+			 << statement.saved_tag << ":\n";
+}
+
+void CodeGen::statement_if_without_else(IfStatement statement)
+{
+	m_output << "__false" << statement.saved_tag << ":\n";
+}
+
+void CodeGen::statement_if_finalize(IfStatement statement) { m_output << "__next" << statement.saved_tag << ":\n"; }
+
 void CodeGen::debug_display_i64()
 {
 	m_output << "\tmovq $__cc_format_string_llu, %rdi\n"

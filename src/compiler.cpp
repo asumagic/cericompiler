@@ -405,15 +405,14 @@ Variable Compiler::parse_assignment_statement()
 
 void Compiler::parse_if_statement()
 {
+	auto if_statement = codegen->prepare_statement_if();
+
+	codegen->statement_if_pre_check(if_statement);
+
 	read_token();
 	check_type(parse_expression(), Type::BOOLEAN);
 
-	const auto tag = ++label_tag;
-
-	cout << "\tpopq %rax\n";
-	cout << "\ttest %rax, %rax\n";
-	cout << "\tjz IfFalse" << tag << '\n';
-	cout << "IfTrue" << tag << ":\n";
+	codegen->statement_if_post_check(if_statement);
 
 	if (current != KEYWORD || strcmp(lexer.YYText(), "THEN"))
 	{
@@ -425,17 +424,16 @@ void Compiler::parse_if_statement()
 
 	if (current == KEYWORD && strcmp(lexer.YYText(), "ELSE") == 0)
 	{
-		cout << "\tjmp Suite" << tag << '\n';
-		cout << "IfFalse" << tag << ":\n";
+		codegen->statement_if_with_else(if_statement);
 		read_token();
 		parse_statement();
 	}
 	else
 	{
-		cout << "IfFalse" << tag << ":\n";
+		codegen->statement_if_without_else(if_statement);
 	}
 
-	cout << "Suite" << tag << ":\n";
+	codegen->statement_if_finalize(if_statement);
 }
 
 void Compiler::parse_while_statement()
