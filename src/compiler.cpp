@@ -170,7 +170,7 @@ Type Compiler::parse_term()
 
 	while (current == MULOP)
 	{
-		MultiplicativeOperator mulop    = parse_multiplicative_operator(); // Save operator in local variable
+		MultiplicativeOperator mulop    = parse_multiplicative_operator();
 		const Type             nth_type = parse_factor();
 
 		check_type(first_type, nth_type);
@@ -225,35 +225,44 @@ AdditiveOperator Compiler::parse_additive_operator()
 
 Type Compiler::parse_simple_expression()
 {
-	AdditiveOperator adop;
-	const Type       first_type = parse_term();
+	const Type first_type = parse_term();
+
 	while (current == ADDOP)
 	{
-		adop                = parse_additive_operator(); // Save operator in local variable
-		const Type nth_type = parse_term();
+		AdditiveOperator adop     = parse_additive_operator();
+		const Type       nth_type = parse_term();
 
 		check_type(first_type, nth_type);
 
-		cout << "\tpop %rbx\n"; // get first operand
-		cout << "\tpop %rax\n"; // get second operand
 		switch (adop)
 		{
 		case AdditiveOperator::OR:
+		{
 			check_type(first_type, Type::BOOLEAN);
-			cout << "\taddq	%rbx, %rax\t# OR\n"; // operand1 OR operand2
+			codegen->alu_or_bool();
 			break;
-		case AdditiveOperator::ADD:
-			check_type(first_type, Type::ARITHMETIC);
-			cout << "\taddq	%rbx, %rax\t# ADD\n"; // add both operands
-			break;
-		case AdditiveOperator::SUB:
-			check_type(first_type, Type::ARITHMETIC);
-			cout << "\tsubq	%rbx, %rax\t# SUB\n"; // substract both operands
-			break;
-		case AdditiveOperator::WTFA:
-		default: error("unknown additive operator");
 		}
-		cout << "\tpush %rax\n"; // store result
+
+		case AdditiveOperator::ADD:
+		{
+			check_type(first_type, Type::ARITHMETIC);
+			codegen->alu_add_i64();
+			break;
+		}
+
+		case AdditiveOperator::SUB:
+		{
+			check_type(first_type, Type::ARITHMETIC);
+			codegen->alu_sub_i64();
+			break;
+		}
+
+		case AdditiveOperator::WTFA:
+		default:
+		{
+			error("unknown additive operator");
+		}
+		}
 	}
 
 	return first_type;

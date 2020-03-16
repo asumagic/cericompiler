@@ -28,7 +28,10 @@ class CodeGen
 	void load_i64(std::int64_t value);
 
 	void alu_and_bool();
+	void alu_or_bool();
 
+	void alu_add_i64();
+	void alu_sub_i64();
 	void alu_multiply_i64();
 	void alu_divide_i64();
 	void alu_modulus_i64();

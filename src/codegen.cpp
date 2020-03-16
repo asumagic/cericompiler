@@ -49,6 +49,30 @@ void CodeGen::alu_and_bool()
 				"\tpush %rax\n";
 }
 
+void CodeGen::alu_or_bool()
+{
+	alu_load_binop_i64();
+
+	m_output << "\torq %rbx, %rax\n"
+				"\tpush %rax\n";
+}
+
+void CodeGen::alu_add_i64()
+{
+	alu_load_binop_i64();
+
+	m_output << "\taddq %rbx, %rax\n"
+				"\tpush %rax\n";
+}
+
+void CodeGen::alu_sub_i64()
+{
+	alu_load_binop_i64();
+
+	m_output << "\tsubq %rbx, %rax\n"
+				"\tpush %rax\n";
+}
+
 void CodeGen::alu_multiply_i64()
 {
 	alu_load_binop_i64();
