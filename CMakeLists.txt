@@ -11,7 +11,8 @@ project(ceri-compiler)
 hunter_add_package(fmt)
 find_package(fmt CONFIG REQUIRED)
 
-find_package(FLEX)
+hunter_add_package(flex)
+find_package(FLEX REQUIRED)
 FLEX_TARGET(tokeniser "src/tokeniser.l" "${CMAKE_CURRENT_BINARY_DIR}/tokeniser.cpp")
 
 add_executable(${PROJECT_NAME}
@@ -23,7 +24,7 @@ add_executable(${PROJECT_NAME}
 	"tokeniser.cpp"
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE "src/")
+target_include_directories(${PROJECT_NAME} PRIVATE "src/" ${FLEX_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} fmt::fmt)
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_STANDARD 14
