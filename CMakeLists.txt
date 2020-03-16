@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.5)
 
+include("3rdparty/HunterGate.cmake")
+HunterGate(
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.251.tar.gz"
+    SHA1 "5659b15dc0884d4b03dbd95710e6a1fa0fc3258d"
+)
+
 project(ceri-compiler)
+
+hunter_add_package(fmt)
+find_package(fmt CONFIG REQUIRED)
 
 find_package(FLEX)
 FLEX_TARGET(tokeniser "src/tokeniser.l" "${CMAKE_CURRENT_BINARY_DIR}/tokeniser.cpp")
@@ -15,7 +24,12 @@ add_executable(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "src/")
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)
+target_link_libraries(${PROJECT_NAME} fmt::fmt)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	CXX_STANDARD 14
+	CXX_STANDARD_REQUIRED ON
+	CXX_EXTENSIONS OFF
+)
 
 enable_testing()
 add_subdirectory(tests)

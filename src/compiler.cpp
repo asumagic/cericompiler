@@ -22,12 +22,13 @@
 #include "util/string_view.hpp"
 
 #include <cstring>
+#include <fmt/core.h>
 #include <string>
 #include <vector>
 
 using namespace std::string_literals;
 
-void Compiler::print_error_preamble() const { std::cerr << "source:" << lexer.lineno() << ": "; }
+void Compiler::print_error_preamble() const { fmt::print(stderr, "source:{}: ", lexer.lineno()); }
 
 void Compiler::error(string_view s) const
 {

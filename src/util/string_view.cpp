@@ -21,7 +21,7 @@ string_view::string_view(const std::string& str) : m_data{str.data()}, m_size{st
 std::string  string_view::str() const { return {m_data, m_data + m_size}; }
 string_view::operator std::string() const { return str(); }
 
-std::size_t std::hash<::string_view>::operator()(string_view s) const noexcept
+std::size_t std::hash<::string_view>::operator()(::string_view s) const noexcept
 {
 	// Defer to std::string's hash algorithm for now
 	return std::hash<std::string>{}(s.str());
