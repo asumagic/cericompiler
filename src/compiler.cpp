@@ -29,7 +29,6 @@
 #include <vector>
 
 using std::cout;
-using std::string;
 
 using namespace std::string_literals;
 
@@ -91,7 +90,7 @@ void Compiler::operator()()
 	if (current != FEOF)
 	{
 		// FIXME: this is not printing the right stuff
-		error((string("extraneous characters at end of file: [") + std::to_string(current) + "]").c_str());
+		error((std::string("extraneous characters at end of file: [") + std::to_string(current) + "]").c_str());
 	}
 
 	codegen->finalize_program();
