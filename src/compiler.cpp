@@ -518,40 +518,12 @@ void Compiler::parse_statement()
 {
 	switch (current)
 	{
-	case TOKEN::KEYWORD_IF:
-	{
-		parse_if_statement();
-		break;
-	}
-
-	case TOKEN::KEYWORD_WHILE:
-	{
-		parse_while_statement();
-		break;
-	}
-
-	case TOKEN::KEYWORD_FOR:
-	{
-		parse_for_statement();
-		break;
-	}
-
-	case TOKEN::KEYWORD_BEGIN:
-	{
-		parse_block_statement();
-		break;
-	}
-
-	case TOKEN::KEYWORD_DISPLAY:
-	{
-		parse_display_statement();
-		break;
-	}
-
-	default:
-	{
-		parse_assignment_statement();
-	}
+	case TOKEN::KEYWORD_IF: parse_if_statement(); break;
+	case TOKEN::KEYWORD_WHILE: parse_while_statement(); break;
+	case TOKEN::KEYWORD_FOR: parse_for_statement(); break;
+	case TOKEN::KEYWORD_BEGIN: parse_block_statement(); break;
+	case TOKEN::KEYWORD_DISPLAY: parse_display_statement(); break;
+	default: parse_assignment_statement(); break;
 	}
 }
 
