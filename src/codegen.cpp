@@ -428,7 +428,8 @@ void CodeGen::debug_display(Type type)
 	}
 
 	m_output << "\taddq $-8, %rsp # Align stack to 16-byte. There is a 8-byte value on the stack already, that is, the "
-				"ret pointer.\n"
+				"ret pointer. FIXME: this is probably not going to work well if things are pushed on the stack "
+				"already, e.g. procedure parameters that do not fit in registers.\n"
 				"\tcall printf\n"
 				"\taddq $8, %rsp # Cancel the alignement done earlier\n";
 }
