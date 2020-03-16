@@ -83,6 +83,8 @@ class CodeGen
 	void         statement_for_finalize(ForStatement);
 
 	void debug_display_i64();
+	void debug_display_boolean();
+	void debug_display_char();
 
 	private:
 	void alu_load_binop_i64();

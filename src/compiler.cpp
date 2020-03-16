@@ -506,16 +506,11 @@ void Compiler::parse_display_statement()
 
 	switch (type)
 	{
-	case Type::UNSIGNED_INT:
-	{
-		codegen->debug_display_i64();
-		break;
-	}
+	case Type::UNSIGNED_INT: codegen->debug_display_i64(); break;
+	case Type::BOOLEAN: codegen->debug_display_boolean(); break;
+	case Type::CHAR: codegen->debug_display_char(); break;
 
-	default:
-	{
-		bug("DISPLAY statement not yet implemented for this type");
-	}
+	default: bug("DISPLAY statement not yet implemented for this type");
 	}
 }
 

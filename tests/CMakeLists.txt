@@ -66,6 +66,7 @@ expect_output("display-arithmetic-tests" "10\\n10")
 expect_output("display-if-test" "1\\n1\\n")
 expect_output("display-for-test" "1\\n2\\n3\\n4\\n5\\n")
 expect_output("display-while-test" "1\\n2\\n3\\n4\\n5\\n")
+expect_output("ghetto-helloworld" "Hello, world!")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL

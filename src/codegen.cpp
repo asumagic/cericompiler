@@ -30,7 +30,8 @@ void CodeGen::begin_global_data_section()
 {
 	m_output << ".data\n"
 				".align 8\n"
-				"__cc_format_string_llu: .string \"%llu\\n\"\n";
+				"__cc_format_string_llu: .string \"%llu\\n\"\n"
+				"__cc_format_string_c:   .string \"%c\" # No newline; this is intended\n";
 }
 
 void CodeGen::finalize_global_data_section() {}
@@ -219,6 +220,16 @@ void CodeGen::statement_for_finalize(ForStatement statement)
 void CodeGen::debug_display_i64()
 {
 	m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
+				"\tpop %rsi\n";
+
+	debug_call_printf();
+}
+
+void CodeGen::debug_display_boolean() { debug_display_i64(); }
+
+void CodeGen::debug_display_char()
+{
+	m_output << "\tmovq $__cc_format_string_c, %rdi\n"
 				"\tpop %rsi\n";
 
 	debug_call_printf();
