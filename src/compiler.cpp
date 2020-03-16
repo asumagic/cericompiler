@@ -417,7 +417,7 @@ void Compiler::parse_if_statement()
 
 	codegen->statement_if_post_check(if_statement);
 
-	if (current != KEYWORD || token_text() != "THEN")
+	if (read_keyword() != Keyword::THEN)
 	{
 		error("expected 'THEN' after conditional expression of 'IF' statement");
 	}
@@ -425,7 +425,7 @@ void Compiler::parse_if_statement()
 	read_token();
 	parse_statement();
 
-	if (current == KEYWORD && token_text() == "ELSE")
+	if (read_keyword() == Keyword::ELSE)
 	{
 		codegen->statement_if_with_else(if_statement);
 		read_token();
@@ -449,7 +449,7 @@ void Compiler::parse_while_statement()
 
 	codegen->statement_while_post_check(while_statement);
 
-	if (current != KEYWORD || token_text() != "DO")
+	if (read_keyword() != Keyword::DO)
 	{
 		error("expected 'DO' after conditional expression of 'WHILE' statement");
 	}
