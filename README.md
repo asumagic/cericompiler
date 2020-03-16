@@ -40,6 +40,9 @@ Types:
 - [ ] `CHAR` type
 - [ ] `DOUBLE` type
 - [x] `BOOLEAN` type
+- [ ] Explicit type conversions
+    - [ ] Integral <=> Integral (e.g. no-op or `CHAR` <=> `INTEGER`)
+    - [ ] Integral <=> Floating-point
 
 Operators:
 - Arithmetic operators: `+`, `-`, `*`, `/`, `%`
