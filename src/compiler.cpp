@@ -76,8 +76,6 @@ void Compiler::check_type(Type a, Type b) const
 
 TOKEN Compiler::read_token() { return (current = TOKEN(lexer.yylex())); }
 
-bool Compiler::match_keyword(const char* keyword) const { return (current == KEYWORD && token_text() == keyword); }
-
 Compiler::Compiler(std::istream& input, std::ostream& output) :
 	lexer{input, output}, codegen{std::make_unique<CodeGen>(output)}
 {}
@@ -99,6 +97,17 @@ void Compiler::operator()()
 }
 
 string_view Compiler::token_text() const { return lexer.YYText(); }
+
+Keyword Compiler::read_keyword() const
+{
+	if (current != KEYWORD)
+	{
+		return Keyword::BAD_KEYWORD;
+	}
+
+	const auto it = keyword_map.find(token_text());
+	return it != keyword_map.end() ? it->second : Keyword::BAD_KEYWORD;
+}
 
 Type Compiler::parse_identifier()
 {
@@ -272,7 +281,7 @@ Type Compiler::parse_simple_expression()
 
 void Compiler::parse_declaration_block()
 {
-	if (!match_keyword("VAR"))
+	if (read_keyword() != Keyword::VAR)
 	{
 		return;
 	}
@@ -520,29 +529,42 @@ void Compiler::parse_display_statement()
 
 void Compiler::parse_statement()
 {
-	if (strcmp(lexer.YYText(), "IF") == 0)
+	switch (read_keyword())
+	{
+	case Keyword::IF:
 	{
 		parse_if_statement();
+		break;
 	}
-	else if (strcmp(lexer.YYText(), "WHILE") == 0)
+
+	case Keyword::WHILE:
 	{
 		parse_while_statement();
+		break;
 	}
-	else if (strcmp(lexer.YYText(), "FOR") == 0)
+
+	case Keyword::FOR:
 	{
 		parse_for_statement();
+		break;
 	}
-	else if (strcmp(lexer.YYText(), "BEGIN") == 0)
+
+	case Keyword::BEGIN:
 	{
 		parse_block_statement();
+		break;
 	}
-	else if (strcmp(lexer.YYText(), "DISPLAY") == 0)
+
+	case Keyword::DISPLAY:
 	{
 		parse_display_statement();
+		break;
 	}
-	else
+
+	default:
 	{
 		parse_assignment_statement();
+	}
 	}
 }
 

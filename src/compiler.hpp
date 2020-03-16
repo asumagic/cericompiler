@@ -1,6 +1,7 @@
 #pragma once
 
 #include "codegen.hpp"
+#include "keywords.hpp"
 #include "operators.hpp"
 #include "tokeniser.hpp"
 #include "types.hpp"
@@ -42,6 +43,8 @@ class Compiler
 	std::unique_ptr<CodeGen> codegen;
 
 	[[nodiscard]] string_view token_text() const;
+
+	[[nodiscard]] Keyword read_keyword() const;
 
 	// Letter := "a"|...|"z"
 	[[nodiscard]] Type parse_identifier();
@@ -112,6 +115,4 @@ class Compiler
 	void check_type(Type a, Type b) const;
 
 	TOKEN read_token();
-
-	[[nodiscard]] bool match_keyword(const char* keyword) const;
 };
