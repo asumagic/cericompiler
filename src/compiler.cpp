@@ -20,11 +20,8 @@
 #include "tokeniser.hpp"
 #include "util/string_view.hpp"
 
-#include <array>
-#include <cassert>
 #include <cstring>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 using namespace std::string_literals;
