@@ -19,8 +19,6 @@ using namespace std;
 %option c++
 %option yylineno
 
-keyword (BEGIN|END|WHILE|FOR|TO|DO|IF|THEN|ELSE|DISPLAY|VAR)
-type (INTEGER|BOOLEAN)
 stringconst  \"[^\n"]+\"
 ws      [ \t\n\r]+
 alpha   [A-Za-z]
@@ -34,8 +32,21 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 
 %%
 
-{keyword}   return KEYWORD;
-{type}      return TYPE;
+"BEGIN"   return KEYWORD_BEGIN;
+"END"     return KEYWORD_END;
+"WHILE"   return KEYWORD_WHILE;
+"FOR"     return KEYWORD_FOR;
+"TO"      return KEYWORD_TO;
+"DO"      return KEYWORD_DO;
+"IF"      return KEYWORD_IF;
+"THEN"    return KEYWORD_THEN;
+"ELSE"    return KEYWORD_ELSE;
+"DISPLAY" return KEYWORD_DISPLAY;
+"VAR"     return KEYWORD_VAR;
+
+"INTEGER" return TYPE_INTEGER;
+"BOOLEAN" return TYPE_BOOLEAN;
+
 {addop}		return ADDOP;
 {mulop}		return MULOP;
 {relop}		return RELOP;

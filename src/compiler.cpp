@@ -96,18 +96,17 @@ void Compiler::operator()()
 	codegen->finalize_program();
 }
 
-string_view Compiler::token_text() const { return lexer.YYText(); }
-
-Keyword Compiler::read_keyword() const
+bool Compiler::is_token_type() const
 {
-	if (current != KEYWORD)
-	{
-		return Keyword::BAD_KEYWORD;
-	}
-
-	const auto it = keyword_map.find(token_text());
-	return it != keyword_map.end() ? it->second : Keyword::BAD_KEYWORD;
+	return int(current) >= int(TOKEN::FIRST_TYPE) && int(current) <= int(TOKEN::LAST_TYPE);
 }
+
+bool Compiler::is_token_keyword() const
+{
+	return int(current) >= int(TOKEN::FIRST_KEYWORD) && int(current) <= int(TOKEN::LAST_KEYWORD);
+}
+
+string_view Compiler::token_text() const { return lexer.YYText(); }
 
 Type Compiler::parse_identifier()
 {
@@ -281,7 +280,7 @@ Type Compiler::parse_simple_expression()
 
 void Compiler::parse_declaration_block()
 {
-	if (read_keyword() != Keyword::VAR)
+	if (current != TOKEN::KEYWORD_VAR)
 	{
 		return;
 	}
@@ -324,24 +323,17 @@ void Compiler::parse_declaration_block()
 
 Type Compiler::parse_type()
 {
-	if (current != TYPE)
+	if (!is_token_type())
 	{
 		error("expected type");
 	}
 
-	const char* name = lexer.YYText();
-
-	if (std::strcmp(name, "INTEGER") == 0)
+	switch (current)
 	{
-		return Type::UNSIGNED_INT;
+	case TOKEN::TYPE_INTEGER: return Type::UNSIGNED_INT;
+	case TOKEN::TYPE_BOOLEAN: return Type::BOOLEAN;
+	default: bug("unrecognized type");
 	}
-
-	if (std::strcmp(name, "BOOLEAN") == 0)
-	{
-		return Type::BOOLEAN;
-	}
-
-	bug("unrecognized type");
 }
 
 RelationalOperator Compiler::parse_relational_operator()
@@ -417,7 +409,7 @@ void Compiler::parse_if_statement()
 
 	codegen->statement_if_post_check(if_statement);
 
-	if (read_keyword() != Keyword::THEN)
+	if (current != TOKEN::KEYWORD_THEN)
 	{
 		error("expected 'THEN' after conditional expression of 'IF' statement");
 	}
@@ -425,7 +417,7 @@ void Compiler::parse_if_statement()
 	read_token();
 	parse_statement();
 
-	if (read_keyword() == Keyword::ELSE)
+	if (current == TOKEN::KEYWORD_ELSE)
 	{
 		codegen->statement_if_with_else(if_statement);
 		read_token();
@@ -449,7 +441,7 @@ void Compiler::parse_while_statement()
 
 	codegen->statement_while_post_check(while_statement);
 
-	if (read_keyword() != Keyword::DO)
+	if (current != TOKEN::KEYWORD_DO)
 	{
 		error("expected 'DO' after conditional expression of 'WHILE' statement");
 	}
@@ -468,7 +460,7 @@ void Compiler::parse_for_statement()
 
 	auto for_statement = codegen->statement_for_prepare(assignment);
 
-	if (current != KEYWORD || token_text() != "TO")
+	if (current != TOKEN::KEYWORD_TO)
 	{
 		error("expected 'TO' after assignement in 'FOR' statement");
 	}
@@ -480,7 +472,7 @@ void Compiler::parse_for_statement()
 
 	codegen->statement_for_post_check(for_statement);
 
-	if (current != KEYWORD || token_text() != "DO")
+	if (current != TOKEN::KEYWORD_DO)
 	{
 		error("expected 'DO' after max expression in 'FOR' statement");
 	}
@@ -499,7 +491,7 @@ void Compiler::parse_block_statement()
 		parse_statement();
 	} while (current == SEMICOLON);
 
-	if (current != KEYWORD || token_text() != "END")
+	if (current != TOKEN::KEYWORD_END)
 	{
 		error("expected 'END' to finish block statement");
 	}
@@ -529,33 +521,33 @@ void Compiler::parse_display_statement()
 
 void Compiler::parse_statement()
 {
-	switch (read_keyword())
+	switch (current)
 	{
-	case Keyword::IF:
+	case TOKEN::KEYWORD_IF:
 	{
 		parse_if_statement();
 		break;
 	}
 
-	case Keyword::WHILE:
+	case TOKEN::KEYWORD_WHILE:
 	{
 		parse_while_statement();
 		break;
 	}
 
-	case Keyword::FOR:
+	case TOKEN::KEYWORD_FOR:
 	{
 		parse_for_statement();
 		break;
 	}
 
-	case Keyword::BEGIN:
+	case TOKEN::KEYWORD_BEGIN:
 	{
 		parse_block_statement();
 		break;
 	}
 
-	case Keyword::DISPLAY:
+	case TOKEN::KEYWORD_DISPLAY:
 	{
 		parse_display_statement();
 		break;
