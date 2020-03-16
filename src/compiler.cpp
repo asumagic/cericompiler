@@ -28,21 +28,20 @@
 #include <unordered_map>
 #include <vector>
 
-using std::cerr;
 using std::cout;
 using std::string;
 
 using namespace std::string_literals;
 
-void Compiler::print_error_preamble() const { cerr << "source:" << lexer.lineno() << ": "; }
+void Compiler::print_error_preamble() const { std::cerr << "source:" << lexer.lineno() << ": "; }
 
 void Compiler::error(const char* s) const
 {
 	print_error_preamble();
-	cerr << "error: " << s << '\n';
+	std::cerr << "error: " << s << '\n';
 
 	print_error_preamble();
-	cerr << "note: when reading token '" << lexer.YYText() << "'\n";
+	std::cerr << "note: when reading token '" << lexer.YYText() << "'\n";
 
 	exit(-1);
 }
