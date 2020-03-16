@@ -18,6 +18,7 @@
 #include "compiler.hpp"
 #include "codegen.hpp"
 #include "tokeniser.hpp"
+#include "util/string_view.hpp"
 
 #include <array>
 #include <cassert>

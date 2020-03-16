@@ -1,8 +1,8 @@
 #pragma once
 
-#include <unordered_map>
+#include "util/string_view.hpp"
 
-#include "typedefs.hpp"
+#include <unordered_map>
 
 // RelationalOperator := "==" | "!=" | "<" | ">" | "<=" | ">="
 enum class RelationalOperator
@@ -16,7 +16,7 @@ enum class RelationalOperator
 	SUPE  // >=
 };
 
-extern const std::unordered_map<StringView, RelationalOperator> relational_operator_names;
+extern const std::unordered_map<string_view, RelationalOperator> relational_operator_names;
 
 // AdditiveOperator := "+" | "-" | "||"
 enum class AdditiveOperator
@@ -27,7 +27,7 @@ enum class AdditiveOperator
 	OR   // ||
 };
 
-extern const std::unordered_map<StringView, AdditiveOperator> additive_operator_names;
+extern const std::unordered_map<string_view, AdditiveOperator> additive_operator_names;
 
 // MultiplicativeOperator := "*" | "/" | "%" | "&&"
 enum class MultiplicativeOperator
@@ -39,4 +39,4 @@ enum class MultiplicativeOperator
 	AND  // &&
 };
 
-extern const std::unordered_map<StringView, MultiplicativeOperator> multiplicative_operator_names;
+extern const std::unordered_map<string_view, MultiplicativeOperator> multiplicative_operator_names;

@@ -2,7 +2,6 @@
 
 #include "operators.hpp"
 #include "tokeniser.hpp"
-#include "typedefs.hpp"
 #include "types.hpp"
 
 #include <iosfwd>
