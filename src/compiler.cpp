@@ -52,7 +52,10 @@ void Compiler::bug(string_view s) const
 
 void Compiler::check_type(Type a, Type b) const
 {
-	assert(int(a) < int(Type::CONCEPT_BEGIN) && "Only the second operand of TypeCheck may be a type concept");
+	if (int(a) < int(Type::CONCEPT_BEGIN))
+	{
+		bug("only the second operand of TypeCheck may be a type concept");
+	}
 
 	bool match = true;
 
