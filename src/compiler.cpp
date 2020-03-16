@@ -21,7 +21,6 @@
 #include "util/enums.hpp"
 #include "util/string_view.hpp"
 
-#include <cstring>
 #include <fmt/core.h>
 #include <vector>
 
