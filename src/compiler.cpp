@@ -23,12 +23,9 @@
 #include <array>
 #include <cassert>
 #include <cstring>
-#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-using std::cout;
 
 using namespace std::string_literals;
 
