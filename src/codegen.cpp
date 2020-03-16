@@ -49,7 +49,7 @@ void CodeGen::store_variable(const Variable& variable) { m_output << fmt::format
 
 void CodeGen::alu_and_bool()
 {
-	alu_load_binop_i64();
+	alu_load_binop(Type::BOOLEAN);
 
 	m_output << "\tandq %rax, %rbx\n"
 				"\tpush %rax\n";
@@ -57,67 +57,222 @@ void CodeGen::alu_and_bool()
 
 void CodeGen::alu_or_bool()
 {
-	alu_load_binop_i64();
+	alu_load_binop(Type::BOOLEAN);
 
 	m_output << "\torq %rbx, %rax\n"
 				"\tpush %rax\n";
 }
 
-void CodeGen::alu_add_i64()
+void CodeGen::alu_add(Type type)
 {
-	alu_load_binop_i64();
+	alu_load_binop(type);
 
-	m_output << "\taddq %rbx, %rax\n"
-				"\tpush %rax\n";
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		m_output << "\taddq %rbx, %rax\n"
+					"\tpush %rax\n";
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
 }
 
-void CodeGen::alu_sub_i64()
+void CodeGen::alu_sub(Type type)
 {
-	alu_load_binop_i64();
+	alu_load_binop(type);
 
-	m_output << "\tsubq %rbx, %rax\n"
-				"\tpush %rax\n";
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		m_output << "\tsubq %rbx, %rax\n"
+					"\tpush %rax\n";
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
 }
 
-void CodeGen::alu_multiply_i64()
+void CodeGen::alu_multiply(Type type)
 {
-	alu_load_binop_i64();
+	alu_load_binop(type);
 
-	m_output << "\tmulq %rbx\n"
-				"\tpush %rax\n";
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		m_output << "\tmulq %rbx\n"
+					"\tpush %rax\n";
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
 }
 
-void CodeGen::alu_divide_i64()
+void CodeGen::alu_divide(Type type)
 {
-	alu_load_binop_i64();
+	alu_load_binop(type);
 
-	m_output << "\tmovq $0, %rdx # Higher part of numerator\n"
-				"\tdiv %rbx # Quotient goes to %rax\n"
-				"\tpush %rax\n";
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		m_output << "\tmovq $0, %rdx # Higher part of numerator\n"
+					"\tdiv %rbx # Quotient goes to %rax\n"
+					"\tpush %rax\n";
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
 }
 
-void CodeGen::alu_modulus_i64()
+void CodeGen::alu_modulus(Type type)
 {
-	alu_load_binop_i64();
+	alu_load_binop(type);
 
-	m_output << "\tmovq $0, %rdx # Higher part of numerator\n"
-				"\tdiv %rbx # Remainder goes to %rdx\n"
-				"\tpush %rax\n";
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		m_output << "\tmovq $0, %rdx # Higher part of numerator\n"
+					"\tdiv %rbx # Remainder goes to %rdx\n"
+					"\tpush %rax\n";
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
 }
 
-void CodeGen::alu_equal_i64() { alu_compare_i64("je"); }
-void CodeGen::alu_not_equal_i64() { alu_compare_i64("jne"); }
-void CodeGen::alu_greater_equal_i64() { alu_compare_i64("jae"); }
-void CodeGen::alu_lower_equal_i64() { alu_compare_i64("jbe"); }
-void CodeGen::alu_greater_i64() { alu_compare_i64("ja"); }
-void CodeGen::alu_lower_i64() { alu_compare_i64("je"); }
+void CodeGen::alu_equal(Type type)
+{
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		alu_compare_i64("je");
+		break;
+	}
 
-bool CodeGen::convert(Type source, Type destination)
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
+}
+
+void CodeGen::alu_not_equal(Type type)
+{
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		alu_compare_i64("jne");
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
+}
+
+void CodeGen::alu_greater_equal(Type type)
+{
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		alu_compare_i64("jae");
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
+}
+
+void CodeGen::alu_lower_equal(Type type)
+{
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		alu_compare_i64("jbe");
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
+}
+
+void CodeGen::alu_greater(Type type)
+{
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		alu_compare_i64("ja");
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
+}
+
+void CodeGen::alu_lower(Type type)
+{
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		alu_compare_i64("je");
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+	}
+	}
+}
+
+void CodeGen::convert(Type source, Type destination)
 {
 	if (source == destination)
 	{
 		// no-op
-		return true;
+		return;
 	}
 
 	if (check_enum_range(source, Type::FIRST_INTEGRAL, Type::LAST_INTEGRAL) || destination == Type::CHAR)
@@ -125,11 +280,12 @@ bool CodeGen::convert(Type source, Type destination)
 		if (check_enum_range(destination, Type::FIRST_INTEGRAL, Type::LAST_INTEGRAL) || destination == Type::CHAR)
 		{
 			// no-op possible. those are 64-bit values regardless
-			return true;
+			return;
 		}
 	}
 
-	return false;
+	throw UnimplementedError{fmt::format(
+		"unsupported type conversion occured: {} -> {}", type_name(source).str(), type_name(destination).str())};
 }
 
 IfStatement CodeGen::statement_if_prepare() { return {++m_label_tag}; }
@@ -218,7 +374,7 @@ void CodeGen::statement_for_finalize(ForStatement statement)
 		fmt::arg("tag", statement.saved_tag));
 }
 
-bool CodeGen::debug_display(Type type)
+void CodeGen::debug_display(Type type)
 {
 	switch (type)
 	{
@@ -246,25 +402,37 @@ bool CodeGen::debug_display(Type type)
 
 	default:
 	{
-		return false;
+		throw UnimplementedError{fmt::format("DISPLAY not implemented for type {}", type_name(type).str())};
 	}
 	}
 
 	m_output << "\tmovb $0, %al # printf is variadic, as per the ABI we write the number of float parameters\n"
 				"\t call printf\n";
-
-	return true;
 }
 
-void CodeGen::alu_load_binop_i64()
+void CodeGen::alu_load_binop(Type type)
 {
-	m_output << "\tpop %rbx\n"
-				"\tpop %rax\n";
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	case Type::BOOLEAN:
+	{
+		m_output << "\tpop %rbx\n"
+					"\tpop %rax\n";
+
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedError{fmt::format("alu_load_binop not implemented for type {}", type_name(type).str())};
+	}
+	}
 }
 
 void CodeGen::alu_compare_i64(string_view instruction)
 {
-	alu_load_binop_i64();
+	alu_load_binop(Type::UNSIGNED_INT);
 
 	++m_label_tag;
 

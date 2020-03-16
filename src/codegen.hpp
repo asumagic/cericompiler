@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <iosfwd>
+#include <stdexcept>
 
 class Variable;
 
@@ -22,6 +23,11 @@ struct ForStatement
 {
 	std::size_t     saved_tag;
 	const Variable* variable;
+};
+
+class UnimplementedError : public std::runtime_error
+{
+	using std::runtime_error::runtime_error;
 };
 
 class CodeGen
@@ -51,21 +57,20 @@ class CodeGen
 	void alu_and_bool();
 	void alu_or_bool();
 
-	void alu_add_i64();
-	void alu_sub_i64();
-	void alu_multiply_i64();
-	void alu_divide_i64();
-	void alu_modulus_i64();
+	void alu_add(Type type);
+	void alu_sub(Type type);
+	void alu_multiply(Type type);
+	void alu_divide(Type type);
+	void alu_modulus(Type type);
 
-	void alu_equal_i64();
-	void alu_not_equal_i64();
-	void alu_greater_equal_i64();
-	void alu_lower_equal_i64();
-	void alu_greater_i64();
-	void alu_lower_i64();
+	void alu_equal(Type type);
+	void alu_not_equal(Type type);
+	void alu_greater_equal(Type type);
+	void alu_lower_equal(Type type);
+	void alu_greater(Type type);
+	void alu_lower(Type type);
 
-	// HACK: using the boolean return value to return whether the conversion was supported or not
-	bool convert(Type source, Type destination);
+	void convert(Type source, Type destination);
 
 	IfStatement statement_if_prepare();
 	void        statement_if_post_check(IfStatement);
@@ -82,11 +87,10 @@ class CodeGen
 	void         statement_for_post_check(ForStatement);
 	void         statement_for_finalize(ForStatement);
 
-	// HACK: return value = supported orn ot
-	bool debug_display(Type type);
+	void debug_display(Type type);
 
 	private:
-	void alu_load_binop_i64();
+	void alu_load_binop(Type type);
 
 	void alu_compare_i64(string_view instruction);
 

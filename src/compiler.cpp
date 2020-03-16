@@ -76,18 +76,25 @@ Compiler::Compiler(std::istream& input, std::ostream& output) :
 
 void Compiler::operator()()
 {
-	codegen->begin_program();
-
-	read_token();
-	parse_program();
-
-	if (current != FEOF)
+	try
 	{
-		// FIXME: this is not printing the right stuff
-		error(fmt::format("extraneous characters at end of file: [{}]", current));
-	}
+		codegen->begin_program();
 
-	codegen->finalize_program();
+		read_token();
+		parse_program();
+
+		if (current != FEOF)
+		{
+			// FIXME: this is not printing the right stuff
+			error(fmt::format("extraneous characters at end of file: [{}]", current));
+		}
+
+		codegen->finalize_program();
+	}
+	catch (const std::runtime_error& e)
+	{
+		error(e.what());
+	}
 }
 
 bool Compiler::is_token_keyword() const { return check_enum_range(current, TOKEN::FIRST_KEYWORD, TOKEN::LAST_KEYWORD); }
@@ -180,13 +187,7 @@ Type Compiler::parse_type_cast()
 	}
 	read_token();
 
-	if (!codegen->convert(source_type, destination_type))
-	{
-		bug(fmt::format(
-			"unsupported type conversion occured: {} -> {}",
-			type_name(source_type).str(),
-			type_name(destination_type).str()));
-	}
+	codegen->convert(source_type, destination_type);
 
 	// right now just yolo it and don't convert
 	return destination_type;
@@ -215,21 +216,21 @@ Type Compiler::parse_term()
 		case TOKEN::MULOP_MUL:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_multiply_i64();
+			codegen->alu_multiply(first_type);
 			break;
 		}
 
 		case TOKEN::MULOP_DIV:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_divide_i64();
+			codegen->alu_divide(first_type);
 			break;
 		}
 
 		case TOKEN::MULOP_MOD:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_modulus_i64();
+			codegen->alu_modulus(first_type);
 			break;
 		}
 
@@ -264,14 +265,14 @@ Type Compiler::parse_simple_expression()
 		case TOKEN::ADDOP_ADD:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_add_i64();
+			codegen->alu_add(first_type);
 			break;
 		}
 
 		case TOKEN::ADDOP_SUB:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_sub_i64();
+			codegen->alu_sub(first_type);
 			break;
 		}
 
@@ -358,12 +359,12 @@ Type Compiler::parse_expression()
 
 		switch (op_token)
 		{
-		case TOKEN::RELOP_EQU: codegen->alu_equal_i64(); break;
-		case TOKEN::RELOP_DIFF: codegen->alu_not_equal_i64(); break;
-		case TOKEN::RELOP_SUPE: codegen->alu_greater_equal_i64(); break;
-		case TOKEN::RELOP_INFE: codegen->alu_lower_equal_i64(); break;
-		case TOKEN::RELOP_INF: codegen->alu_lower_i64(); break;
-		case TOKEN::RELOP_SUP: codegen->alu_greater_i64(); break;
+		case TOKEN::RELOP_EQU: codegen->alu_equal(first_type); break;
+		case TOKEN::RELOP_DIFF: codegen->alu_not_equal(first_type); break;
+		case TOKEN::RELOP_SUPE: codegen->alu_greater_equal(first_type); break;
+		case TOKEN::RELOP_INFE: codegen->alu_lower_equal(first_type); break;
+		case TOKEN::RELOP_INF: codegen->alu_lower(first_type); break;
+		case TOKEN::RELOP_SUP: codegen->alu_greater(first_type); break;
 		default: bug("unknown comparison operator");
 		}
 
@@ -505,10 +506,7 @@ void Compiler::parse_display_statement()
 	read_token();
 	const Type type = parse_expression();
 
-	if (!codegen->debug_display(type))
-	{
-		bug("DISPLAY statement not yet implemented for this type");
-	}
+	codegen->debug_display(type);
 }
 
 void Compiler::parse_statement()
