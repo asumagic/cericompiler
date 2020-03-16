@@ -21,21 +21,22 @@
 #include "util/enums.hpp"
 #include "util/string_view.hpp"
 
+#include <fmt/color.h>
 #include <fmt/core.h>
 #include <vector>
 
 void Compiler::error(string_view s) const
 {
 	const auto source_context = fmt::format("source:{}: ", lexer.lineno());
-	fmt::print(stderr, "{}error: {}\n", source_context, s.str());
-	fmt::print(stderr, "{}note:  while reading token '{}'\n", token_text().str());
+	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", source_context, s.str());
+	fmt::print(stderr, fg(fmt::color::red), "{}note:  while reading token '{}'\n", source_context, token_text().str());
 
 	exit(-1);
 }
 
 void Compiler::bug(string_view s) const
 {
-	fmt::print(stderr, "source:{}: COMPILER BUG", lexer.lineno());
+	fmt::print(stderr, fg(fmt::color::red), "source:{}: COMPILER BUG", lexer.lineno());
 
 	error(s);
 }
