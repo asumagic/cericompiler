@@ -397,8 +397,7 @@ void CodeGen::debug_display(Type type)
 	{
 		m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
 					"\tpop %rsi\n"
-					"\tmovb $0, %al # number of float parameters (varargs)\n"
-					"\tcall printf\n";
+					"\tmovb $0, %al # number of float parameters (varargs)\n";
 		break;
 	}
 
@@ -406,8 +405,7 @@ void CodeGen::debug_display(Type type)
 	{
 		m_output << "\tmovq $__cc_format_string_c, %rdi\n"
 					"\tpop %rsi\n"
-					"\tmovb $0, %al # number of float parameters (varargs)\n"
-					"\tcall printf\n";
+					"\tmovb $0, %al # number of float parameters (varargs)\n";
 		break;
 	}
 
