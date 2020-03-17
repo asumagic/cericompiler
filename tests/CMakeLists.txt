@@ -70,6 +70,7 @@ expect_output("ghetto-helloworld" "Hello, world!")
 expect_output("type-double-very-simple-display" "0\.0+\\n")
 expect_output("type-double-assignment" "3\.1410*\\n")
 expect_output("type-double-arithmetic-add" "2\.50*\\n")
+expect_output("type-double-arithmetic-sub" "-0\.50*\\n")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL
