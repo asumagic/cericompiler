@@ -13,7 +13,10 @@ action = sys.argv[1]
 compiler_path = sys.argv[2]
 source_path = sys.argv[3]
 
+linker_flags = ["-no-pie", "-lm"]
+
 # TODO: dedup compile_and_pray and compile_and_match_output code
+# TODO: check and print error codes
 
 if action == "compile_and_pray":
     asm_path = sys.argv[4]
@@ -35,7 +38,7 @@ if action == "compile_and_pray":
         sys.exit(compiler_process.returncode)
 
     linker_process = Popen(
-        [linker_path, "-o" + exec_path, asm_path, "-no-pie"]
+        [linker_path, "-o" + exec_path, asm_path, *linker_flags]
     )
 
     (stdout, stderr) = linker_process.communicate()
@@ -65,7 +68,7 @@ elif action == "compile_and_match_output":
         sys.exit(compiler_process.returncode)
 
     linker_process = Popen(
-        [linker_path, "-o" + exec_path, asm_path, "-no-pie"]
+        [linker_path, "-o" + exec_path, asm_path, *linker_flags]
     )
 
     (stdout, stderr) = linker_process.communicate()

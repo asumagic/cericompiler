@@ -72,6 +72,8 @@ expect_output("type-double-assignment" "3\.1410*\\n")
 expect_output("type-double-arithmetic-add" "2\.50*\\n")
 expect_output("type-double-arithmetic-sub" "-0\.50*\\n")
 expect_output("type-double-arithmetic-mul" "30\.00*\\n")
+expect_output("type-double-arithmetic-div" "5\.00*\\n")
+expect_output("type-double-arithmetic-mod" "1\.00*\\n")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL

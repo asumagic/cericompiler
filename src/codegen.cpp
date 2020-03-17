@@ -172,6 +172,13 @@ void CodeGen::alu_divide(Type type)
 		break;
 	}
 
+	case Type::DOUBLE:
+	{
+		m_output << "\tfdivp %st(0), %st(1)\n";
+		alu_store_f64();
+		break;
+	}
+
 	default:
 	{
 		throw UnimplementedError{"Unimplemented ALU operation for this type"};
@@ -181,15 +188,26 @@ void CodeGen::alu_divide(Type type)
 
 void CodeGen::alu_modulus(Type type)
 {
-	alu_load_binop(type);
-
 	switch (type)
 	{
 	case Type::UNSIGNED_INT:
 	{
+		alu_load_binop(type);
 		m_output << "\tmovq $0, %rdx # Higher part of numerator\n"
 					"\tdiv %rbx # Remainder goes to %rdx\n"
 					"\tpush %rax\n";
+		break;
+	}
+
+	case Type::DOUBLE:
+	{
+		// no alu_load_binop here: we load to xmm0/1
+		// use standard C fmod
+		m_output << "\tmovsd 8(%rsp), %xmm0\n"
+					"\tmovsd (%rsp), %xmm1\n"
+					"\taddq $8, %rsp\n"
+					"\tcall fmod\n"
+					"\tmovsd %xmm0, (%rsp)\n";
 		break;
 	}
 
