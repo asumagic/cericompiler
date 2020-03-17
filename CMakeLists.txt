@@ -11,6 +11,11 @@ project(ceri-compiler)
 hunter_add_package(fmt)
 find_package(fmt CONFIG REQUIRED)
 
+if(POLICY CMP0074)
+    # Fix for FLEX/CMake warning
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
 hunter_add_package(flex)
 find_package(FLEX REQUIRED)
 FLEX_TARGET(tokeniser "src/tokeniser.l" "${CMAKE_CURRENT_BINARY_DIR}/tokeniser.cpp")
