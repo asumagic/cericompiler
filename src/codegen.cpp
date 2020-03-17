@@ -39,7 +39,23 @@ void CodeGen::finalize_global_data_section() {}
 
 void CodeGen::define_global_variable(const Variable& variable)
 {
-	m_output << fmt::format("{}:\t.quad 0 # type: {}\n", variable.name, type_name(variable.type.type).str());
+	m_output << fmt::format("{}:\n\t", variable.name);
+
+	// NOTE: non 64-bit loads are still loaded with 64-bit pushes.
+	//       Realistically, this does not matter, though.
+	//       This might be problematic when dealing with a C FFI for example however, since we (probably) need to clear
+	//       up the upper bits of the registers when we pass small data types.
+
+	switch (variable.type.type)
+	{
+	case Type::BOOLEAN:
+	case Type::CHAR: m_output << ".byte 0"; break;
+	case Type::UNSIGNED_INT: m_output << ".quad 0"; break;
+	case Type::DOUBLE: m_output << ".double 0.0"; break;
+	default: throw UnimplementedError{"Unimplemented global variable type"};
+	}
+
+	m_output << fmt::format(" # type: {}\n", type_name(variable.type.type).str());
 }
 
 void CodeGen::load_variable(const Variable& variable) { m_output << fmt::format("\tpush {}\n", variable.name); }
