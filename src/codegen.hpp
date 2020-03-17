@@ -91,6 +91,7 @@ class CodeGen
 
 	private:
 	void alu_load_binop(Type type);
+	void alu_store_f64();
 
 	void alu_compare_i64(string_view instruction);
 

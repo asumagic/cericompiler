@@ -90,6 +90,13 @@ void CodeGen::alu_add(Type type)
 		break;
 	}
 
+	case Type::DOUBLE:
+	{
+		m_output << "\tfaddp %st(0), %st(1)\n";
+		alu_store_f64();
+		break;
+	}
+
 	default:
 	{
 		throw UnimplementedError{"Unimplemented ALU operation for this type"};
@@ -445,11 +452,25 @@ void CodeGen::alu_load_binop(Type type)
 		break;
 	}
 
+	case Type::DOUBLE:
+	{
+		m_output << "\tfldl (%rsp)\n"
+					"\tfldl 8(%rsp)\n"
+					"\taddq $16, %rsp\n";
+		break;
+	}
+
 	default:
 	{
 		throw UnimplementedError{fmt::format("alu_load_binop not implemented for type {}", type_name(type).str())};
 	}
 	}
+}
+
+void CodeGen::alu_store_f64()
+{
+	m_output << "\taddq $-8, %rsp\n"
+				"\tfstpl (%rsp)\n";
 }
 
 void CodeGen::alu_compare_i64(string_view instruction)
