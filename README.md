@@ -53,7 +53,7 @@ Types:
 Operators:
 - [x] Arithmetic operators: `+`, `-`, `*`, `/`, `%`
     - [x] Integral
-    - [ ] Floating-point
+    - [x] Floating-point
 - [x] Logical operators: `||`, `&&`
 - [ ] Boolean negation operator: `!`
 - [x] Comparison operators: `<`, `<=`, `==`, `>`, `>=`, `!=` (or `<>`)
