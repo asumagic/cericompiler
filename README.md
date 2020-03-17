@@ -38,7 +38,7 @@ Types:
 - [x] Typed variables
 - [x] `INTEGER` type
     - [x] Integer literals
-- [ ] `CHAR` type
+- [x] `CHAR` type
     - [ ] Character literals
 - [x] `DOUBLE` type
     - [x] Floating-point literals
