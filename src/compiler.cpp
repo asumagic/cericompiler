@@ -355,6 +355,14 @@ void Compiler::parse_declaration_block()
 	}
 
 	read_token();
+
+	for (const auto& it : variables)
+	{
+		const auto&         name = it.first;
+		const VariableType& type = it.second;
+
+		codegen->define_global_variable({name, type});
+	}
 }
 
 Type Compiler::parse_type()
@@ -583,14 +591,6 @@ void Compiler::parse_program()
 	codegen->begin_global_data_section();
 	parse_declaration_block();
 	codegen->finalize_global_data_section();
-
-	for (const auto& it : variables)
-	{
-		const auto&         name = it.first;
-		const VariableType& type = it.second;
-
-		codegen->define_global_variable({name, type});
-	}
 
 	parse_statement_part();
 }
