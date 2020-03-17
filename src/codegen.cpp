@@ -115,7 +115,7 @@ void CodeGen::alu_add(Type type)
 
 	default:
 	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+		throw UnimplementedTypeSupportError{};
 	}
 	}
 }
@@ -142,7 +142,7 @@ void CodeGen::alu_sub(Type type)
 
 	default:
 	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+		throw UnimplementedTypeSupportError{};
 	}
 	}
 }
@@ -169,7 +169,7 @@ void CodeGen::alu_multiply(Type type)
 
 	default:
 	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+		throw UnimplementedTypeSupportError{};
 	}
 	}
 }
@@ -197,7 +197,7 @@ void CodeGen::alu_divide(Type type)
 
 	default:
 	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+		throw UnimplementedTypeSupportError{};
 	}
 	}
 }
@@ -229,112 +229,17 @@ void CodeGen::alu_modulus(Type type)
 
 	default:
 	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
+		throw UnimplementedTypeSupportError{};
 	}
 	}
 }
 
-void CodeGen::alu_equal(Type type)
-{
-	switch (type)
-	{
-	case Type::UNSIGNED_INT:
-	{
-		alu_compare_i64("je");
-		break;
-	}
-
-	default:
-	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
-	}
-	}
-}
-
-void CodeGen::alu_not_equal(Type type)
-{
-	switch (type)
-	{
-	case Type::UNSIGNED_INT:
-	{
-		alu_compare_i64("jne");
-		break;
-	}
-
-	default:
-	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
-	}
-	}
-}
-
-void CodeGen::alu_greater_equal(Type type)
-{
-	switch (type)
-	{
-	case Type::UNSIGNED_INT:
-	{
-		alu_compare_i64("jae");
-		break;
-	}
-
-	default:
-	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
-	}
-	}
-}
-
-void CodeGen::alu_lower_equal(Type type)
-{
-	switch (type)
-	{
-	case Type::UNSIGNED_INT:
-	{
-		alu_compare_i64("jbe");
-		break;
-	}
-
-	default:
-	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
-	}
-	}
-}
-
-void CodeGen::alu_greater(Type type)
-{
-	switch (type)
-	{
-	case Type::UNSIGNED_INT:
-	{
-		alu_compare_i64("ja");
-		break;
-	}
-
-	default:
-	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
-	}
-	}
-}
-
-void CodeGen::alu_lower(Type type)
-{
-	switch (type)
-	{
-	case Type::UNSIGNED_INT:
-	{
-		alu_compare_i64("je");
-		break;
-	}
-
-	default:
-	{
-		throw UnimplementedError{"Unimplemented ALU operation for this type"};
-	}
-	}
-}
+void CodeGen::alu_equal(Type type) { alu_compare(type, "je"); }
+void CodeGen::alu_not_equal(Type type) { alu_compare(type, "jne"); }
+void CodeGen::alu_greater_equal(Type type) { alu_compare(type, "jae"); }
+void CodeGen::alu_lower_equal(Type type) { alu_compare(type, "jbe"); }
+void CodeGen::alu_greater(Type type) { alu_compare(type, "ja"); }
+void CodeGen::alu_lower(Type type) { alu_compare(type, "jb"); }
 
 void CodeGen::convert(Type source, Type destination)
 {
@@ -353,7 +258,7 @@ void CodeGen::convert(Type source, Type destination)
 		}
 	}
 
-	throw UnimplementedError{fmt::format(
+	throw UnimplementedTypeSupportError{fmt::format(
 		"unsupported type conversion occured: {} -> {}", type_name(source).str(), type_name(destination).str())};
 }
 
@@ -476,7 +381,7 @@ void CodeGen::debug_display(Type type)
 
 	default:
 	{
-		throw UnimplementedError{fmt::format("DISPLAY not implemented for type {}", type_name(type).str())};
+		throw UnimplementedTypeSupportError{};
 	}
 	}
 
@@ -510,7 +415,7 @@ void CodeGen::alu_load_binop(Type type)
 
 	default:
 	{
-		throw UnimplementedError{fmt::format("alu_load_binop not implemented for type {}", type_name(type).str())};
+		throw UnimplementedTypeSupportError{};
 	}
 	}
 }
@@ -521,14 +426,34 @@ void CodeGen::alu_store_f64()
 				"\tfstpl (%rsp)\n";
 }
 
-void CodeGen::alu_compare_i64(string_view instruction)
+void CodeGen::alu_compare(Type type, string_view instruction)
 {
-	alu_load_binop(Type::UNSIGNED_INT);
+	alu_load_binop(type);
+
+	switch (type)
+	{
+	case Type::UNSIGNED_INT:
+	{
+		m_output << "\tcmpq %rbx, %rax\n";
+		break;
+	}
+
+	case Type::DOUBLE:
+	{
+		m_output << "\tfcomip\n"
+					"\tfstp %st(0) # Clear fp stack\n";
+		break;
+	}
+
+	default:
+	{
+		throw UnimplementedTypeSupportError{};
+	}
+	}
 
 	++m_label_tag;
 
 	m_output << fmt::format(
-		"\tcmpq %rbx, %rax\n"
 		"\t{jumpinstruction} __true{tag}\n"
 		"\tpush $0x0 # No branching: push false\n"
 		"\tjmp __next{tag}\n"

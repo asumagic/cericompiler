@@ -27,7 +27,16 @@ struct ForStatement
 
 class UnimplementedError : public std::runtime_error
 {
+	public:
 	using std::runtime_error::runtime_error;
+};
+
+class UnimplementedTypeSupportError : public UnimplementedError
+{
+	public:
+	using UnimplementedError::UnimplementedError;
+
+	UnimplementedTypeSupportError() : UnimplementedError{"Support was not implemented for this type"} {}
 };
 
 class CodeGen
@@ -93,7 +102,7 @@ class CodeGen
 	void alu_load_binop(Type type);
 	void alu_store_f64();
 
-	void alu_compare_i64(string_view instruction);
+	void alu_compare(Type type, string_view instruction);
 
 	std::size_t m_label_tag = 0;
 
