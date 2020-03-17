@@ -45,7 +45,7 @@ Types:
 - [x] `BOOLEAN` type
 - [x] Explicit type conversions
     - [x] Integral <=> Integral (e.g. no-op or `CHAR` <=> `INTEGER`)
-    - [ ] Integral <=> Floating-point
+    - [x] Integral <=> Floating-point
 - [ ] User-defined types
 - [ ] Dynamic allocation
 - [ ] Arrays

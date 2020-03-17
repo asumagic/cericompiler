@@ -256,6 +256,25 @@ void CodeGen::convert(Type source, Type destination)
 			// no-op possible. those are 64-bit values regardless
 			return;
 		}
+
+		if (destination == Type::DOUBLE)
+		{
+			m_output << "\tfildq (%rsp)\n"
+						"\tfstpl (%rsp)\n";
+
+			return;
+		}
+	}
+
+	if (check_enum_range(source, Type::FIRST_FLOATING, Type::LAST_FLOATING))
+	{
+		if (check_enum_range(destination, Type::FIRST_INTEGRAL, Type::LAST_INTEGRAL) || destination == Type::CHAR)
+		{
+			m_output << "\tfldl (%rsp)\n"
+						"\tfistpq (%rsp)\n";
+
+			return;
+		}
 	}
 
 	throw UnimplementedTypeSupportError{fmt::format(
