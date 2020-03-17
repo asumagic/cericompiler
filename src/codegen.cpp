@@ -144,6 +144,13 @@ void CodeGen::alu_multiply(Type type)
 		break;
 	}
 
+	case Type::DOUBLE:
+	{
+		m_output << "\tfmulp %st(0), %st(1)\n";
+		alu_store_f64();
+		break;
+	}
+
 	default:
 	{
 		throw UnimplementedError{"Unimplemented ALU operation for this type"};
