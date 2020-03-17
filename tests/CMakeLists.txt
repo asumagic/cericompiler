@@ -79,5 +79,5 @@ expect_output("type-double-comparison-megatest" "o{16}")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL
-	COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -j
+	COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
 	DEPENDS ${UNIT_TEST} ${PROJECT_NAME})
