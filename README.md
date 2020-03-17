@@ -39,7 +39,7 @@ Types:
 - [x] `INTEGER` type
     - [x] Integer literals
 - [x] `CHAR` type
-    - [ ] Character literals
+    - [x] Character literals
 - [x] `DOUBLE` type
     - [x] Floating-point literals
 - [x] `BOOLEAN` type

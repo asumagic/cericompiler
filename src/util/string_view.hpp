@@ -28,6 +28,11 @@ class string_view
 	std::string str() const;
 				operator std::string() const;
 
+	constexpr const char& operator[](std::size_t at) const
+	{
+		return m_data[at];
+	}
+
 	friend std::ostream& operator<<(std::ostream& os, string_view view);
 
 	private:

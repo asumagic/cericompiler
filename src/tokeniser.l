@@ -22,6 +22,7 @@ using namespace std;
 stringconst  \"[^\n"]+\"
 alpha   [A-Za-z]
 digit   [0-9]
+charliteral \'[^\n\r\t]\'
 floatliteral    {digit}+\.{digit}+
 integerliteral  {digit}+
 id	{alpha}({alpha}|{digit})*
@@ -46,6 +47,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "BOOLEAN" return TYPE_BOOLEAN;
 "CHAR"    return TYPE_CHAR;
 
+{charliteral}    return CHAR_LITERAL;
 {floatliteral}   return FLOAT_LITERAL;
 {integerliteral} return INTEGER_LITERAL;
 {id}             return ID;

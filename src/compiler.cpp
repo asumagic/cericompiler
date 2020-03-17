@@ -123,6 +123,15 @@ Type Compiler::parse_identifier()
 	return type.type;
 }
 
+Type Compiler::parse_character_literal()
+{
+	// 2nd character in e.g. `'h'`
+	codegen->load_i64(token_text()[1]);
+	read_token();
+
+	return Type::CHAR;
+}
+
 Type Compiler::parse_integer_literal()
 {
 	codegen->load_i64(std::stoull(token_text()));
@@ -163,6 +172,11 @@ Type Compiler::parse_factor()
 		}
 
 		return type;
+	}
+
+	if (current == CHAR_LITERAL)
+	{
+		return parse_character_literal();
 	}
 
 	if (current == INTEGER_LITERAL)
