@@ -100,7 +100,7 @@ AdditiveOperator          := "+" | "-" | "||"
 DeclarationPart           := "VAR" VarDeclaration {";" VarDeclaration} "."
 VarDeclaration            := Identifier {"," Identifier} ":" Type
 
-Type                      := "INTEGER" | "BOOLEAN"
+Type                      := "INTEGER" | "CHAR" | "BOOLEAN" | "DOUBLE"
 
 Expression                := SimpleExpression [RelationalOperator SimpleExpression]
 RelationalOperator        := "==" | "!=" | "<" | ">" | "<=" | ">="
