@@ -9,10 +9,16 @@ class CompilerError : public std::runtime_error
 	using std::runtime_error::runtime_error;
 };
 
-class UnimplementedError : public CompilerError
+class CompilerBug : public std::runtime_error
 {
 	public:
-	using CompilerError::CompilerError;
+	using std::runtime_error::runtime_error;
+};
+
+class UnimplementedError : public CompilerBug
+{
+	public:
+	using CompilerBug::CompilerBug;
 };
 
 class UnimplementedTypeSupportError : public UnimplementedError
