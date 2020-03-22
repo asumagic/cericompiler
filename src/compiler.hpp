@@ -32,13 +32,12 @@ class Compiler
 	void operator()();
 
 	private:
-	TOKEN current; // Current token
+	yyFlexLexer m_lexer;
+	TOKEN       m_current_token;
 
-	yyFlexLexer lexer;
+	std::unordered_map<std::string, VariableType> m_variables;
 
-	std::unordered_map<std::string, VariableType> variables;
-
-	std::unique_ptr<CodeGen> codegen;
+	std::unique_ptr<CodeGen> m_codegen;
 
 	[[nodiscard]] bool is_token_keyword() const;
 	[[nodiscard]] bool is_token_type() const;
@@ -69,12 +68,35 @@ class Compiler
 	void               parse_statement_part();
 	void               parse_program();
 
-	[[noreturn]] void error(string_view s) const;
-	[[noreturn]] void bug(string_view s) const;
+	//! \brief Halt the execution of the compiler due to an ill-formed program and display details provided by \p
+	//! error_message.
+	[[noreturn]] void error(string_view error_message) const;
 
+	//! \brief Halt the execution of the compiler due to a compiler bug and display details provided by \p
+	//! error_message.
+	[[noreturn]] void bug(string_view error_message) const;
+
+	//! \brief Check whether types a and b are compatible (i.e. they behave identically) otherwise show an error.
+	//!
+	//! \param a may only be a concrete type, e.g. UNSIGNED_INT or CHAR.
+	//! \param b may be both a concrete type and a concept.
+	//!
+	//! \details
+	//!		Examples:
+	//!		- check_type(Type::UNSIGNED_INT, Type::ARITHMETIC) will *not* show an error
+	//!		- check_type(Type::UNSIGNED_INT, Type::UNSIGNED_INT) will *not* show an error
+	//!		- check_type(Type::DOUBLE, Type::CHAR) *will* show an error
+	//!		- check_type(Type::CHAR, Type::ARITHMETIC) *will* show an error
+	//!		- check_type(Type::ARITHMETIC, Type::UNSIGNED_INT) will show a *compiler bug error*
 	void check_type(Type a, Type b) const;
 
-	void  expect_token(TOKEN expected, string_view error_message) const;
-	void  read_token(TOKEN expected, string_view error_message);
+	//! \brief If the current token is not \p expected, show \p error_message as an error.
+	void expect_token(TOKEN expected, string_view error_message) const;
+
+	//! \brief If the current token is \p expected, skip it, otherwise show \p error_message as an error.
+	void read_token(TOKEN expected, string_view error_message);
+
+	//! \brief Read the next token and update \var current.
+	//! \warning This will invalidate any prior token_text() references.
 	TOKEN read_token();
 };

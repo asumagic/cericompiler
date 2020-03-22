@@ -28,7 +28,7 @@
 
 void Compiler::expect_token(TOKEN expected, string_view error_message) const
 {
-	if (current != expected)
+	if (m_current_token != expected)
 	{
 		error(error_message);
 	}
@@ -40,20 +40,20 @@ void Compiler::read_token(TOKEN expected, string_view error_message)
 	read_token();
 }
 
-void Compiler::error(string_view s) const
+void Compiler::error(string_view error_message) const
 {
-	const auto source_context = fmt::format("source:{}: ", lexer.lineno());
-	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", source_context, s.str());
+	const auto source_context = fmt::format("source:{}: ", m_lexer.lineno());
+	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", source_context, error_message.str());
 	fmt::print(stderr, fg(fmt::color::red), "{}note:  while reading token '{}'\n", source_context, token_text().str());
 
 	exit(-1);
 }
 
-void Compiler::bug(string_view s) const
+void Compiler::bug(string_view error_message) const
 {
-	fmt::print(stderr, fg(fmt::color::red), "source:{}: error: COMPILER BUG!\n", lexer.lineno());
+	fmt::print(stderr, fg(fmt::color::red), "source:{}: error: COMPILER BUG!\n", m_lexer.lineno());
 
-	error(s);
+	error(error_message);
 }
 
 void Compiler::check_type(Type a, Type b) const
@@ -83,28 +83,28 @@ void Compiler::check_type(Type a, Type b) const
 	}
 }
 
-TOKEN Compiler::read_token() { return (current = TOKEN(lexer.yylex())); }
+TOKEN Compiler::read_token() { return (m_current_token = TOKEN(m_lexer.yylex())); }
 
 Compiler::Compiler(std::istream& input, std::ostream& output) :
-	lexer{input, output}, codegen{std::make_unique<CodeGen>(output)}
+	m_lexer{input, output}, m_codegen{std::make_unique<CodeGen>(output)}
 {}
 
 void Compiler::operator()()
 {
 	try
 	{
-		codegen->begin_program();
+		m_codegen->begin_program();
 
 		read_token();
 		parse_program();
 
-		if (current != FEOF)
+		if (m_current_token != FEOF)
 		{
 			// FIXME: this is not printing the right stuff
 			error(fmt::format("extraneous characters at end of file"));
 		}
 
-		codegen->finalize_program();
+		m_codegen->finalize_program();
 	}
 	catch (const CompilerError& e)
 	{
@@ -116,27 +116,39 @@ void Compiler::operator()()
 	}
 }
 
-bool Compiler::is_token_keyword() const { return check_enum_range(current, TOKEN::FIRST_KEYWORD, TOKEN::LAST_KEYWORD); }
-bool Compiler::is_token_type() const { return check_enum_range(current, TOKEN::FIRST_TYPE, TOKEN::LAST_TYPE); }
-bool Compiler::is_token_addop() const { return check_enum_range(current, TOKEN::FIRST_ADDOP, TOKEN::LAST_ADDOP); }
-bool Compiler::is_token_mulop() const { return check_enum_range(current, TOKEN::FIRST_MULOP, TOKEN::LAST_MULOP); }
-bool Compiler::is_token_relop() const { return check_enum_range(current, TOKEN::FIRST_RELOP, TOKEN::LAST_RELOP); }
+bool Compiler::is_token_keyword() const
+{
+	return check_enum_range(m_current_token, TOKEN::FIRST_KEYWORD, TOKEN::LAST_KEYWORD);
+}
+bool Compiler::is_token_type() const { return check_enum_range(m_current_token, TOKEN::FIRST_TYPE, TOKEN::LAST_TYPE); }
+bool Compiler::is_token_addop() const
+{
+	return check_enum_range(m_current_token, TOKEN::FIRST_ADDOP, TOKEN::LAST_ADDOP);
+}
+bool Compiler::is_token_mulop() const
+{
+	return check_enum_range(m_current_token, TOKEN::FIRST_MULOP, TOKEN::LAST_MULOP);
+}
+bool Compiler::is_token_relop() const
+{
+	return check_enum_range(m_current_token, TOKEN::FIRST_RELOP, TOKEN::LAST_RELOP);
+}
 
-string_view Compiler::token_text() const { return lexer.YYText(); }
+string_view Compiler::token_text() const { return m_lexer.YYText(); }
 
 Type Compiler::parse_identifier()
 {
 	const std::string name = token_text();
 
-	const auto it = variables.find(name);
-	if (it == variables.end())
+	const auto it = m_variables.find(name);
+	if (it == m_variables.end())
 	{
 		error(fmt::format("use of undeclared identifier '{}'", name));
 	}
 
 	const VariableType& type = it->second;
 
-	codegen->load_variable({name, type});
+	m_codegen->load_variable({name, type});
 	read_token();
 
 	return type.type;
@@ -145,7 +157,7 @@ Type Compiler::parse_identifier()
 Type Compiler::parse_character_literal()
 {
 	// 2nd character in e.g. `'h'`
-	codegen->load_i64(token_text()[1]);
+	m_codegen->load_i64(token_text()[1]);
 	read_token();
 
 	return Type::CHAR;
@@ -157,7 +169,7 @@ Type Compiler::parse_integer_literal()
 		sizeof(unsigned long long) >= sizeof(std::int64_t),
 		"unsigned long long must be 64-bit on the compiler platform");
 
-	codegen->load_i64(std::stoull(token_text()));
+	m_codegen->load_i64(std::stoull(token_text()));
 	read_token();
 
 	return Type::UNSIGNED_INT;
@@ -171,7 +183,7 @@ Type Compiler::parse_float_literal()
 	std::uint64_t target;
 	std::memcpy(&target, &source, sizeof(target));
 
-	codegen->load_i64(target);
+	m_codegen->load_i64(target);
 	read_token();
 
 	return Type::DOUBLE;
@@ -181,7 +193,7 @@ Type Compiler::parse_factor()
 {
 	// TODO: implement boolean negation '!'
 
-	switch (current)
+	switch (m_current_token)
 	{
 	case LPARENT:
 	{
@@ -216,7 +228,7 @@ Type Compiler::parse_type_cast()
 	const Type source_type = parse_expression();
 	read_token(RPARENT, "expected ')' after expression for explicit type conversion");
 
-	codegen->convert(source_type, destination_type);
+	m_codegen->convert(source_type, destination_type);
 
 	// right now just yolo it and don't convert
 	return destination_type;
@@ -227,7 +239,7 @@ Type Compiler::parse_term()
 	const Type first_type = parse_factor();
 	while (is_token_mulop())
 	{
-		const TOKEN op_token = current;
+		const TOKEN op_token = m_current_token;
 		read_token();
 
 		const Type nth_type = parse_factor();
@@ -238,28 +250,28 @@ Type Compiler::parse_term()
 		case TOKEN::MULOP_AND:
 		{
 			check_type(first_type, Type::BOOLEAN);
-			codegen->alu_and_bool();
+			m_codegen->alu_and_bool();
 			break;
 		}
 
 		case TOKEN::MULOP_MUL:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_multiply(first_type);
+			m_codegen->alu_multiply(first_type);
 			break;
 		}
 
 		case TOKEN::MULOP_DIV:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_divide(first_type);
+			m_codegen->alu_divide(first_type);
 			break;
 		}
 
 		case TOKEN::MULOP_MOD:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_modulus(first_type);
+			m_codegen->alu_modulus(first_type);
 			break;
 		}
 
@@ -276,7 +288,7 @@ Type Compiler::parse_simple_expression()
 
 	while (is_token_addop())
 	{
-		const TOKEN op_token = current;
+		const TOKEN op_token = m_current_token;
 		read_token();
 
 		const Type nth_type = parse_term();
@@ -287,21 +299,21 @@ Type Compiler::parse_simple_expression()
 		case TOKEN::ADDOP_OR:
 		{
 			check_type(first_type, Type::BOOLEAN);
-			codegen->alu_or_bool();
+			m_codegen->alu_or_bool();
 			break;
 		}
 
 		case TOKEN::ADDOP_ADD:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_add(first_type);
+			m_codegen->alu_add(first_type);
 			break;
 		}
 
 		case TOKEN::ADDOP_SUB:
 		{
 			check_type(first_type, Type::ARITHMETIC);
-			codegen->alu_sub(first_type);
+			m_codegen->alu_sub(first_type);
 			break;
 		}
 
@@ -314,7 +326,7 @@ Type Compiler::parse_simple_expression()
 
 void Compiler::parse_declaration_block()
 {
-	if (current != TOKEN::KEYWORD_VAR)
+	if (m_current_token != TOKEN::KEYWORD_VAR)
 	{
 		return;
 	}
@@ -328,9 +340,9 @@ void Compiler::parse_declaration_block()
 			read_token();
 			current_declarations.push_back(token_text());
 			read_token();
-		} while (current == COMMA);
+		} while (m_current_token == COMMA);
 
-		if (current != COLON)
+		if (m_current_token != COLON)
 		{
 			error("expected ':' after variable name list in declaration block");
 		}
@@ -341,18 +353,18 @@ void Compiler::parse_declaration_block()
 
 		for (auto& name : current_declarations)
 		{
-			variables.emplace(std::move(name), VariableType{type});
+			m_variables.emplace(std::move(name), VariableType{type});
 		}
-	} while (current == SEMICOLON);
+	} while (m_current_token == SEMICOLON);
 
 	read_token(DOT, "expected '.' at end of declaration block");
 
-	for (const auto& it : variables)
+	for (const auto& it : m_variables)
 	{
 		const auto&         name = it.first;
 		const VariableType& type = it.second;
 
-		codegen->define_global_variable({name, type});
+		m_codegen->define_global_variable({name, type});
 	}
 }
 
@@ -363,7 +375,7 @@ Type Compiler::parse_type()
 		error("expected type");
 	}
 
-	const TOKEN token = current;
+	const TOKEN token = m_current_token;
 
 	read_token();
 
@@ -383,7 +395,7 @@ Type Compiler::parse_expression()
 
 	if (is_token_relop())
 	{
-		const TOKEN op_token = current;
+		const TOKEN op_token = m_current_token;
 		read_token();
 
 		const Type nth_type = parse_simple_expression();
@@ -391,12 +403,12 @@ Type Compiler::parse_expression()
 
 		switch (op_token)
 		{
-		case TOKEN::RELOP_EQU: codegen->alu_equal(first_type); break;
-		case TOKEN::RELOP_DIFF: codegen->alu_not_equal(first_type); break;
-		case TOKEN::RELOP_SUPE: codegen->alu_greater_equal(first_type); break;
-		case TOKEN::RELOP_INFE: codegen->alu_lower_equal(first_type); break;
-		case TOKEN::RELOP_INF: codegen->alu_lower(first_type); break;
-		case TOKEN::RELOP_SUP: codegen->alu_greater(first_type); break;
+		case TOKEN::RELOP_EQU: m_codegen->alu_equal(first_type); break;
+		case TOKEN::RELOP_DIFF: m_codegen->alu_not_equal(first_type); break;
+		case TOKEN::RELOP_SUPE: m_codegen->alu_greater_equal(first_type); break;
+		case TOKEN::RELOP_INFE: m_codegen->alu_lower_equal(first_type); break;
+		case TOKEN::RELOP_INF: m_codegen->alu_lower(first_type); break;
+		case TOKEN::RELOP_SUP: m_codegen->alu_greater(first_type); break;
 		default: bug("unknown comparison operator");
 		}
 
@@ -411,21 +423,21 @@ Variable Compiler::parse_assignment_statement()
 	expect_token(ID, "expected an identifier");
 
 	const std::string name = token_text();
-	const auto        it   = variables.find(name);
+	const auto        it   = m_variables.find(name);
 
-	if (it == variables.end())
+	if (it == m_variables.end())
 	{
 		error(fmt::format("assignment of undeclared variable '{}'", name));
 	}
 
 	const VariableType& variable_type = it->second;
 
-	read_token(); // We needed the token_text up until now
+	read_token(); // We needed the token_text up until now - consume the identifier
 	read_token(ASSIGN, "expected ':=' in variable assignment");
 
 	Type type = parse_expression();
 
-	codegen->store_variable({name, variable_type});
+	m_codegen->store_variable({name, variable_type});
 
 	check_type(type, variable_type.type);
 
@@ -434,34 +446,34 @@ Variable Compiler::parse_assignment_statement()
 
 void Compiler::parse_if_statement()
 {
-	auto if_statement = codegen->statement_if_prepare();
+	auto if_statement = m_codegen->statement_if_prepare();
 
 	read_token();
 	check_type(parse_expression(), Type::BOOLEAN);
 
 	read_token(KEYWORD_THEN, "expected 'THEN' after conditional expression of 'IF' statement");
 
-	codegen->statement_if_post_check(if_statement);
+	m_codegen->statement_if_post_check(if_statement);
 
 	parse_statement();
 
-	if (current == TOKEN::KEYWORD_ELSE)
+	if (m_current_token == TOKEN::KEYWORD_ELSE)
 	{
-		codegen->statement_if_with_else(if_statement);
+		m_codegen->statement_if_with_else(if_statement);
 		read_token();
 		parse_statement();
 	}
 	else
 	{
-		codegen->statement_if_without_else(if_statement);
+		m_codegen->statement_if_without_else(if_statement);
 	}
 
-	codegen->statement_if_finalize(if_statement);
+	m_codegen->statement_if_finalize(if_statement);
 }
 
 void Compiler::parse_while_statement()
 {
-	auto while_statement = codegen->statement_while_prepare();
+	auto while_statement = m_codegen->statement_while_prepare();
 
 	read_token();
 	const Type type = parse_expression();
@@ -469,11 +481,11 @@ void Compiler::parse_while_statement()
 
 	read_token(KEYWORD_DO, "expected 'DO' after conditional expression of 'WHILE' statement");
 
-	codegen->statement_while_post_check(while_statement);
+	m_codegen->statement_while_post_check(while_statement);
 
 	parse_statement();
 
-	codegen->statement_while_finalize(while_statement);
+	m_codegen->statement_while_finalize(while_statement);
 }
 
 void Compiler::parse_for_statement()
@@ -482,8 +494,8 @@ void Compiler::parse_for_statement()
 	const auto assignment = parse_assignment_statement();
 	check_type(assignment.type.type, Type::UNSIGNED_INT);
 
-	auto for_statement = codegen->statement_for_prepare(assignment);
-	codegen->statement_for_post_assignment(for_statement);
+	auto for_statement = m_codegen->statement_for_prepare(assignment);
+	m_codegen->statement_for_post_assignment(for_statement);
 
 	read_token(KEYWORD_TO, "expected 'TO' after assignement in 'FOR' statement");
 
@@ -491,11 +503,11 @@ void Compiler::parse_for_statement()
 
 	read_token(KEYWORD_DO, "expected 'DO' after max expression in 'FOR' statement");
 
-	codegen->statement_for_post_check(for_statement);
+	m_codegen->statement_for_post_check(for_statement);
 
 	parse_statement();
 
-	codegen->statement_for_finalize(for_statement);
+	m_codegen->statement_for_finalize(for_statement);
 }
 
 void Compiler::parse_block_statement()
@@ -504,7 +516,7 @@ void Compiler::parse_block_statement()
 	{
 		read_token();
 		parse_statement();
-	} while (current == SEMICOLON);
+	} while (m_current_token == SEMICOLON);
 
 	read_token(KEYWORD_END, "expected 'END' to finish block statement");
 }
@@ -514,12 +526,12 @@ void Compiler::parse_display_statement()
 	read_token();
 	const Type type = parse_expression();
 
-	codegen->debug_display(type);
+	m_codegen->debug_display(type);
 }
 
 void Compiler::parse_statement()
 {
-	switch (current)
+	switch (m_current_token)
 	{
 	case TOKEN::KEYWORD_IF: parse_if_statement(); break;
 	case TOKEN::KEYWORD_WHILE: parse_while_statement(); break;
@@ -532,11 +544,11 @@ void Compiler::parse_statement()
 
 void Compiler::parse_statement_part()
 {
-	codegen->begin_executable_section();
-	codegen->begin_main_procedure();
+	m_codegen->begin_executable_section();
+	m_codegen->begin_main_procedure();
 
 	parse_statement();
-	while (current == SEMICOLON)
+	while (m_current_token == SEMICOLON)
 	{
 		read_token();
 		parse_statement();
@@ -544,15 +556,15 @@ void Compiler::parse_statement_part()
 
 	read_token(DOT, "expected '.' (did you forget a ';'?)");
 
-	codegen->finalize_main_procedure();
-	codegen->finalize_executable_section();
+	m_codegen->finalize_main_procedure();
+	m_codegen->finalize_executable_section();
 }
 
 void Compiler::parse_program()
 {
-	codegen->begin_global_data_section();
+	m_codegen->begin_global_data_section();
 	parse_declaration_block();
-	codegen->finalize_global_data_section();
+	m_codegen->finalize_global_data_section();
 
 	parse_statement_part();
 }
