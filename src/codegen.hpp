@@ -1,5 +1,6 @@
 #pragma once
 
+#include "exceptions.hpp"
 #include "types.hpp"
 #include "util/string_view.hpp"
 
@@ -23,20 +24,6 @@ struct ForStatement
 {
 	std::size_t     saved_tag;
 	const Variable* variable;
-};
-
-class UnimplementedError : public std::runtime_error
-{
-	public:
-	using std::runtime_error::runtime_error;
-};
-
-class UnimplementedTypeSupportError : public UnimplementedError
-{
-	public:
-	using UnimplementedError::UnimplementedError;
-
-	UnimplementedTypeSupportError() : UnimplementedError{"Support was not implemented for this type"} {}
 };
 
 class CodeGen
