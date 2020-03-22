@@ -31,6 +31,9 @@ add_executable(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME} PRIVATE "src/" ${FLEX_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} fmt::fmt)
+target_compile_options(${PROJECT_NAME} PRIVATE
+	"-Wall" "-Wextra"
+)
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_STANDARD 14
 	CXX_STANDARD_REQUIRED ON
