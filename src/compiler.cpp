@@ -17,6 +17,7 @@
 
 #include "compiler.hpp"
 #include "codegen.hpp"
+#include "exceptions.hpp"
 #include "tokeniser.hpp"
 #include "util/enums.hpp"
 #include "util/string_view.hpp"
@@ -91,9 +92,13 @@ void Compiler::operator()()
 
 		codegen->finalize_program();
 	}
-	catch (const std::runtime_error& e)
+	catch (const CompilerError& e)
 	{
 		error(e.what());
+	}
+	catch (const std::runtime_error& e)
+	{
+		bug(e.what());
 	}
 }
 
