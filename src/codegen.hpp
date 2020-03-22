@@ -8,7 +8,7 @@
 #include <iosfwd>
 #include <stdexcept>
 
-class Variable;
+struct Variable;
 
 struct IfStatement
 {
