@@ -445,7 +445,7 @@ Variable Compiler::parse_assignment_statement()
 
 	check_type(type, variable_type.type);
 
-	return {name, type};
+	return {name, {type}};
 }
 
 void Compiler::parse_if_statement()

@@ -18,10 +18,16 @@ struct VariableType
 	Type type;
 };
 
+enum class Scope
+{
+	GLOBAL
+};
+
 struct Variable
 {
 	std::string  name;
 	VariableType type;
+	Scope        variable_scope = Scope::GLOBAL;
 };
 
 class Compiler
