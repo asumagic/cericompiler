@@ -18,16 +18,10 @@ struct VariableType
 	Type type;
 };
 
-enum class Scope
-{
-	GLOBAL
-};
-
 struct Variable
 {
 	std::string  name;
 	VariableType type;
-	Scope        variable_scope = Scope::GLOBAL;
 };
 
 class Compiler
@@ -80,5 +74,7 @@ class Compiler
 
 	void check_type(Type a, Type b) const;
 
+	void  expect_token(TOKEN expected, string_view error_message) const;
+	void  read_token(TOKEN expected, string_view error_message);
 	TOKEN read_token();
 };

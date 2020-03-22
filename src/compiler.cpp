@@ -26,6 +26,20 @@
 #include <fmt/core.h>
 #include <vector>
 
+void Compiler::expect_token(TOKEN expected, string_view error_message) const
+{
+	if (current != expected)
+	{
+		error(error_message);
+	}
+}
+
+void Compiler::read_token(TOKEN expected, string_view error_message)
+{
+	expect_token(expected, error_message);
+	read_token();
+}
+
 void Compiler::error(string_view s) const
 {
 	const auto source_context = fmt::format("source:{}: ", lexer.lineno());
@@ -87,7 +101,7 @@ void Compiler::operator()()
 		if (current != FEOF)
 		{
 			// FIXME: this is not printing the right stuff
-			error(fmt::format("extraneous characters at end of file: [{}]", current));
+			error(fmt::format("extraneous characters at end of file"));
 		}
 
 		codegen->finalize_program();
@@ -139,6 +153,10 @@ Type Compiler::parse_character_literal()
 
 Type Compiler::parse_integer_literal()
 {
+	static_assert(
+		sizeof(unsigned long long) >= sizeof(std::int64_t),
+		"unsigned long long must be 64-bit on the compiler platform");
+
 	codegen->load_i64(std::stoull(token_text()));
 	read_token();
 
@@ -163,45 +181,28 @@ Type Compiler::parse_factor()
 {
 	// TODO: implement boolean negation '!'
 
-	if (current == RPARENT)
+	switch (current)
+	{
+	case LPARENT:
 	{
 		read_token();
+
 		Type type = parse_expression();
-		if (current != LPARENT)
-		{
-			error("expected ')'");
-		}
-		else
-		{
-			read_token();
-		}
+		read_token(RPARENT, "expected ')'");
 
 		return type;
 	}
 
-	if (current == CHAR_LITERAL)
-	{
-		return parse_character_literal();
-	}
+	case CHAR_LITERAL: return parse_character_literal();
+	case INTEGER_LITERAL: return parse_integer_literal();
+	case FLOAT_LITERAL: return parse_float_literal();
+	case ID: return parse_identifier();
 
-	if (current == INTEGER_LITERAL)
-	{
-		return parse_integer_literal();
-	}
-
-	if (current == FLOAT_LITERAL)
-	{
-		return parse_float_literal();
-	}
-
-	if (current == ID)
-	{
-		return parse_identifier();
-	}
-
-	if (is_token_type())
-	{
-		return parse_type_cast();
+	default:
+		if (is_token_type())
+		{
+			return parse_type_cast();
+		}
 	}
 
 	error("expected '(', number or identifier");
@@ -210,20 +211,10 @@ Type Compiler::parse_factor()
 Type Compiler::parse_type_cast()
 {
 	const Type destination_type = parse_type();
+	read_token(LPARENT, "expected '('");
 
-	if (current != RPARENT)
-	{
-		error("expected '(' after type for explicit type conversion");
-	}
-
-	read_token();
 	const Type source_type = parse_expression();
-
-	if (current != LPARENT)
-	{
-		error("expected ')' after expression for explicit type conversion");
-	}
-	read_token();
+	read_token(RPARENT, "expected ')' after expression for explicit type conversion");
 
 	codegen->convert(source_type, destination_type);
 
@@ -354,12 +345,7 @@ void Compiler::parse_declaration_block()
 		}
 	} while (current == SEMICOLON);
 
-	if (current != DOT)
-	{
-		error("expected '.' at end of declaration block");
-	}
-
-	read_token();
+	read_token(DOT, "expected '.' at end of declaration block");
 
 	for (const auto& it : variables)
 	{
@@ -422,8 +408,7 @@ Type Compiler::parse_expression()
 
 Variable Compiler::parse_assignment_statement()
 {
-	if (current != ID)
-		error("expected an identifier");
+	expect_token(ID, "expected an identifier");
 
 	const std::string name = token_text();
 	const auto        it   = variables.find(name);
@@ -435,10 +420,9 @@ Variable Compiler::parse_assignment_statement()
 
 	const VariableType& variable_type = it->second;
 
-	read_token();
-	if (current != ASSIGN)
-		error("expected ':=' in variable assignment");
-	read_token();
+	read_token(); // We needed the token_text up until now
+	read_token(ASSIGN, "expected ':=' in variable assignment");
+
 	Type type = parse_expression();
 
 	codegen->store_variable({name, variable_type});
@@ -455,14 +439,10 @@ void Compiler::parse_if_statement()
 	read_token();
 	check_type(parse_expression(), Type::BOOLEAN);
 
+	read_token(KEYWORD_THEN, "expected 'THEN' after conditional expression of 'IF' statement");
+
 	codegen->statement_if_post_check(if_statement);
 
-	if (current != TOKEN::KEYWORD_THEN)
-	{
-		error("expected 'THEN' after conditional expression of 'IF' statement");
-	}
-
-	read_token();
 	parse_statement();
 
 	if (current == TOKEN::KEYWORD_ELSE)
@@ -487,14 +467,10 @@ void Compiler::parse_while_statement()
 	const Type type = parse_expression();
 	check_type(type, Type::BOOLEAN);
 
+	read_token(KEYWORD_DO, "expected 'DO' after conditional expression of 'WHILE' statement");
+
 	codegen->statement_while_post_check(while_statement);
 
-	if (current != TOKEN::KEYWORD_DO)
-	{
-		error("expected 'DO' after conditional expression of 'WHILE' statement");
-	}
-
-	read_token();
 	parse_statement();
 
 	codegen->statement_while_finalize(while_statement);
@@ -507,25 +483,16 @@ void Compiler::parse_for_statement()
 	check_type(assignment.type.type, Type::UNSIGNED_INT);
 
 	auto for_statement = codegen->statement_for_prepare(assignment);
-
-	if (current != TOKEN::KEYWORD_TO)
-	{
-		error("expected 'TO' after assignement in 'FOR' statement");
-	}
-
 	codegen->statement_for_post_assignment(for_statement);
 
-	read_token();
+	read_token(KEYWORD_TO, "expected 'TO' after assignement in 'FOR' statement");
+
 	check_type(parse_expression(), Type::UNSIGNED_INT);
+
+	read_token(KEYWORD_DO, "expected 'DO' after max expression in 'FOR' statement");
 
 	codegen->statement_for_post_check(for_statement);
 
-	if (current != TOKEN::KEYWORD_DO)
-	{
-		error("expected 'DO' after max expression in 'FOR' statement");
-	}
-
-	read_token();
 	parse_statement();
 
 	codegen->statement_for_finalize(for_statement);
@@ -539,12 +506,7 @@ void Compiler::parse_block_statement()
 		parse_statement();
 	} while (current == SEMICOLON);
 
-	if (current != TOKEN::KEYWORD_END)
-	{
-		error("expected 'END' to finish block statement");
-	}
-
-	read_token();
+	read_token(KEYWORD_END, "expected 'END' to finish block statement");
 }
 
 void Compiler::parse_display_statement()
@@ -580,12 +542,7 @@ void Compiler::parse_statement_part()
 		parse_statement();
 	}
 
-	if (current != DOT)
-	{
-		error("expected '.' (did you forget a ';'?)");
-	}
-
-	read_token();
+	read_token(DOT, "expected '.' (did you forget a ';'?)");
 
 	codegen->finalize_main_procedure();
 	codegen->finalize_executable_section();

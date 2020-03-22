@@ -6,7 +6,6 @@
 
 #include <cstdint>
 #include <iosfwd>
-#include <stdexcept>
 
 struct Variable;
 
