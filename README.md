@@ -55,7 +55,7 @@ Operators:
     - [x] Integral
     - [x] Floating-point
 - [x] Logical operators: `||`, `&&`
-- [ ] Boolean negation operator: `!`
+- [x] Boolean negation operator: `!`
 - [x] Comparison operators: `<`, `<=`, `==`, `>`, `>=`, `!=` (or `<>`)
     - [x] Integral
     - [x] Floating-point

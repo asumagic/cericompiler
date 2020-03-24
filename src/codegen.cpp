@@ -93,6 +93,8 @@ void CodeGen::alu_or_bool()
 				"\tpush %rax\n";
 }
 
+void CodeGen::alu_not_bool() { m_output << "\tnotq (%rsp)\n"; }
+
 void CodeGen::alu_add(Type type)
 {
 	alu_load_binop(type);

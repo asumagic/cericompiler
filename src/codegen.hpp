@@ -51,6 +51,7 @@ class CodeGen
 
 	void alu_and_bool();
 	void alu_or_bool();
+	void alu_not_bool();
 
 	void alu_add(Type type);
 	void alu_sub(Type type);

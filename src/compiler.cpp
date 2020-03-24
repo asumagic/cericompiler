@@ -186,8 +186,6 @@ Type Compiler::parse_float_literal()
 
 Type Compiler::parse_factor()
 {
-	// TODO: implement boolean negation '!'
-
 	switch (m_current_token)
 	{
 	case LPARENT:
@@ -197,6 +195,17 @@ Type Compiler::parse_factor()
 		read_token(RPARENT, "expected ')'");
 
 		return type;
+	}
+
+	case NOT:
+	{
+		read_token();
+		Type type = parse_factor();
+		check_type(type, Type::BOOLEAN);
+
+		m_codegen->alu_not_bool();
+
+		return Type::BOOLEAN;
 	}
 
 	case CHAR_LITERAL: return parse_character_literal();
