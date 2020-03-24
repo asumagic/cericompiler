@@ -90,6 +90,9 @@ class Compiler
 	//! \brief If the current token is \p expected, skip it, otherwise show \p error_message as an error.
 	void read_token(TOKEN expected, string_view error_message);
 
+	//! \brief If the current token is \p expected, read it and return true, otherwise return false.
+	bool try_read_token(TOKEN expected);
+
 	//! \brief Read the next token and update \var current.
 	//! \warning This will invalidate any prior token_text() references.
 	TOKEN read_token();

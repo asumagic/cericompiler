@@ -40,6 +40,17 @@ void Compiler::read_token(TOKEN expected, string_view error_message)
 	read_token();
 }
 
+bool Compiler::try_read_token(TOKEN expected)
+{
+	if (m_current_token == expected)
+	{
+		read_token();
+		return true;
+	}
+
+	return false;
+}
+
 void Compiler::error(string_view error_message) const
 {
 	const auto source_context = fmt::format("source:{}: ", m_lexer.lineno());
@@ -98,12 +109,12 @@ void Compiler::operator()()
 	{
 		m_codegen->begin_program();
 
-		read_token();
+		read_token(); // Read first token
 		parse_program();
 
 		if (m_current_token != FEOF)
 		{
-			error(fmt::format("extraneous characters at end of file"));
+			error(fmt::format("extraneous characters at end of file. did you use '.' instead of ';'?"));
 		}
 
 		m_codegen->finalize_program();
@@ -182,7 +193,6 @@ Type Compiler::parse_factor()
 	case LPARENT:
 	{
 		read_token();
-
 		Type type = parse_expression();
 		read_token(RPARENT, "expected ')'");
 
@@ -208,7 +218,6 @@ Type Compiler::parse_type_cast()
 {
 	const Type destination_type = parse_type();
 	read_token(LPARENT, "expected '('");
-
 	const Type source_type = parse_expression();
 	read_token(RPARENT, "expected ')' after expression for explicit type conversion");
 
@@ -321,17 +330,12 @@ void Compiler::parse_declaration_block()
 
 		do
 		{
-			read_token();
+			read_token(); // Skip VAR or previous COMMA
 			current_declarations.push_back(token_text());
-			read_token();
+			read_token(); // Skip variable name
 		} while (m_current_token == COMMA);
 
-		if (m_current_token != COLON)
-		{
-			error("expected ':' after variable name list in declaration block");
-		}
-
-		read_token();
+		read_token(COLON, "expected ':' after variable name list in declaration block");
 
 		const Type type = parse_type();
 
@@ -441,10 +445,9 @@ void Compiler::parse_if_statement()
 
 	parse_statement();
 
-	if (m_current_token == TOKEN::KEYWORD_ELSE)
+	if (try_read_token(KEYWORD_ELSE))
 	{
 		m_codegen->statement_if_with_else(if_statement);
-		read_token();
 		parse_statement();
 	}
 	else
