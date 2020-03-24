@@ -1,7 +1,7 @@
 #pragma once
 
 #include "codegen.hpp"
-#include "tokeniser.hpp"
+#include "token.hpp"
 #include "types.hpp"
 #include "util/string_view.hpp"
 
@@ -38,12 +38,6 @@ class Compiler
 	std::unordered_map<std::string, VariableType> m_variables;
 
 	std::unique_ptr<CodeGen> m_codegen;
-
-	[[nodiscard]] bool is_token_keyword() const;
-	[[nodiscard]] bool is_token_type() const;
-	[[nodiscard]] bool is_token_addop() const;
-	[[nodiscard]] bool is_token_mulop() const;
-	[[nodiscard]] bool is_token_relop() const;
 
 	[[nodiscard]] string_view token_text() const;
 

@@ -66,3 +66,9 @@ enum TOKEN
 	NOT,
 	ASSIGN
 };
+
+[[nodiscard]] bool is_token_keyword(TOKEN token);
+[[nodiscard]] bool is_token_type(TOKEN token);
+[[nodiscard]] bool is_token_addop(TOKEN token);
+[[nodiscard]] bool is_token_mulop(TOKEN token);
+[[nodiscard]] bool is_token_relop(TOKEN token);

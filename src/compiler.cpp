@@ -18,7 +18,7 @@
 #include "compiler.hpp"
 #include "codegen.hpp"
 #include "exceptions.hpp"
-#include "tokeniser.hpp"
+#include "token.hpp"
 #include "util/enums.hpp"
 #include "util/string_view.hpp"
 
@@ -63,18 +63,21 @@ void Compiler::check_type(Type a, Type b) const
 		bug("only the second operand of TypeCheck may be a type concept");
 	}
 
-	bool match = true;
+	bool match;
 
-	if (b == Type::ARITHMETIC)
+	switch (b)
 	{
-		if (!check_enum_range(a, Type::FIRST_ARITHMETIC, Type::LAST_ARITHMETIC))
-		{
-			match = false;
-		}
+	case Type::ARITHMETIC:
+	{
+		match = check_enum_range(a, Type::FIRST_ARITHMETIC, Type::LAST_ARITHMETIC);
+		break;
 	}
-	else if (a != b)
+
+	default:
 	{
-		match = false;
+		match = (a == b);
+		break;
+	}
 	}
 
 	if (!match)
@@ -100,7 +103,6 @@ void Compiler::operator()()
 
 		if (m_current_token != FEOF)
 		{
-			// FIXME: this is not printing the right stuff
 			error(fmt::format("extraneous characters at end of file"));
 		}
 
@@ -114,24 +116,6 @@ void Compiler::operator()()
 	{
 		bug(e.what());
 	}
-}
-
-bool Compiler::is_token_keyword() const
-{
-	return check_enum_range(m_current_token, TOKEN::FIRST_KEYWORD, TOKEN::LAST_KEYWORD);
-}
-bool Compiler::is_token_type() const { return check_enum_range(m_current_token, TOKEN::FIRST_TYPE, TOKEN::LAST_TYPE); }
-bool Compiler::is_token_addop() const
-{
-	return check_enum_range(m_current_token, TOKEN::FIRST_ADDOP, TOKEN::LAST_ADDOP);
-}
-bool Compiler::is_token_mulop() const
-{
-	return check_enum_range(m_current_token, TOKEN::FIRST_MULOP, TOKEN::LAST_MULOP);
-}
-bool Compiler::is_token_relop() const
-{
-	return check_enum_range(m_current_token, TOKEN::FIRST_RELOP, TOKEN::LAST_RELOP);
 }
 
 string_view Compiler::token_text() const { return m_lexer.YYText(); }
@@ -211,7 +195,7 @@ Type Compiler::parse_factor()
 	case ID: return parse_identifier();
 
 	default:
-		if (is_token_type())
+		if (is_token_type(m_current_token))
 		{
 			return parse_type_cast();
 		}
@@ -237,7 +221,7 @@ Type Compiler::parse_type_cast()
 Type Compiler::parse_term()
 {
 	const Type first_type = parse_factor();
-	while (is_token_mulop())
+	while (is_token_mulop(m_current_token))
 	{
 		const TOKEN op_token = m_current_token;
 		read_token();
@@ -286,7 +270,7 @@ Type Compiler::parse_simple_expression()
 {
 	const Type first_type = parse_term();
 
-	while (is_token_addop())
+	while (is_token_addop(m_current_token))
 	{
 		const TOKEN op_token = m_current_token;
 		read_token();
@@ -370,7 +354,7 @@ void Compiler::parse_declaration_block()
 
 Type Compiler::parse_type()
 {
-	if (!is_token_type())
+	if (!is_token_type(m_current_token))
 	{
 		error("expected type");
 	}
@@ -393,7 +377,7 @@ Type Compiler::parse_expression()
 {
 	const Type first_type = parse_simple_expression();
 
-	if (is_token_relop())
+	if (is_token_relop(m_current_token))
 	{
 		const TOKEN op_token = m_current_token;
 		read_token();
