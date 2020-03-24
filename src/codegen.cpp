@@ -372,10 +372,18 @@ void CodeGen::debug_display(Type type)
 	switch (type)
 	{
 	case Type::UNSIGNED_INT:
+	{
+		m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
+					"\tpop %rsi\n"
+					"\tmovb $0, %al # number of float parameters (varargs)\n";
+		break;
+	}
+
 	case Type::BOOLEAN:
 	{
 		m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
 					"\tpop %rsi\n"
+					"\tandq $0x1, %rsi # restrict bool output to 0 or 1\n"
 					"\tmovb $0, %al # number of float parameters (varargs)\n";
 		break;
 	}
