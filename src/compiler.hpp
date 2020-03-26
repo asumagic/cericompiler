@@ -11,6 +11,7 @@
 #include <stack>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <FlexLexer.h>
@@ -47,6 +48,7 @@ class Compiler
 	std::unordered_map<std::string, VariableType> m_variables;
 	std::unordered_map<std::string, Type>         m_typedefs;
 	std::unordered_map<std::string, Function>     m_functions;
+	std::unordered_set<std::string>               m_includes;
 
 	std::unique_ptr<CodeGen> m_codegen;
 

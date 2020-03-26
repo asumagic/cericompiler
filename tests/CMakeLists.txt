@@ -90,6 +90,7 @@ expect_output("ffi-include-mathh" "o")
 expect_compiles("ffi-test-no-params")
 expect_diagnostic("fail-case-call-missing-params" ".*not enough parameters.*")
 expect_diagnostic("fail-case-call-extra-params" ".*too much parameters.*")
+expect_compiles("duplicate-include")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL

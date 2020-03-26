@@ -466,6 +466,15 @@ void Compiler::parse_include()
 
 	read_token(SEMICOLON, "expected ';' after INCLUDE directive");
 
+	const auto emplace_result = m_includes.emplace(path);
+	const bool success        = emplace_result.second;
+
+	if (!success)
+	{
+		// Already included this file
+		return;
+	}
+
 	std::ifstream included_source{path};
 
 	if (!included_source)
