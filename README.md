@@ -86,6 +86,9 @@ Functions:
         - [ ] Return value support
         - [ ] Generic procedures
 
+Misc:
+- [x] Include file support
+
 ## Language grammar
 
 This is provided for demonstration purposes, and includes some approximations (e.g. `Symbol` is not strictly defined and
@@ -98,6 +101,7 @@ Letter                     := "a"|...|"z"
 Number                     := Digit{Digit}
 Digit                      := "0"|...|"9"
 
+StringLiteral              := "\"" {Symbol} "\""
 CharacterLiteral           := "'" Symbol "'"
 IntegerLiteral             := Number
 FloatLiteral               := Number "." Number
@@ -123,9 +127,12 @@ TypeDeclaration            := "TYPE" Identifier "=" Type ";"
 ForeignFunctionDeclaration := "FFI" Identifier "(" TypeList ")" : TypeOrVoid
 TypeList                   := [ Type {"," Type} ]
 
+Include                    := "INCLUDE" StringLiteral ";"
+
 Declaration                := VarDeclarationBlock
                             | TypeDeclaration
                             | ForeignFunctionDeclaration
+                            | Include
 
 Type                       := "INTEGER" | "CHAR" | "BOOLEAN" | "DOUBLE"
 TypeOrVoid                 := Type | "VOID"

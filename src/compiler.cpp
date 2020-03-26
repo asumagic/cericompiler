@@ -23,11 +23,14 @@
 
 #include <fmt/color.h>
 #include <fmt/core.h>
+#include <fstream>
 #include <vector>
 
-Compiler::Compiler(string_view unit_name, std::istream& input, std::ostream& output) :
-	m_unit_name{unit_name}, m_lexer{input, output}, m_codegen{std::make_unique<CodeGen>(output)}
-{}
+Compiler::Compiler(string_view file_name, std::istream& input, std::ostream& output) :
+	m_output_stream{output}, m_lexer{new yyFlexLexer(input, output)}, m_codegen{std::make_unique<CodeGen>(output)}
+{
+	m_file_name_stack.push(file_name);
+}
 
 void Compiler::operator()()
 {
@@ -45,9 +48,15 @@ void Compiler::operator()()
 
 		m_codegen->finalize_program();
 	}
+	catch (const CompilerBug& e)
+	{
+		bug(e.what());
+	}
 	catch (const CompilerError& e)
 	{
-		error(e.what());
+		// Rethrow the exception. This is done so that we don't call bug() on a compiler error caught by the next
+		// handler.
+		throw;
 	}
 	catch (const std::runtime_error& e)
 	{
@@ -352,6 +361,7 @@ void Compiler::parse_declaration_block()
 		case TOKEN::KEYWORD_VAR: parse_variable_declaration_block(); break;
 		case TOKEN::KEYWORD_TYPE: parse_type_definition(); break;
 		case TOKEN::KEYWORD_FFI: parse_foreign_function_declaration(); break;
+		case TOKEN::KEYWORD_INCLUDE: parse_include(); break;
 		default: return;
 		}
 	}
@@ -431,6 +441,63 @@ void Compiler::parse_foreign_function_declaration()
 	read_token(SEMICOLON, "expected ';' after FFI declaration");
 
 	m_functions.emplace(name, std::move(function));
+}
+
+void Compiler::parse_include()
+{
+	read_token(); // consume INCLUDE
+
+	expect_token(TOKEN::STRINGCONST, "expected string literal after INCLUDE directive");
+	const std::string path = token_text().substr(1, token_text().size() - 2);
+
+	read_token(); // consume STRINGCONST include path
+
+	read_token(SEMICOLON, "expected ';' after INCLUDE directive");
+
+	std::ifstream included_source{path};
+
+	if (!included_source)
+	{
+		error(fmt::format("cannot open include file '{}'", path));
+	}
+
+	// Create new lexer state and save old state
+	auto new_lexer_state   = std::unique_ptr<yyFlexLexer>{new yyFlexLexer(included_source, m_output_stream)};
+	auto old_lexer_state   = std::move(m_lexer);
+	m_lexer                = std::move(new_lexer_state);
+	auto old_current_token = m_current_token;
+	m_file_name_stack.push(path);
+
+	const auto restore_state = [&] {
+		m_file_name_stack.pop();
+		m_lexer         = std::move(old_lexer_state);
+		m_current_token = old_current_token;
+	};
+
+	try
+	{
+		// Read the first token using the new lexer
+		read_token();
+
+		parse_declaration_block();
+
+		if (m_current_token != TOKEN::FEOF)
+		{
+			error("expected end of file");
+		}
+	}
+	catch (const CompilerError& e)
+	{
+		restore_state();
+		note("included here");
+		throw;
+	}
+
+	// TODO: "source:1: note: including from here by catching and rethrowing exception"
+	// TODO: keep a stack of unit names instead of m_unit_name
+
+	// Restore old state
+	restore_state();
 }
 
 Type Compiler::parse_type(bool allow_void)
@@ -692,15 +759,24 @@ void Compiler::emit_global_variables()
 	}
 }
 
-std::string Compiler::source_context() const { return fmt::format("{}:{}:", m_unit_name, m_lexer.lineno()); };
+string_view Compiler::current_file() const { return m_file_name_stack.top(); }
+
+std::string Compiler::source_context() const
+{
+	return fmt::format("{}:{}: ", current_file().str(), m_lexer->lineno());
+};
 
 void Compiler::error(string_view error_message) const
 {
-	const auto context = source_context();
-	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", context, error_message.str());
-	fmt::print(stderr, fg(fmt::color::red), "{}note:  while reading token '{}'\n", context, token_text().str());
+	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", source_context(), error_message.str());
+	note(fmt::format("while reading token '{}'", token_text().str()));
 
-	exit(-1);
+	throw CompilerError{"aborting due to past error"};
+}
+
+void Compiler::note(string_view note_message) const
+{
+	fmt::print(stderr, fg(fmt::color::gray), "{}note:  {}\n", source_context(), note_message.str());
 }
 
 void Compiler::bug(string_view error_message) const
@@ -740,7 +816,7 @@ void Compiler::check_type(Type a, Type b) const
 	}
 }
 
-string_view Compiler::token_text() const { return m_lexer.YYText(); }
+string_view Compiler::token_text() const { return m_lexer->YYText(); }
 
 void Compiler::expect_token(TOKEN expected, string_view error_message) const
 {
@@ -767,4 +843,4 @@ bool Compiler::try_read_token(TOKEN expected)
 	return false;
 }
 
-TOKEN Compiler::read_token() { return (m_current_token = TOKEN(m_lexer.yylex())); }
+TOKEN Compiler::read_token() { return (m_current_token = TOKEN(m_lexer->yylex())); }

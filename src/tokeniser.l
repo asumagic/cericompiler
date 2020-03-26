@@ -35,6 +35,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "TYPE"    return KEYWORD_TYPE;
 "CONVERT" return KEYWORD_CONVERT;
 "FFI"     return KEYWORD_FFI;
+"INCLUDE" return KEYWORD_INCLUDE;
 
 "INTEGER" return TYPE_INTEGER;
 "DOUBLE"  return TYPE_DOUBLE;

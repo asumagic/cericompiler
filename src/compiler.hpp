@@ -8,6 +8,7 @@
 
 #include <iosfwd>
 #include <memory>
+#include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -31,15 +32,17 @@ struct Function
 class Compiler
 {
 	public:
-	Compiler(string_view unit_name = "<stdin>", std::istream& = std::cin, std::ostream& = std::cout);
+	Compiler(string_view file_name = "<stdin>.pas", std::istream& = std::cin, std::ostream& = std::cout);
 
 	void operator()();
 
 	private:
-	std::string m_unit_name;
+	std::stack<std::string> m_file_name_stack;
 
-	yyFlexLexer m_lexer;
-	TOKEN       m_current_token;
+	std::ostream& m_output_stream;
+
+	std::unique_ptr<yyFlexLexer> m_lexer;
+	TOKEN                        m_current_token;
 
 	std::unordered_map<std::string, VariableType> m_variables;
 	std::unordered_map<std::string, Type>         m_typedefs;
@@ -61,6 +64,7 @@ class Compiler
 	void               parse_declaration_block();
 	void               parse_variable_declaration_block();
 	void               parse_foreign_function_declaration();
+	void               parse_include();
 	[[nodiscard]] Type parse_type(bool allow_void = false);
 	void               parse_type_definition();
 	[[nodiscard]] Type parse_expression();
@@ -77,11 +81,15 @@ class Compiler
 
 	void emit_global_variables();
 
+	string_view current_file() const;
 	std::string source_context() const;
 
 	//! \brief Halt the execution of the compiler due to an ill-formed program and display details provided by \p
 	//! error_message.
 	[[noreturn]] void error(string_view error_message) const;
+
+	//! \brief Provide a note providing context for a compiler diagnostic.
+	void note(string_view note_message) const;
 
 	//! \brief Halt the execution of the compiler due to a compiler bug and display details provided by \p
 	//! error_message.
