@@ -29,11 +29,13 @@ struct Variable
 class Compiler
 {
 	public:
-	Compiler(std::istream& = std::cin, std::ostream& = std::cout);
+	Compiler(string_view unit_name = "<stdin>", std::istream& = std::cin, std::ostream& = std::cout);
 
 	void operator()();
 
 	private:
+	std::string m_unit_name;
+
 	yyFlexLexer m_lexer;
 	TOKEN       m_current_token;
 
@@ -69,6 +71,8 @@ class Compiler
 	void               parse_program();
 
 	void emit_global_variables();
+
+	std::string source_context() const;
 
 	//! \brief Halt the execution of the compiler due to an ill-formed program and display details provided by \p
 	//! error_message.

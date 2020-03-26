@@ -51,18 +51,20 @@ bool Compiler::try_read_token(TOKEN expected)
 	return false;
 }
 
+std::string Compiler::source_context() const { return fmt::format("{}:{}:", m_unit_name, m_lexer.lineno()); };
+
 void Compiler::error(string_view error_message) const
 {
-	const auto source_context = fmt::format("source:{}: ", m_lexer.lineno());
-	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", source_context, error_message.str());
-	fmt::print(stderr, fg(fmt::color::red), "{}note:  while reading token '{}'\n", source_context, token_text().str());
+	const auto context = source_context();
+	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", context, error_message.str());
+	fmt::print(stderr, fg(fmt::color::red), "{}note:  while reading token '{}'\n", context, token_text().str());
 
 	exit(-1);
 }
 
 void Compiler::bug(string_view error_message) const
 {
-	fmt::print(stderr, fg(fmt::color::red), "source:{}: error: COMPILER BUG!\n", m_lexer.lineno());
+	fmt::print(stderr, fg(fmt::color::red), "{}error: COMPILER BUG!\n", source_context());
 
 	error(error_message);
 }
@@ -99,8 +101,8 @@ void Compiler::check_type(Type a, Type b) const
 
 TOKEN Compiler::read_token() { return (m_current_token = TOKEN(m_lexer.yylex())); }
 
-Compiler::Compiler(std::istream& input, std::ostream& output) :
-	m_lexer{input, output}, m_codegen{std::make_unique<CodeGen>(output)}
+Compiler::Compiler(string_view unit_name, std::istream& input, std::ostream& output) :
+	m_unit_name{unit_name}, m_lexer{input, output}, m_codegen{std::make_unique<CodeGen>(output)}
 {}
 
 void Compiler::operator()()
