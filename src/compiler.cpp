@@ -377,14 +377,6 @@ void Compiler::parse_variable_declaration_block()
 			break;
 		}
 	};
-
-	for (const auto& it : m_variables)
-	{
-		const auto&         name = it.first;
-		const VariableType& type = it.second;
-
-		m_codegen->define_global_variable({name, type});
-	}
 }
 
 Type Compiler::parse_type()
@@ -596,21 +588,33 @@ void Compiler::parse_declaration() {}
 
 void Compiler::parse_main_block_statement()
 {
-	m_codegen->begin_executable_section();
 	m_codegen->begin_main_procedure();
 
 	parse_block_statement();
 	read_token(DOT, "expected '.' at end of program");
 
 	m_codegen->finalize_main_procedure();
-	m_codegen->finalize_executable_section();
 }
 
 void Compiler::parse_program()
 {
-	m_codegen->begin_global_data_section();
+	m_codegen->begin_executable_section();
 	parse_declaration_block();
-	m_codegen->finalize_global_data_section();
-
 	parse_main_block_statement();
+	m_codegen->finalize_executable_section();
+
+	m_codegen->begin_global_data_section();
+	emit_global_variables();
+	m_codegen->finalize_global_data_section();
+}
+
+void Compiler::emit_global_variables()
+{
+	for (const auto& it : m_variables)
+	{
+		const auto&         name = it.first;
+		const VariableType& type = it.second;
+
+		m_codegen->define_global_variable({name, type});
+	}
 }

@@ -66,6 +66,8 @@ class Compiler
 	void               parse_main_block_statement();
 	void               parse_program();
 
+	void emit_global_variables();
+
 	//! \brief Halt the execution of the compiler due to an ill-formed program and display details provided by \p
 	//! error_message.
 	[[noreturn]] void error(string_view error_message) const;
