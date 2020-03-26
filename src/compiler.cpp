@@ -486,7 +486,7 @@ void Compiler::parse_foreign_function_declaration()
 
 Type Compiler::parse_type(bool allow_void)
 {
-	if (m_current_token == VOID && allow_void)
+	if (allow_void && try_read_token(VOID))
 	{
 		return Type::VOID;
 	}
