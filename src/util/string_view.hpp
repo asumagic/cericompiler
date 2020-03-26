@@ -28,12 +28,13 @@ class string_view
 	std::string str() const;
 				operator std::string() const;
 
-	constexpr const char& operator[](std::size_t at) const
-	{
-		return m_data[at];
-	}
+	constexpr const char& operator[](std::size_t at) const { return m_data[at]; }
 
 	friend std::ostream& operator<<(std::ostream& os, string_view view);
+
+	constexpr std::size_t size() const { return m_size; }
+
+	string_view substr(std::size_t from, std::size_t count) const { return {m_data + from, count}; }
 
 	private:
 	//! Constexpr version of std::strlen as it is not constexpr in C++11
