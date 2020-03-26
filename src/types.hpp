@@ -2,7 +2,10 @@
 
 #include "util/string_view.hpp"
 
-enum class Type
+#include <cstdint>
+#include <limits>
+
+enum class Type : std::int_fast32_t
 {
 	VOID,
 
@@ -32,7 +35,10 @@ enum class Type
 	ARITHMETIC   = FIRST_CONCEPT,
 	LAST_CONCEPT = ARITHMETIC,
 
-	TOTAL
+	BUILTIN_TOTAL,
+
+	FIRST_USER_DEFINED,
+	LAST_USER_DEFINED = std::numeric_limits<std::int_fast32_t>::max(),
 };
 
 string_view type_name(Type type);

@@ -26,6 +26,29 @@
 #include <fstream>
 #include <vector>
 
+bool operator==(const UserType& a, const UserType& b)
+{
+	if (a.category != b.category)
+	{
+		return false;
+	}
+
+	switch (a.category)
+	{
+	case UserType::Category::POINTER:
+	{
+		return a.layout_data.pointer.target == b.layout_data.pointer.target;
+	}
+
+	default:
+	{
+		throw UnimplementedTypeSupportError{};
+	}
+	}
+
+	return true;
+}
+
 Compiler::Compiler(string_view file_name, std::istream& input, std::ostream& output) :
 	m_output_stream{output}, m_lexer{new yyFlexLexer(input, output)}, m_codegen{std::make_unique<CodeGen>(output)}
 {
@@ -130,7 +153,32 @@ Type Compiler::parse_float_literal()
 	return Type::DOUBLE;
 }
 
-Type Compiler::parse_factor()
+Type Compiler::parse_variable_reference()
+{
+	read_token();
+
+	expect_token(TOKEN::ID, "expected identifier after referencing operator '@'");
+	const std::string name = token_text();
+	read_token();
+
+	const auto it = m_variables.find(name);
+	if (it == m_variables.end())
+	{
+		error(fmt::format("use of undeclared identifier '{}'", name));
+	}
+
+	const VariableType& variable_type = it->second;
+
+	UserType user_type(UserType::Category::POINTER);
+	user_type.layout_data.pointer.target = variable_type.type;
+	const Type pointer_type              = create_type(user_type);
+
+	m_codegen->load_pointer_to_variable({it->first, variable_type});
+
+	return pointer_type;
+}
+
+Type Compiler::parse_dereferencable()
 {
 	switch (m_current_token)
 	{
@@ -154,6 +202,7 @@ Type Compiler::parse_factor()
 		return Type::BOOLEAN;
 	}
 
+	case AT: return parse_variable_reference();
 	case CHAR_LITERAL: return parse_character_literal();
 	case INTEGER_LITERAL: return parse_integer_literal();
 	case FLOAT_LITERAL: return parse_float_literal();
@@ -161,9 +210,31 @@ Type Compiler::parse_factor()
 	case KEYWORD_CONVERT: return parse_type_cast();
 	default:
 	{
-		error("expected '(', literal or identifier");
+		error("expected expression");
 	}
 	}
+}
+
+Type Compiler::parse_factor()
+{
+	Type current_type = parse_dereferencable();
+
+	while (try_read_token(TOKEN::EXPONENT))
+	{
+		const auto it = m_user_types.find(current_type);
+
+		if (it == m_user_types.end() || it->second.category != UserType::Category::POINTER)
+		{
+			error(fmt::format("cannot dereference non-pointer type '{}'", type_name(current_type).str()));
+		}
+
+		const UserType& type = it->second;
+
+		m_codegen->load_value_from_pointer(type.layout_data.pointer.target);
+		current_type = type.layout_data.pointer.target;
+	}
+
+	return current_type;
 }
 
 Type Compiler::parse_type_cast()
@@ -558,6 +629,14 @@ Type Compiler::parse_type(bool allow_void)
 		return it->second;
 	}
 
+	if (try_read_token(EXPONENT))
+	{
+		UserType type(UserType::Category::POINTER);
+		type.layout_data.pointer.target = parse_type(false);
+
+		return create_type(type);
+	}
+
 	error("expected type");
 }
 
@@ -736,6 +815,12 @@ void Compiler::parse_display_statement()
 	read_token();
 	const Type type = parse_expression();
 
+	// check if user defined, if not its not allowed
+	if (check_enum_range(type, Type::FIRST_USER_DEFINED, Type::LAST_USER_DEFINED))
+	{
+		error(fmt::format("DISPLAY is not supported for type {}", type_name(type).str()));
+	}
+
 	m_codegen->debug_display(type);
 }
 
@@ -773,6 +858,38 @@ void Compiler::parse_program()
 	m_codegen->begin_global_data_section();
 	emit_global_variables();
 	m_codegen->finalize_global_data_section();
+}
+
+Type Compiler::create_type(UserType user_type)
+{
+	// TODO: have another map for the opposite lookup
+	for (const auto it : m_user_types)
+	{
+		const Type      other_type      = it.first;
+		const UserType& other_user_type = it.second;
+
+		if (user_type == other_user_type)
+		{
+			return other_type;
+		}
+	}
+
+	const auto emplace_result = m_user_types.emplace(allocate_type_id(), user_type);
+	const auto it             = emplace_result.first;
+	const bool success        = emplace_result.second;
+
+	if (!success)
+	{
+		bug("type id was already allocated");
+	}
+
+	return it->first;
+}
+
+Type Compiler::allocate_type_id()
+{
+	m_first_free_type = Type(underlying_cast(m_first_free_type) + 1);
+	return m_first_free_type;
 }
 
 void Compiler::emit_global_variables()

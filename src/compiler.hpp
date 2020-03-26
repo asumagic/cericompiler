@@ -30,6 +30,48 @@ struct Function
 	bool                           foreign = false;
 };
 
+struct UserType
+{
+	enum class Category
+	{
+		POINTER,
+		/*ARRAY,
+		RECORD*/
+	};
+
+	struct PointerType
+	{
+		Type target;
+	};
+
+	UserType(Category category) : category{category}
+	{
+		switch (category)
+		{
+		case Category::POINTER: new (&layout_data.pointer) PointerType();
+		}
+	}
+
+	~UserType()
+	{
+		switch (category)
+		{
+		case Category::POINTER: layout_data.pointer.~PointerType();
+		}
+	}
+
+	Category category;
+
+	union
+	{
+		PointerType pointer;
+	} layout_data;
+
+	friend bool operator==(const UserType& a, const UserType& b);
+};
+
+bool operator==(const UserType& a, const UserType& b);
+
 class Compiler
 {
 	public:
@@ -47,16 +89,21 @@ class Compiler
 
 	std::unordered_map<std::string, VariableType> m_variables;
 	std::unordered_map<std::string, Type>         m_typedefs;
+	std::unordered_map<Type, UserType>            m_user_types;
 	std::unordered_map<std::string, Function>     m_functions;
 	std::unordered_set<std::string>               m_includes;
 
 	std::unique_ptr<CodeGen> m_codegen;
+
+	Type m_first_free_type = Type::FIRST_USER_DEFINED;
 
 	[[nodiscard]] Type parse_factor_identifier();
 	void               parse_statement_identifier();
 	[[nodiscard]] Type parse_character_literal();
 	[[nodiscard]] Type parse_integer_literal();
 	[[nodiscard]] Type parse_float_literal();
+	[[nodiscard]] Type parse_variable_reference();
+	[[nodiscard]] Type parse_dereferencable();
 	[[nodiscard]] Type parse_factor();
 	[[nodiscard]] Type parse_type_cast();
 	[[nodiscard]] Type parse_function_call_after_identifier(string_view name, bool expects_return = false);
@@ -80,6 +127,9 @@ class Compiler
 	void               parse_statement();
 	void               parse_main_block_statement();
 	void               parse_program();
+
+	Type create_type(UserType user_type);
+	Type allocate_type_id();
 
 	void emit_global_variables();
 

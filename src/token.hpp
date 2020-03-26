@@ -71,6 +71,8 @@ enum TOKEN
 	DOT,
 	NOT,
 	ASSIGN,
+	EXPONENT,
+	AT,
 	EQUAL
 };
 

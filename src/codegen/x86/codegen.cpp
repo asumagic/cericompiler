@@ -52,7 +52,10 @@ void CodeGen::define_global_variable(const Variable& variable)
 	case Type::CHAR: m_output << ".byte 0"; break;
 	case Type::UNSIGNED_INT: m_output << ".quad 0"; break;
 	case Type::DOUBLE: m_output << ".double 0.0"; break;
-	default: throw UnimplementedError{"Unimplemented global variable type"};
+	default:
+		// HACK: this is gonna break horribly with >64-bit types
+		m_output << ".double 0.0";
+		// throw UnimplementedError{"Unimplemented global variable type"};
 	}
 
 	m_output << fmt::format(" # type: {}\n", type_name(variable.type.type).str());
@@ -76,6 +79,17 @@ void CodeGen::load_i64(uint64_t value)
 	{
 		m_output << fmt::format("\tpush $0x{:016x}\n", value);
 	}
+}
+
+void CodeGen::load_pointer_to_variable(const Variable& variable)
+{
+	m_output << fmt::format("\tpush ${}\n", variable.mangled_name());
+}
+
+void CodeGen::load_value_from_pointer([[maybe_unused]] Type dereferenced_type)
+{
+	m_output << "\tpopq %rax\n"
+				"\tpushq (%rax)\n";
 }
 
 void CodeGen::store_variable(const Variable& variable)

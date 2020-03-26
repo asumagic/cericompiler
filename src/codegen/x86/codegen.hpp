@@ -68,6 +68,8 @@ class CodeGen
 
 	void load_variable(const Variable& variable);
 	void load_i64(uint64_t value);
+	void load_pointer_to_variable(const Variable& variable);
+	void load_value_from_pointer(Type dereferenced_type);
 
 	void store_variable(const Variable& variable);
 

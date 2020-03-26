@@ -18,7 +18,7 @@ floatliteral    {digit}+\.{digit}+
 integerliteral  {digit}+
 idchar  ({alpha}|[\_])
 id	{idchar}({idchar}|{digit})*
-unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
+unknown [^\^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.\@]+
 
 %%
 
@@ -78,6 +78,8 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "("       return LPARENT;
 ")"       return RPARENT;
 "!"       return NOT;
+"^"       return EXPONENT;
+"@"       return AT;
 <<EOF>>   return FEOF;
 {ws}      {}
 "(*"    { /* Skip comments between '(*' and '*)' */

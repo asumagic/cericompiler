@@ -49,6 +49,8 @@ Types:
 - [ ] User-defined types
     - [x] `TYPE alias = aliased` syntax
     - [ ] Records
+- [x] Pointer types
+    - [x] Pointer to user types (e.g. pointer to pointer)
 - [ ] Dynamic allocation
 - [ ] Arrays
 
@@ -110,13 +112,22 @@ IntegerLiteral             := Number
 FloatLiteral               := Number "." Number
 Literal                    := CharacterLiteral | IntegerLiteral | FloatLiteral
 
-Factor                     := Literal | Identifier | "(" Expression ")"| "!" Factor | TypeCast | FunctionCall
 TypeCast                   := "CONVERT" Expression "TO" Type
+
+Dereferencable             := Literal
+                            | "@" Identifier
+                            | Identifier
+                            | "(" Expression ")"
+                            | "!" Factor
+                            | TypeCast
+                            | FunctionCall
+
+Factor                     := Dereferencable { "^" }
 
 FunctionCall               := Identifier "(" ParamList ")"
 ParamList                  := [ Expression {"," Expression} ]
 
-Term                       := Factor {MultiplicativeOperator Factor}
+Term                       := Dereferencable {MultiplicativeOperator Dereferencable}
 MultiplicativeOperator     := "*" | "/" | "%" | "&&"
 
 SimpleExpression           := Term {AdditiveOperator Term}
@@ -137,7 +148,8 @@ Declaration                := VarDeclarationBlock
                             | ForeignFunctionDeclaration
                             | Include
 
-Type                       := "INTEGER" | "CHAR" | "BOOLEAN" | "DOUBLE"
+Type                       := "INTEGER" | "CHAR" | "BOOLEAN" | "DOUBLE" | Identifier | PointerType
+PointerType                := "^" Type
 TypeOrVoid                 := Type | "VOID"
 
 Expression                 := SimpleExpression [RelationalOperator SimpleExpression]
