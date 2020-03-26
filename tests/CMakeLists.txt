@@ -94,6 +94,7 @@ expect_compiles("duplicate-include")
 expect_output("type-pointer-simple" "123\\n321\\n")
 expect_output("type-pointer-to-pointer" "123\\n321\\n")
 expect_diagnostic("fail-case-pointer-mismatch" ".*incompatible type.*")
+expect_compiles("pointer-typedef")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL
