@@ -1,0 +1,5 @@
+FFI fmod(DOUBLE, DOUBLE): DOUBLE;
+
+BEGIN
+    DISPLAY fmod(1.0, 2.0, 3.0)
+END.
