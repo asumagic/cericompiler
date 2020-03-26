@@ -512,7 +512,7 @@ void CodeGen::debug_display(Type type)
 long CodeGen::offset_from_frame_pointer() const { return -8; }
 long CodeGen::compute_alignment_correction() const { return -(-offset_from_frame_pointer() % 16); }
 
-void CodeGen::align_stack() const
+void CodeGen::align_stack()
 {
 	const long alignment_correction = compute_alignment_correction();
 	if (alignment_correction != 0)
@@ -521,7 +521,7 @@ void CodeGen::align_stack() const
 	}
 }
 
-void CodeGen::unalign_stack() const
+void CodeGen::unalign_stack()
 {
 	const long alignment_correction = compute_alignment_correction();
 	if (alignment_correction != 0)
