@@ -19,7 +19,10 @@ int main(int argc, char** argv)
 
 	std::string source_path, destination_path;
 	cli.add_option("-i,--input-file", source_path, ".pas source to compile; stdin if left empty");
-	cli.add_option("-o,--output-file", destination_path, "destination assembly file; stdout if left empty");
+	cli.add_option("-s,--assembly-output", destination_path, "destination assembly file; stdout if left empty");
+
+	// TODO: something to invoke the assembler and the linker
+	// TODO: should take input files directly, not through -i
 
 	CLI11_PARSE(cli, argc, argv);
 
