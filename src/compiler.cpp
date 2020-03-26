@@ -53,6 +53,16 @@ Compiler::Compiler(string_view file_name, std::istream& input, std::ostream& out
 	m_output_stream{output}, m_lexer{new yyFlexLexer(input, output)}, m_codegen{std::make_unique<CodeGen>(output)}
 {
 	m_file_name_stack.push(file_name);
+
+	if (!input)
+	{
+		error("could not open source for writing");
+	}
+
+	if (!output)
+	{
+		error("could not open destination for writing");
+	}
 }
 
 void Compiler::operator()()

@@ -18,8 +18,11 @@ endif()
 
 hunter_add_package(flex)
 find_package(FLEX REQUIRED)
-FLEX_TARGET(tokeniser "src/tokeniser.l" "${CMAKE_CURRENT_BINARY_DIR}/tokeniser.cpp")
 
+hunter_add_package(CLI11)
+find_package(CLI11 CONFIG REQUIRED)
+
+FLEX_TARGET(tokeniser "src/tokeniser.l" "${CMAKE_CURRENT_BINARY_DIR}/tokeniser.cpp")
 add_executable(${PROJECT_NAME}
 	"src/codegen/x86/codegen.cpp"
 	"src/compiler.cpp"
@@ -32,7 +35,7 @@ add_executable(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "src/" ${FLEX_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} fmt::fmt)
+target_link_libraries(${PROJECT_NAME} fmt::fmt CLI11::CLI11)
 target_compile_options(${PROJECT_NAME} PRIVATE
 	"-Wall" "-Wextra"
 )
