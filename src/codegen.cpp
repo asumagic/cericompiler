@@ -1,8 +1,8 @@
 #include "codegen.hpp"
 
-#include "compiler.hpp"
 #include "types.hpp"
 #include "util/enums.hpp"
+#include "variable.hpp"
 
 #include <fmt/core.h>
 #include <ostream>

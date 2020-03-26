@@ -27,6 +27,7 @@ add_executable(${PROJECT_NAME}
 	"src/types.cpp"
 	"src/main.cpp"
 	"src/util/string_view.cpp"
+	"src/variable.cpp"
 	"tokeniser.cpp"
 )
 

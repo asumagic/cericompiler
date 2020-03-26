@@ -4,6 +4,7 @@
 #include "token.hpp"
 #include "types.hpp"
 #include "util/string_view.hpp"
+#include "variable.hpp"
 
 #include <iosfwd>
 #include <memory>
@@ -11,20 +12,6 @@
 #include <unordered_map>
 
 #include <FlexLexer.h>
-
-struct VariableType
-{
-	// This is a struct on its own in case we add metadata or anything of the sort
-	Type type;
-};
-
-struct Variable
-{
-	std::string  name;
-	VariableType type;
-
-	std::string mangled_name() const;
-};
 
 class Compiler
 {
