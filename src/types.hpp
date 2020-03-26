@@ -4,6 +4,8 @@
 
 enum class Type
 {
+	VOID,
+
 	// Concrete types
 	FIRST_CONCRETE,
 

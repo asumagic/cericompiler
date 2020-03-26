@@ -9,20 +9,42 @@
 
 struct Variable;
 
-struct IfStatement
+class IfStatement
 {
+	friend class CodeGen;
+
+	private:
 	std::size_t saved_tag;
 };
 
-struct WhileStatement
+class WhileStatement
 {
+	friend class CodeGen;
+
+	private:
 	std::size_t saved_tag;
 };
 
-struct ForStatement
+class ForStatement
 {
+	friend class CodeGen;
+
+	private:
 	std::size_t     saved_tag;
 	const Variable* variable;
+};
+
+struct FunctionCall
+{
+	friend class CodeGen;
+
+	private:
+	std::size_t regular_count = 0, float_count = 0;
+
+	public:
+	std::string function_name;
+	Type        return_type = Type::VOID;
+	bool        variadic    = false;
 };
 
 class CodeGen
@@ -68,20 +90,24 @@ class CodeGen
 
 	void convert(Type source, Type destination);
 
-	IfStatement statement_if_prepare();
-	void        statement_if_post_check(IfStatement);
-	void        statement_if_with_else(IfStatement);
-	void        statement_if_without_else(IfStatement);
-	void        statement_if_finalize(IfStatement);
+	void statement_if_prepare(IfStatement&);
+	void statement_if_post_check(IfStatement&);
+	void statement_if_with_else(IfStatement&);
+	void statement_if_without_else(IfStatement&);
+	void statement_if_finalize(IfStatement&);
 
-	WhileStatement statement_while_prepare();
-	void           statement_while_post_check(WhileStatement);
-	void           statement_while_finalize(WhileStatement);
+	void statement_while_prepare(WhileStatement&);
+	void statement_while_post_check(WhileStatement&);
+	void statement_while_finalize(WhileStatement&);
 
-	ForStatement statement_for_prepare(const Variable& assignement_variable);
-	void         statement_for_post_assignment(ForStatement);
-	void         statement_for_post_check(ForStatement);
-	void         statement_for_finalize(ForStatement);
+	void statement_for_prepare(ForStatement&, const Variable& assignement_variable);
+	void statement_for_post_assignment(ForStatement&);
+	void statement_for_post_check(ForStatement&);
+	void statement_for_finalize(ForStatement&);
+
+	void function_call_prepare(FunctionCall&);
+	void function_call_param(FunctionCall&, Type type);
+	void function_call_finalize(FunctionCall&);
 
 	void debug_display(Type type);
 
@@ -91,7 +117,15 @@ class CodeGen
 
 	void alu_compare(Type type, string_view instruction);
 
+	void        function_call_label_param(FunctionCall&, string_view label);
+	string_view function_call_register(FunctionCall&, Type type);
+
+	bool is_function_param_type_regular(Type type) const;
+	bool is_function_param_type_float(Type type) const;
+
 	std::size_t m_label_tag = 0;
+
+	FunctionCall m_current_function;
 
 	std::ostream& m_output;
 };

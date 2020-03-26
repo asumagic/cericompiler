@@ -16,7 +16,6 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "compiler.hpp"
-#include "codegen.hpp"
 #include "exceptions.hpp"
 #include "token.hpp"
 #include "util/enums.hpp"
@@ -489,7 +488,8 @@ Variable Compiler::parse_assignment_statement()
 
 void Compiler::parse_if_statement()
 {
-	auto if_statement = m_codegen->statement_if_prepare();
+	IfStatement if_statement;
+	m_codegen->statement_if_prepare(if_statement);
 
 	read_token();
 	check_type(parse_expression(), Type::BOOLEAN);
@@ -515,7 +515,8 @@ void Compiler::parse_if_statement()
 
 void Compiler::parse_while_statement()
 {
-	auto while_statement = m_codegen->statement_while_prepare();
+	WhileStatement while_statement;
+	m_codegen->statement_while_prepare(while_statement);
 
 	read_token();
 	const Type type = parse_expression();
@@ -536,7 +537,8 @@ void Compiler::parse_for_statement()
 	const auto assignment = parse_assignment_statement();
 	check_type(assignment.type.type, Type::UNSIGNED_INT);
 
-	auto for_statement = m_codegen->statement_for_prepare(assignment);
+	ForStatement for_statement;
+	m_codegen->statement_for_prepare(for_statement, assignment);
 	m_codegen->statement_for_post_assignment(for_statement);
 
 	read_token(KEYWORD_TO, "expected 'TO' after assignement in 'FOR' statement");

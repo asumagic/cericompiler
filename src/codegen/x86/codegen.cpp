@@ -289,9 +289,9 @@ void CodeGen::convert(Type source, Type destination)
 		"unsupported type conversion occured: {} -> {}", type_name(source).str(), type_name(destination).str())};
 }
 
-IfStatement CodeGen::statement_if_prepare() { return {++m_label_tag}; }
+void CodeGen::statement_if_prepare(IfStatement& statement) { statement.saved_tag = ++m_label_tag; }
 
-void CodeGen::statement_if_post_check(IfStatement statement)
+void CodeGen::statement_if_post_check(IfStatement& statement)
 {
 	m_output << fmt::format(
 		"\tpopq %rax\n"
@@ -301,7 +301,7 @@ void CodeGen::statement_if_post_check(IfStatement statement)
 		fmt::arg("tag", statement.saved_tag));
 }
 
-void CodeGen::statement_if_with_else(IfStatement statement)
+void CodeGen::statement_if_with_else(IfStatement& statement)
 {
 	m_output << fmt::format(
 		"\tjmp __next{tag}\n"
@@ -309,25 +309,23 @@ void CodeGen::statement_if_with_else(IfStatement statement)
 		fmt::arg("tag", statement.saved_tag));
 }
 
-void CodeGen::statement_if_without_else(IfStatement statement)
+void CodeGen::statement_if_without_else(IfStatement& statement)
 {
 	m_output << fmt::format("__false{}:\n", statement.saved_tag);
 }
 
-void CodeGen::statement_if_finalize(IfStatement statement)
+void CodeGen::statement_if_finalize(IfStatement& statement)
 {
 	m_output << fmt::format("__next{}:\n", statement.saved_tag);
 }
 
-WhileStatement CodeGen::statement_while_prepare()
+void CodeGen::statement_while_prepare(WhileStatement& statement)
 {
-	WhileStatement statement{++m_label_tag};
+	statement.saved_tag = ++m_label_tag;
 	m_output << fmt::format("__while{}:\n", statement.saved_tag);
-
-	return statement;
 }
 
-void CodeGen::statement_while_post_check(WhileStatement statement)
+void CodeGen::statement_while_post_check(WhileStatement& statement)
 {
 	m_output << fmt::format(
 		"\tpop %rax\n"
@@ -336,7 +334,7 @@ void CodeGen::statement_while_post_check(WhileStatement statement)
 		fmt::arg("tag", statement.saved_tag));
 }
 
-void CodeGen::statement_while_finalize(WhileStatement statement)
+void CodeGen::statement_while_finalize(WhileStatement& statement)
 {
 	m_output << fmt::format(
 		"\tjmp __while{tag}\n"
@@ -344,17 +342,18 @@ void CodeGen::statement_while_finalize(WhileStatement statement)
 		fmt::arg("tag", statement.saved_tag));
 }
 
-ForStatement CodeGen::statement_for_prepare(const Variable& assignement_variable)
+void CodeGen::statement_for_prepare(ForStatement& statement, const Variable& assignement_variable)
 {
-	return {++m_label_tag, &assignement_variable};
+	statement.variable  = &assignement_variable;
+	statement.saved_tag = ++m_label_tag;
 }
 
-void CodeGen::statement_for_post_assignment(ForStatement statement)
+void CodeGen::statement_for_post_assignment(ForStatement& statement)
 {
 	m_output << fmt::format("__for{}:\n", statement.saved_tag);
 }
 
-void CodeGen::statement_for_post_check(ForStatement statement)
+void CodeGen::statement_for_post_check(ForStatement& statement)
 {
 	// we branch *out* if var < %rax, mind the op order in at&t
 	m_output << fmt::format(
@@ -365,7 +364,7 @@ void CodeGen::statement_for_post_check(ForStatement statement)
 		fmt::arg("tag", statement.saved_tag));
 }
 
-void CodeGen::statement_for_finalize(ForStatement statement)
+void CodeGen::statement_for_finalize(ForStatement& statement)
 {
 	m_output << fmt::format(
 		"\taddq $1, {name}\n"
@@ -375,42 +374,85 @@ void CodeGen::statement_for_finalize(ForStatement statement)
 		fmt::arg("tag", statement.saved_tag));
 }
 
+void CodeGen::function_call_prepare([[maybe_unused]] FunctionCall& call) {}
+
+void CodeGen::function_call_param(FunctionCall& call, Type type)
+{
+	if (type == Type::BOOLEAN)
+	{
+		// Be careful to handle this first: bool is considered regular but we handle it specially anyway!
+		m_output << fmt::format(
+			"\tpopq {paramreg}\n"
+			"\tandq $1, {paramreg}\n",
+			fmt::arg("paramreg", function_call_register(call, type).str()));
+		++call.regular_count;
+	}
+	else if (is_function_param_type_regular(type))
+	{
+		m_output << fmt::format("\tpopq {paramreg}\n", fmt::arg("paramreg", function_call_register(call, type).str()));
+		++call.regular_count;
+	}
+	else if (is_function_param_type_float(type))
+	{
+		m_output << fmt::format(
+			"\tmovsd (%rsp), {paramreg}\n"
+			"\taddq $8, %rsp # Effectively pop the float from the stack.\n",
+			fmt::arg("paramreg", function_call_register(call, type).str()));
+		++call.float_count;
+	}
+	else
+	{
+		throw UnimplementedTypeSupportError{"Unimplemented function_call_param() for this type"};
+	}
+}
+
+void CodeGen::function_call_finalize(FunctionCall& call)
+{
+	if (call.variadic)
+	{
+		m_output << fmt::format("\tmovb ${floatcount}, %al\n", fmt::arg("floatcount", call.float_count));
+	}
+
+	// TODO: maybe do stack alignment in a more sane way. we'll need that for local variables to work properly
+	m_output << fmt::format(
+		"\taddq $-8, %rsp # Align stack to 16-byte.\n"
+		"\tcall {function}\n"
+		"\taddq $8, %rsp # Cancel stack alignment\n",
+		fmt::arg("function", call.function_name));
+
+	// TODO: handle return value
+}
+
 void CodeGen::debug_display(Type type)
 {
+	FunctionCall call;
+	call.variadic      = true;
+	call.function_name = "printf";
+	function_call_prepare(call);
+
 	switch (type)
 	{
 	case Type::UNSIGNED_INT:
 	{
-		m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
-					"\tpop %rsi\n"
-					"\tmovb $0, %al # number of float parameters (varargs)\n";
+		function_call_label_param(call, "__cc_format_string_llu");
 		break;
 	}
 
 	case Type::BOOLEAN:
 	{
-		m_output << "\tmovq $__cc_format_string_llu, %rdi\n"
-					"\tpop %rsi\n"
-					"\tandq $0x1, %rsi # restrict bool output to 0 or 1\n"
-					"\tmovb $0, %al # number of float parameters (varargs)\n";
+		function_call_label_param(call, "__cc_format_string_llu");
 		break;
 	}
 
 	case Type::CHAR:
 	{
-		m_output << "\tmovq $__cc_format_string_c, %rdi\n"
-					"\tpop %rsi\n"
-					"\tmovb $0, %al # number of float parameters (varargs)\n";
+		function_call_label_param(call, "__cc_format_string_c");
 		break;
 	}
 
 	case Type::DOUBLE:
 	{
-		m_output << "\tmovq $__cc_format_string_f, %rdi # Write 1st parameter\n"
-					"\tmovsd (%rsp), %xmm0 # Write 2nd parameter - load 64-bit double from stack to xmm0, clear "
-					"upper bits\n"
-					"\taddq $8, %rsp # Effectively pop the double from the stack.\n"
-					"\tmovb $1, %al # number of float parameters (varargs)\n";
+		function_call_label_param(call, "__cc_format_string_f");
 		break;
 	}
 
@@ -420,11 +462,8 @@ void CodeGen::debug_display(Type type)
 	}
 	}
 
-	m_output << "\taddq $-8, %rsp # Align stack to 16-byte. There is a 8-byte value on the stack already, that is, the "
-				"ret pointer. FIXME: this is probably not going to work well if things are pushed on the stack "
-				"already, e.g. procedure parameters that do not fit in registers.\n"
-				"\tcall printf\n"
-				"\taddq $8, %rsp # Cancel the alignement done earlier\n";
+	function_call_param(call, type);
+	function_call_finalize(call);
 }
 
 void CodeGen::alu_load_binop(Type type)
@@ -497,4 +536,64 @@ void CodeGen::alu_compare(Type type, string_view instruction)
 		"__next{tag}:\n",
 		fmt::arg("jumpinstruction", instruction.str()),
 		fmt::arg("tag", m_label_tag));
+}
+
+void CodeGen::function_call_label_param(FunctionCall& call, string_view label)
+{
+	// HACK: type passed to function_call_register should be a pointer or something
+	m_output << fmt::format(
+		"\tmovq ${label}, {paramreg}\n",
+		fmt::arg("label", label.str()),
+		fmt::arg("paramreg", function_call_register(call, Type::UNSIGNED_INT).str()));
+
+	++call.regular_count;
+}
+
+string_view CodeGen::function_call_register(FunctionCall& call, Type type)
+{
+	if (is_function_param_type_regular(type))
+	{
+		switch (call.regular_count)
+		{
+		case 0: return "%rdi";
+		case 1: return "%rsi";
+		case 2: return "%rdx";
+		case 3: return "%rcx";
+		case 4: return "%r8";
+		case 5: return "%r9";
+		default: break;
+		}
+	}
+	else if (is_function_param_type_float(type))
+	{
+		switch (call.float_count)
+		{
+		case 0: return "%xmm0";
+		case 1: return "%xmm1";
+		case 2: return "%xmm2";
+		case 3: return "%xmm3";
+		case 4: return "%xmm4";
+		case 5: return "%xmm5";
+		case 6: return "%xmm6";
+		case 7: return "%xmm7";
+		default: break;
+		}
+	}
+	else
+	{
+		throw UnimplementedTypeSupportError{"Unimplemented function_call_register() for this type"};
+	}
+
+	throw UnimplementedError{"Pushing extra parameters to stack not supported yet"};
+}
+
+bool CodeGen::is_function_param_type_regular(Type type) const
+{
+	return check_enum_range(type, Type::FIRST_INTEGRAL, Type::LAST_INTEGRAL) || type == Type::CHAR
+		|| type == Type::BOOLEAN;
+}
+
+bool CodeGen::is_function_param_type_float(Type type) const
+{
+	return check_enum_range(type, Type::FIRST_FLOATING, Type::LAST_FLOATING);
 }

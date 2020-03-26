@@ -21,7 +21,7 @@ find_package(FLEX REQUIRED)
 FLEX_TARGET(tokeniser "src/tokeniser.l" "${CMAKE_CURRENT_BINARY_DIR}/tokeniser.cpp")
 
 add_executable(${PROJECT_NAME}
-	"src/codegen.cpp"
+	"src/codegen/x86/codegen.cpp"
 	"src/compiler.cpp"
 	"src/token.cpp"
 	"src/types.cpp"

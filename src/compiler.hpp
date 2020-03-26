@@ -1,6 +1,6 @@
 #pragma once
 
-#include "codegen.hpp"
+#include "codegen/x86/codegen.hpp"
 #include "token.hpp"
 #include "types.hpp"
 #include "util/string_view.hpp"
