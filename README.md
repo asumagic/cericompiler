@@ -23,6 +23,14 @@ make -j
 Dependencies should be fetched automatically by the Hunter package manager.
 Note that, as a result, building this project will create a `.hunter` directory in your home directory, which can then be removed safely.
 
+### Dependencies
+
+The following dependencies are in use but do not require manual installation:
+- [Hunter](https://github.com/cpp-pm/hunter) (C++ package manager)
+- [CLI11](https://github.com/CLIUtils/CLI11) (commandline parsing)
+- [FLEX](https://github.com/westes/flex) (scanner generator)
+- [\{fmt\}](https://github.com/fmtlib/fmt) (formatting library)
+
 ## Usage
 
 `ceri-compiler` reads the source from `stdin` and writes at&t x86-64 assembly to `stdout`.
