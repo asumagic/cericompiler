@@ -153,7 +153,7 @@ Type Compiler::parse_factor_identifier()
 
 		if (function.return_type == Type::VOID)
 		{
-			error(fmt::format("function '{}' does not return anything", name));
+			error(fmt::format("tried to get return value of function '{}' which does not return anything", name));
 		}
 
 		if (function.variadic)
@@ -469,8 +469,8 @@ void Compiler::parse_foreign_function_declaration()
 		do
 		{
 			if (is_token_type(m_current_token))
-		{
-			const auto type = parse_type();
+			{
+				const auto type = parse_type();
 				function.parameters.push_back({type});
 			}
 		} while (try_read_token(COMMA));
