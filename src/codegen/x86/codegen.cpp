@@ -225,13 +225,22 @@ void CodeGen::alu_modulus(Type type)
 
 	case Type::DOUBLE:
 	{
-		// no alu_load_binop here: we load to xmm0/1
-		// use standard C fmod
-		m_output << "\tmovsd 8(%rsp), %xmm0\n"
-					"\tmovsd (%rsp), %xmm1\n"
-					"\taddq $8, %rsp\n"
-					"\tcall fmod\n"
-					"\tmovsd %xmm0, (%rsp)\n";
+		FunctionCall call;
+		call.variadic      = false;
+		call.return_type   = Type::DOUBLE;
+		call.function_name = "fmod";
+
+		function_call_prepare(call);
+		function_call_param(call, Type::DOUBLE);
+		function_call_param(call, Type::DOUBLE);
+
+		m_output << "\t# HACK: swap float operands for modulus '%', as they are pushed the opposite way\n"
+					"\tpxor %xmm0, %xmm1\n"
+					"\tpxor %xmm1, %xmm0\n"
+					"\tpxor %xmm0, %xmm1\n";
+
+		function_call_finalize(call);
+
 		break;
 	}
 
@@ -420,7 +429,15 @@ void CodeGen::function_call_finalize(FunctionCall& call)
 		"\taddq $8, %rsp # Cancel stack alignment\n",
 		fmt::arg("function", call.function_name));
 
-	// TODO: handle return value
+	if (is_function_param_type_float(call.return_type))
+	{
+		m_output << "\taddq $-8, %rsp\n"
+					"\tmovsd %xmm0, (%rsp)\n";
+	}
+	else if (call.return_type != Type::VOID)
+	{
+		throw UnimplementedTypeSupportError{"Unimplemented return type"};
+	}
 }
 
 void CodeGen::debug_display(Type type)
