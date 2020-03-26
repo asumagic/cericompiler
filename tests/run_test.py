@@ -82,8 +82,8 @@ elif action == "compile_and_match_output":
 
     if re.match(output_pattern, stdout.decode("utf-8")) is None:
         print(
-            f"""Failed to match pattern "{output_pattern}". """
-            f"""Program output:\n{stdout.decode("utf-8")}""",
+            "Failed to match pattern \"{}\". ".format(output_pattern) +
+            "Program output:\n{}".format(stdout.decode("utf-8")),
             file=sys.stderr
         )
         sys.exit(1)
@@ -104,12 +104,12 @@ elif action == "compile_and_match_diagnostic":
 
     if re.match(diagnostic_pattern, stderr.decode("utf-8")) is None:
         print(
-            f"""Failed to match pattern "{diagnostic_pattern}". """
-            f"""Compiler output:\n{stderr.decode("utf-8")}""",
+            "Failed to match pattern \"{}\". ".format(diagnostic_pattern) +
+            "Compiler output:\n{}".format(stderr.decode("utf-8")),
             file=sys.stderr
         )
         sys.exit(1)
 
 else:
-    print(f"Invalid action {action} entered", file=sys.stderr)
+    print("Invalid action {} entered".format(action), file=sys.stderr)
     sys.exit(1)
