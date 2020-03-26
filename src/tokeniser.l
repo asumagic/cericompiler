@@ -16,7 +16,8 @@ digit   [0-9]
 charliteral \'[^\n\r\t]\'
 floatliteral    {digit}+\.{digit}+
 integerliteral  {digit}+
-id	{alpha}({alpha}|{digit})*
+idchar  ({alpha}|[\_])
+id	{idchar}({idchar}|{digit})*
 unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 
 %%
