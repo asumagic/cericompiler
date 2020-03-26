@@ -9,7 +9,13 @@ int main(int argc, char** argv)
 {
 	// Read the source from stdin, output the assembly to stdout
 
-	CLI::App cli{"cericompiler"};
+	CLI::App cli{
+		"cericompiler\n"
+		"Example:\n"
+		"\tcericompiler -i ./hello.pas -o ./hello.s\n"
+		"\tas ./hello.s -o ./hello.o\n"
+		"\tgcc ./hello.o -o ./hello -no-pie\n"
+		"\t./hello\n"};
 
 	std::string source_path, destination_path;
 	cli.add_option("-i,--input-file", source_path, ".pas source to compile; stdin if left empty");

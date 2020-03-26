@@ -33,7 +33,9 @@ The following dependencies are in use but do not require manual installation:
 
 ## Usage
 
-`ceri-compiler` reads the source from `stdin` and writes at&t x86-64 assembly to `stdout`.
+`ceri-compiler` reads the source from `stdin` and writes at&t x86-64 assembly to `stdout` by default.
+
+Use `cericompiler -h` for details and examples.
 
 Building should run tests, some of which dump the assembly files in the `tests/` subdirectory *within your build directory*.
 
