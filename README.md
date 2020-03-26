@@ -71,62 +71,76 @@ Statements:
 - [ ] `CASE` statement
 - [x] `DISPLAY` debug statement
 
-Procedures:
-- [ ] User-defined procedure support
-    - [ ] Declaration support
-    - [ ] Calling support
-    - [ ] Local variables
-    - [ ] Parameter support
-    - [ ] Return value support
-    - [ ] Generic procedures
-- [ ] C Foreign function interface
+Functions:
+- [ ] Function support
+    - [x] C foreign function interface
+        - [x] Declaration support
+        - [x] Calling support
+        - [x] Parameter support
+        - [x] Return value support
+    - [ ] User-defined functions
+        - [ ] Declaration support
+        - [ ] Calling support
+        - [ ] Local variables
+        - [ ] Parameter support
+        - [ ] Return value support
+        - [ ] Generic procedures
 
 ## Language grammar
 
 ```sf
-Identifier                := Letter{Letter|Digit}
-Letter                    := "a"|...|"z"
+Identifier                 := Letter{Letter|Digit}
+Letter                     := "a"|...|"z"
 
-Number                    := Digit{Digit}
-Digit                     := "0"|...|"9"
+Number                     := Digit{Digit}
+Digit                      := "0"|...|"9"
 
-Factor                    := Number | Identifier | "(" Expression ")"| "!" Factor | TypeCast
-TypeCast                  := "CONVERT" Expression "TO" Type
+Factor                     := Number | Identifier | "(" Expression ")"| "!" Factor | TypeCast | FunctionCall
+TypeCast                   := "CONVERT" Expression "TO" Type
 
-Term                      := Factor {MultiplicativeOperator Factor}
-MultiplicativeOperator    := "*" | "/" | "%" | "&&"
+FunctionCall               := Identifier "(" ParamList ")"
+ParamList                  := [ Expression {"," Expression} ]
 
-SimpleExpression          := Term {AdditiveOperator Term}
-AdditiveOperator          := "+" | "-" | "||"
+Term                       := Factor {MultiplicativeOperator Factor}
+MultiplicativeOperator     := "*" | "/" | "%" | "&&"
 
-VarDeclarationBlock       := "VAR" VarDeclaration {VarDeclaration}
-VarDeclaration            := Identifier {"," Identifier} ":" Type ";"
+SimpleExpression           := Term {AdditiveOperator Term}
+AdditiveOperator           := "+" | "-" | "||"
 
-TypeDeclaration           := "TYPE" Identifier "=" Type ";"
+VarDeclarationBlock        := "VAR" VarDeclaration {VarDeclaration}
+VarDeclaration             := Identifier {"," Identifier} ":" Type ";"
 
-Declaration               := VarDeclarationBlock | TypeDeclaration
+TypeDeclaration            := "TYPE" Identifier "=" Type ";"
 
-Type                      := "INTEGER" | "CHAR" | "BOOLEAN" | "DOUBLE"
+ForeignFunctionDeclaration := "FFI" Identifier "(" TypeList ")" : TypeOrVoid
+TypeList                   := [ Type {"," Type} ]
 
-Expression                := SimpleExpression [RelationalOperator SimpleExpression]
-RelationalOperator        := "==" | "!=" | "<>" | "<" | ">" | "<=" | ">="
+Declaration                := VarDeclarationBlock
+                              | TypeDeclaration
+                              | ForeignFunctionDeclaration
 
-AssignementStatement      := Identifier ":=" Expression
-IfStatement               := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
-WhileStatement            := "WHILE" Expression DO Statement
-ForStatement              := "FOR" AssignementStatement "TO" Expression "DO" Statement
-BlockStatement            := "BEGIN" [ Statement { ";" Statement } [";"] ] "END"
-DisplayStatement          := "DISPLAY" Expression
+Type                       := "INTEGER" | "CHAR" | "BOOLEAN" | "DOUBLE"
+TypeOrVoid                 := Type | "VOID"
 
-Statement                 := AssignementStatement
-                             | IfStatement
-                             | WhileStatement
-                             | ForStatement
-                             | BlockStatement
-                             | DisplayStatement
-                             | TypeDefinition
+Expression                 := SimpleExpression [RelationalOperator SimpleExpression]
+RelationalOperator         := "==" | "!=" | "<>" | "<" | ">" | "<=" | ">="
 
-MainBlockStatement        := BlockStatement
+AssignementStatement       := Identifier ":=" Expression
+IfStatement                := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
+WhileStatement             := "WHILE" Expression DO Statement
+ForStatement               := "FOR" AssignementStatement "TO" Expression "DO" Statement
+BlockStatement             := "BEGIN" [ Statement { ";" Statement } [";"] ] "END"
+DisplayStatement           := "DISPLAY" Expression
 
-Program                   := {Declaration} MainBlockStatement "."
+Statement                  := AssignementStatement
+                              | IfStatement
+                              | WhileStatement
+                              | ForStatement
+                              | BlockStatement
+                              | DisplayStatement
+                              | TypeDefinition
+
+MainBlockStatement         := BlockStatement
+
+Program                    := {Declaration} MainBlockStatement "."
 ```

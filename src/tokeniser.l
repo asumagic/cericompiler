@@ -41,13 +41,15 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "ELSE"    return KEYWORD_ELSE;
 "DISPLAY" return KEYWORD_DISPLAY;
 "VAR"     return KEYWORD_VAR;
-"CONVERT" return KEYWORD_CONVERT;
 "TYPE"    return KEYWORD_TYPE;
+"CONVERT" return KEYWORD_CONVERT;
+"FFI"     return KEYWORD_FFI;
 
 "INTEGER" return TYPE_INTEGER;
 "DOUBLE"  return TYPE_DOUBLE;
 "BOOLEAN" return TYPE_BOOLEAN;
 "CHAR"    return TYPE_CHAR;
+"VOID"    return VOID;
 
 {charliteral}    return CHAR_LITERAL;
 {floatliteral}   return FLOAT_LITERAL;

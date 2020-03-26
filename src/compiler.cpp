@@ -132,22 +132,89 @@ void Compiler::operator()()
 
 string_view Compiler::token_text() const { return m_lexer.YYText(); }
 
-Type Compiler::parse_identifier()
+Type Compiler::parse_factor_identifier()
 {
 	const std::string name = token_text();
 
-	const auto it = m_variables.find(name);
-	if (it == m_variables.end())
+	read_token(); // Consume identifier
+
+	if (m_current_token == TOKEN::LPARENT)
 	{
-		error(fmt::format("use of undeclared identifier '{}'", name));
+		// Function call
+		read_token(); // Consume '('
+
+		const auto it = m_functions.find(name);
+		if (it == m_functions.end())
+		{
+			error(fmt::format("use of undeclared function '{}'", name));
+		}
+
+		const Function& function = it->second;
+
+		if (function.return_type == Type::VOID)
+		{
+			error(fmt::format("function '{}' does not return anything", name));
+		}
+
+		if (function.variadic)
+		{
+			bug("variadic foreign function calls are not supported from the language for now");
+		}
+
+		FunctionCall call;
+		call.function_name = name;
+		call.return_type   = function.return_type;
+		call.variadic      = function.variadic;
+
+		m_codegen->function_call_prepare(call);
+
+		// TODO: try catch to add context for the nth parameter and also for the function call
+		std::size_t i = 0;
+		do
+		{
+			if (i >= function.parameters.size())
+			{
+				error(fmt::format(
+					"too much parameters for function '{}', expected {}", name, function.parameters.size()));
+			}
+
+			const FunctionParameter& declared_parameter = function.parameters[i];
+
+			const Type expression_type = parse_expression();
+			check_type(expression_type, declared_parameter.type);
+
+			m_codegen->function_call_param(call, expression_type);
+
+			++i;
+		} while (try_read_token(TOKEN::COMMA));
+
+		if (i < function.parameters.size())
+		{
+			error(
+				fmt::format("not enough parameters for function '{}', expected {}", name, function.parameters.size()));
+		}
+
+		m_codegen->function_call_finalize(call);
+
+		read_token(TOKEN::RPARENT, "expected ')' after parameter list in function call");
+
+		return function.return_type;
 	}
+	else
+	{
+		// Variable
+		const auto it = m_variables.find(name);
+		if (it == m_variables.end())
+		{
+			error(fmt::format("use of undeclared identifier '{}'", name));
+		}
 
-	const VariableType& type = it->second;
+		const VariableType& type = it->second;
 
-	m_codegen->load_variable({name, type});
-	read_token();
+		m_codegen->load_variable({name, type});
 
-	return type.type;
+		return type.type;
+	}
 }
 
 Type Compiler::parse_character_literal()
@@ -212,7 +279,7 @@ Type Compiler::parse_factor()
 	case CHAR_LITERAL: return parse_character_literal();
 	case INTEGER_LITERAL: return parse_integer_literal();
 	case FLOAT_LITERAL: return parse_float_literal();
-	case ID: return parse_identifier();
+	case ID: return parse_factor_identifier();
 	case KEYWORD_CONVERT: return parse_type_cast();
 	default:
 	{
@@ -335,6 +402,7 @@ void Compiler::parse_declaration_block()
 		{
 		case TOKEN::KEYWORD_VAR: parse_variable_declaration_block(); break;
 		case TOKEN::KEYWORD_TYPE: parse_type_definition(); break;
+		case TOKEN::KEYWORD_FFI: parse_foreign_function_declaration(); break;
 		default: return;
 		}
 	}
@@ -380,8 +448,46 @@ void Compiler::parse_variable_declaration_block()
 	};
 }
 
-Type Compiler::parse_type()
+void Compiler::parse_foreign_function_declaration()
 {
+	Function function;
+	function.foreign = true;
+
+	read_token(); // consume FFI
+
+	expect_token(ID, "expected function name");
+	const std::string name = token_text();
+	read_token();
+
+	read_token(LPARENT, "expected '(' after function name");
+
+	do
+	{
+		if (is_token_type(m_current_token))
+		{
+			const auto type = parse_type();
+			function.parameters.push_back({type});
+		}
+	} while (try_read_token(COMMA));
+
+	read_token(RPARENT, "expected ')' after type list");
+
+	read_token(COLON, "expected ':' after ')' to specify return type of foreign function");
+
+	function.return_type = parse_type(true);
+
+	read_token(SEMICOLON, "expected ';' after FFI declaration");
+
+	m_functions.emplace(name, std::move(function));
+}
+
+Type Compiler::parse_type(bool allow_void)
+{
+	if (m_current_token == VOID && allow_void)
+	{
+		return Type::VOID;
+	}
+
 	if (is_token_type(m_current_token))
 	{
 		const TOKEN token = m_current_token;
@@ -397,7 +503,8 @@ Type Compiler::parse_type()
 		default: bug("unrecognized type");
 		}
 	}
-	else if (m_current_token == ID)
+
+	if (m_current_token == ID)
 	{
 		const auto it = m_typedefs.find(token_text());
 
@@ -592,8 +699,6 @@ void Compiler::parse_statement()
 	default: parse_assignment_statement(); break;
 	}
 }
-
-void Compiler::parse_declaration() {}
 
 void Compiler::parse_main_block_statement()
 {

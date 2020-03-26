@@ -10,8 +10,23 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <FlexLexer.h>
+
+struct FunctionParameter
+{
+	Type        type;
+	std::string name = "";
+};
+
+struct Function
+{
+	bool                           variadic = false;
+	Type                           return_type;
+	std::vector<FunctionParameter> parameters;
+	bool                           foreign = false;
+};
 
 class Compiler
 {
@@ -28,12 +43,13 @@ class Compiler
 
 	std::unordered_map<std::string, VariableType> m_variables;
 	std::unordered_map<std::string, Type>         m_typedefs;
+	std::unordered_map<std::string, Function>     m_functions;
 
 	std::unique_ptr<CodeGen> m_codegen;
 
 	[[nodiscard]] string_view token_text() const;
 
-	[[nodiscard]] Type parse_identifier();
+	[[nodiscard]] Type parse_factor_identifier();
 	[[nodiscard]] Type parse_character_literal();
 	[[nodiscard]] Type parse_integer_literal();
 	[[nodiscard]] Type parse_float_literal();
@@ -43,7 +59,8 @@ class Compiler
 	[[nodiscard]] Type parse_simple_expression();
 	void               parse_declaration_block();
 	void               parse_variable_declaration_block();
-	[[nodiscard]] Type parse_type();
+	void               parse_foreign_function_declaration();
+	[[nodiscard]] Type parse_type(bool allow_void = false);
 	void               parse_type_definition();
 	[[nodiscard]] Type parse_expression();
 	Variable           parse_assignment_statement();
@@ -53,7 +70,6 @@ class Compiler
 	void               parse_block_statement();
 	void               parse_display_statement();
 	void               parse_statement();
-	void               parse_declaration();
 	void               parse_main_block_statement();
 	void               parse_program();
 

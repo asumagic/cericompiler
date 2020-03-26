@@ -81,6 +81,7 @@ expect_output("type-double-comparison-megatest" "o{16}")
 expect_output("type-double-convert-int" "3\\n")
 expect_output("type-integer-convert-double" "123\.0+\\n")
 expect_output("type-declaration" "123\\n")
+expect_output("ffi-test-fmod" "1\.00*\\n")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL
