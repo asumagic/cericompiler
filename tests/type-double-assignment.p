@@ -1,4 +1,6 @@
-VAR pi : DOUBLE.
+VAR pi : DOUBLE;
 
-pi := 3.141;
-DISPLAY pi.
+BEGIN
+    pi := 3.141;
+    DISPLAY pi
+END.

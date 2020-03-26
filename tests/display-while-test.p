@@ -1,9 +1,11 @@
-VAR a : INTEGER.
+VAR a : INTEGER;
 
-a := 1;
-
-WHILE a <= 5 DO
 BEGIN
-    DISPLAY a;
-    a := a + 1
+    a := 1;
+
+    WHILE a <= 5 DO
+    BEGIN
+        DISPLAY a;
+        a := a + 1
+    END
 END.

@@ -1,6 +1,8 @@
-VAR a, b, c : INTEGER.
+VAR a, b, c : INTEGER;
 
-a := 6;
-b := 7;
+BEGIN
+    a := 6;
+    b := 7;
 
-c := a * b.
+    c := a * b
+END.

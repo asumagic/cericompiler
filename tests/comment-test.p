@@ -1,4 +1,6 @@
-VAR a : INTEGER. (* This comment
+VAR a : INTEGER; (* This comment
     should have no negative effect
     on the behaviour of the program
-*) a := 0.
+*) BEGIN
+    a := 0
+END.

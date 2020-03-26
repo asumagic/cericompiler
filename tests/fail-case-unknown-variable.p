@@ -1,1 +1,1 @@
-a := 0.
+BEGIN a := 0 END.

@@ -212,23 +212,23 @@ Type Compiler::parse_factor()
 	case INTEGER_LITERAL: return parse_integer_literal();
 	case FLOAT_LITERAL: return parse_float_literal();
 	case ID: return parse_identifier();
-
+	case KEYWORD_CONVERT: return parse_type_cast();
 	default:
-		if (is_token_type(m_current_token))
-		{
-			return parse_type_cast();
-		}
+	{
+		error("expected '(', literal or identifier");
 	}
-
-	error("expected '(', number or identifier");
+	}
 }
 
 Type Compiler::parse_type_cast()
 {
-	const Type destination_type = parse_type();
-	read_token(LPARENT, "expected '('");
+	read_token(); // CONVERT
+
 	const Type source_type = parse_expression();
-	read_token(RPARENT, "expected ')' after expression for explicit type conversion");
+
+	read_token(KEYWORD_TO, "expected 'TO' after expression in CONVERT expression");
+
+	const Type destination_type = parse_type();
 
 	m_codegen->convert(source_type, destination_type);
 
@@ -328,21 +328,30 @@ Type Compiler::parse_simple_expression()
 
 void Compiler::parse_declaration_block()
 {
-	if (m_current_token != TOKEN::KEYWORD_VAR)
+	for (;;)
 	{
-		return;
+		switch (m_current_token)
+		{
+		case TOKEN::KEYWORD_VAR: parse_variable_declaration_block(); break;
+		case TOKEN::KEYWORD_TYPE: parse_type_definition(); break;
+		default: return;
+		}
 	}
+}
 
-	do
+void Compiler::parse_variable_declaration_block()
+{
+	read_token(TOKEN::KEYWORD_VAR, "expected 'VAR' to begin variable declaration block");
+
+	for (;;)
 	{
 		std::vector<std::string> current_declarations;
 
 		do
 		{
-			read_token(); // Skip VAR or previous COMMA
 			current_declarations.push_back(token_text());
 			read_token(); // Skip variable name
-		} while (m_current_token == COMMA);
+		} while (try_read_token(TOKEN::COMMA));
 
 		read_token(COLON, "expected ':' after variable name list in declaration block");
 
@@ -352,9 +361,22 @@ void Compiler::parse_declaration_block()
 		{
 			m_variables.emplace(std::move(name), VariableType{type});
 		}
-	} while (m_current_token == SEMICOLON);
 
-	read_token(DOT, "expected '.' at end of declaration block");
+		read_token(TOKEN::SEMICOLON, "expected ';' after variable declaration");
+
+		// If the current token is an identifier, then we assume we're continuing to parse a variable declaration.
+		// e.g.:
+		//     VAR
+		//         a : INTEGER;
+		//         b, c : BOOLEAN;
+		//     BEGIN END.
+		// At the end of the 1st iteration, `b` is read and is an identifier, so it loops again.
+		// At the end of the 2nd iteration, `BEGIN` is read but is not an ID, therefore this will break out.
+		if (m_current_token != ID)
+		{
+			break;
+		}
+	};
 
 	for (const auto& it : m_variables)
 	{
@@ -367,23 +389,53 @@ void Compiler::parse_declaration_block()
 
 Type Compiler::parse_type()
 {
-	if (!is_token_type(m_current_token))
+	if (is_token_type(m_current_token))
 	{
-		error("expected type");
+		const TOKEN token = m_current_token;
+
+		read_token();
+
+		switch (token)
+		{
+		case TOKEN::TYPE_INTEGER: return Type::UNSIGNED_INT;
+		case TOKEN::TYPE_DOUBLE: return Type::DOUBLE;
+		case TOKEN::TYPE_BOOLEAN: return Type::BOOLEAN;
+		case TOKEN::TYPE_CHAR: return Type::CHAR;
+		default: bug("unrecognized type");
+		}
+	}
+	else if (m_current_token == ID)
+	{
+		const auto it = m_typedefs.find(token_text());
+
+		if (it == m_typedefs.end())
+		{
+			error("expected type but identifier does not refer to any type definition");
+		}
+
+		read_token();
+
+		return it->second;
 	}
 
-	const TOKEN token = m_current_token;
+	error("expected type");
+}
 
-	read_token();
+void Compiler::parse_type_definition()
+{
+	read_token(); // consume TYPE keyword
 
-	switch (token)
-	{
-	case TOKEN::TYPE_INTEGER: return Type::UNSIGNED_INT;
-	case TOKEN::TYPE_DOUBLE: return Type::DOUBLE;
-	case TOKEN::TYPE_BOOLEAN: return Type::BOOLEAN;
-	case TOKEN::TYPE_CHAR: return Type::CHAR;
-	default: bug("unrecognized type");
-	}
+	expect_token(TOKEN::ID, "expected identifier after TYPE declaration");
+	const std::string alias = token_text();
+	read_token(); // consume identifier
+
+	read_token(TOKEN::EQUAL, "expected '=' after aliased name in TYPE declaration");
+
+	const Type aliased = parse_type();
+
+	read_token(TOKEN::SEMICOLON, "expected ';' after TYPE declaration");
+
+	m_typedefs.emplace(alias, aliased);
 }
 
 Type Compiler::parse_expression()
@@ -508,6 +560,8 @@ void Compiler::parse_for_statement()
 
 void Compiler::parse_block_statement()
 {
+	expect_token(KEYWORD_BEGIN, "expected 'BEGIN' to begin block statement");
+
 	do
 	{
 		read_token();
@@ -538,19 +592,15 @@ void Compiler::parse_statement()
 	}
 }
 
-void Compiler::parse_statement_part()
+void Compiler::parse_declaration() {}
+
+void Compiler::parse_main_block_statement()
 {
 	m_codegen->begin_executable_section();
 	m_codegen->begin_main_procedure();
 
-	parse_statement();
-	while (m_current_token == SEMICOLON)
-	{
-		read_token();
-		parse_statement();
-	}
-
-	read_token(DOT, "expected '.' (did you forget a ';'?)");
+	parse_block_statement();
+	read_token(DOT, "expected '.' at end of program");
 
 	m_codegen->finalize_main_procedure();
 	m_codegen->finalize_executable_section();
@@ -562,5 +612,5 @@ void Compiler::parse_program()
 	parse_declaration_block();
 	m_codegen->finalize_global_data_section();
 
-	parse_statement_part();
+	parse_main_block_statement();
 }

@@ -1,3 +1,5 @@
-VAR a : CHAR.
+VAR a : CHAR;
 
-a := CHAR(65).
+BEGIN
+    a := CONVERT 65 TO CHAR
+END.

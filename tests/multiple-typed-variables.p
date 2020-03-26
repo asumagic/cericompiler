@@ -1,5 +1,7 @@
 VAR
     a : INTEGER;
-    b, c : BOOLEAN.
+    b, c : BOOLEAN;
 
-a := 0.
+BEGIN
+    a := 0
+END.

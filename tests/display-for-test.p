@@ -1,6 +1,8 @@
-VAR a : INTEGER.
+VAR a : INTEGER;
 
-FOR a := 1 TO 5 DO
 BEGIN
-    DISPLAY a
+    FOR a := 1 TO 5 DO
+    BEGIN
+        DISPLAY a
+    END
 END.

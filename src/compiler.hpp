@@ -36,6 +36,7 @@ class Compiler
 	TOKEN       m_current_token;
 
 	std::unordered_map<std::string, VariableType> m_variables;
+	std::unordered_map<std::string, Type>         m_typedefs;
 
 	std::unique_ptr<CodeGen> m_codegen;
 
@@ -50,7 +51,9 @@ class Compiler
 	[[nodiscard]] Type parse_term();
 	[[nodiscard]] Type parse_simple_expression();
 	void               parse_declaration_block();
+	void               parse_variable_declaration_block();
 	[[nodiscard]] Type parse_type();
+	void               parse_type_definition();
 	[[nodiscard]] Type parse_expression();
 	Variable           parse_assignment_statement();
 	void               parse_if_statement();
@@ -59,7 +62,8 @@ class Compiler
 	void               parse_block_statement();
 	void               parse_display_statement();
 	void               parse_statement();
-	void               parse_statement_part();
+	void               parse_declaration();
+	void               parse_main_block_statement();
 	void               parse_program();
 
 	//! \brief Halt the execution of the compiler due to an ill-formed program and display details provided by \p

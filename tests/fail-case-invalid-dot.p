@@ -1,4 +1,6 @@
-VAR a : INTEGER.
+VAR a : INTEGER;
 
-a := 0.
-a := 1.
+BEGIN
+    a := 0;
+    a := 1
+END..

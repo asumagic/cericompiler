@@ -1,1 +1,3 @@
-DISPLAY 0.
+BEGIN
+    DISPLAY 0
+END.

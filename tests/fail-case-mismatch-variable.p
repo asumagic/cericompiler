@@ -1,3 +1,5 @@
-VAR a : INTEGER.
+VAR a : INTEGER;
 
-a := a || a.
+BEGIN
+    a := a || a.
+END.

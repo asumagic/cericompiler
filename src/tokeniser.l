@@ -41,6 +41,8 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 "ELSE"    return KEYWORD_ELSE;
 "DISPLAY" return KEYWORD_DISPLAY;
 "VAR"     return KEYWORD_VAR;
+"CONVERT" return KEYWORD_CONVERT;
+"TYPE"    return KEYWORD_TYPE;
 
 "INTEGER" return TYPE_INTEGER;
 "DOUBLE"  return TYPE_DOUBLE;
@@ -77,6 +79,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 ";"       return SEMICOLON;
 "."       return DOT;
 ":="      return ASSIGN;
+"="       return EQUAL;
 "("       return LPARENT;
 ")"       return RPARENT;
 "!"       return NOT;

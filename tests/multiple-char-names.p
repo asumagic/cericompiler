@@ -1,3 +1,5 @@
-VAR hello : INTEGER.
+VAR hello : INTEGER;
 
-hello := 0.
+BEGIN
+    hello := 0
+END.

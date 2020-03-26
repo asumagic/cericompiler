@@ -1,3 +1,5 @@
-VAR a : INTEGER.
+VAR a : INTEGER;
 
-IF ((0 == 0) + (0 == 0)) THEN BEGIN END.
+BEGIN
+    IF ((0 == 0) + (0 == 0)) THEN BEGIN END.
+END.

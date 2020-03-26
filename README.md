@@ -47,6 +47,8 @@ Types:
     - [x] Integral <=> Integral (e.g. no-op or `CHAR` <=> `INTEGER`)
     - [x] Integral <=> Floating-point
 - [ ] User-defined types
+    - [x] `TYPE alias = aliased` syntax
+    - [ ] Records
 - [ ] Dynamic allocation
 - [ ] Arrays
 
@@ -89,7 +91,7 @@ Number                    := Digit{Digit}
 Digit                     := "0"|...|"9"
 
 Factor                    := Number | Identifier | "(" Expression ")"| "!" Factor | TypeCast
-TypeCast                  := Type "(" Expression ")"
+TypeCast                  := "CONVERT" Expression "TO" Type
 
 Term                      := Factor {MultiplicativeOperator Factor}
 MultiplicativeOperator    := "*" | "/" | "%" | "&&"
@@ -97,16 +99,19 @@ MultiplicativeOperator    := "*" | "/" | "%" | "&&"
 SimpleExpression          := Term {AdditiveOperator Term}
 AdditiveOperator          := "+" | "-" | "||"
 
-DeclarationPart           := "VAR" VarDeclaration {";" VarDeclaration} "."
-VarDeclaration            := Identifier {"," Identifier} ":" Type
+VarDeclarationBlock       := "VAR" VarDeclaration {VarDeclaration}
+VarDeclaration            := Identifier {"," Identifier} ":" Type ";"
+
+TypeDeclaration           := "TYPE" Identifier "=" Type ";"
+
+Declaration               := VarDeclarationBlock | TypeDeclaration
 
 Type                      := "INTEGER" | "CHAR" | "BOOLEAN" | "DOUBLE"
 
 Expression                := SimpleExpression [RelationalOperator SimpleExpression]
-RelationalOperator        := "==" | "!=" | "<" | ">" | "<=" | ">="
+RelationalOperator        := "==" | "!=" | "<>" | "<" | ">" | "<=" | ">="
 
 AssignementStatement      := Identifier ":=" Expression
-
 IfStatement               := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 WhileStatement            := "WHILE" Expression DO Statement
 ForStatement              := "FOR" AssignementStatement "TO" Expression "DO" Statement
@@ -114,6 +119,14 @@ BlockStatement            := "BEGIN" Statement { ";" Statement } "END"
 DisplayStatement          := "DISPLAY" Expression
 
 Statement                 := AssignementStatement
-StatementPart             := Statement {";" Statement} "."
-Program                   := [DeclarationPart] StatementPart
+                             | IfStatement
+                             | WhileStatement
+                             | ForStatement
+                             | BlockStatement
+                             | DisplayStatement
+                             | TypeDefinition
+
+MainBlockStatement        := BlockStatement
+
+Program                   := {Declaration} MainBlockStatement "."
 ```
