@@ -387,7 +387,13 @@ void Compiler::parse_variable_declaration_block()
 
 		for (auto& name : current_declarations)
 		{
-			m_variables.emplace(std::move(name), VariableType{type});
+			const auto emplace_result = m_variables.emplace(name, VariableType{type});
+			const bool success        = emplace_result.second;
+
+			if (!success)
+			{
+				error(fmt::format("duplicate declaration of variable '{}'", name));
+			}
 		}
 
 		read_token(TOKEN::SEMICOLON, "expected ';' after variable declaration");
@@ -440,7 +446,13 @@ void Compiler::parse_foreign_function_declaration()
 
 	read_token(SEMICOLON, "expected ';' after FFI declaration");
 
-	m_functions.emplace(name, std::move(function));
+	const auto emplace_result = m_functions.emplace(name, std::move(function));
+	const bool success        = emplace_result.second;
+
+	if (!success)
+	{
+		error(fmt::format("duplicate declaration of function '{}'", name));
+	}
 }
 
 void Compiler::parse_include()
@@ -554,7 +566,13 @@ void Compiler::parse_type_definition()
 
 	read_token(TOKEN::SEMICOLON, "expected ';' after TYPE declaration");
 
-	m_typedefs.emplace(alias, aliased);
+	const auto emplace_result = m_typedefs.emplace(alias, aliased);
+	const bool success        = emplace_result.second;
+
+	if (!success)
+	{
+		error(fmt::format("duplicate declaration of type '{}'", alias));
+	}
 }
 
 Type Compiler::parse_expression()

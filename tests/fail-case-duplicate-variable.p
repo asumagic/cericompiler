@@ -1,0 +1,4 @@
+VAR a : INTEGER;
+VAR a : INTEGER;
+
+BEGIN END.

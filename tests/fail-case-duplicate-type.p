@@ -1,0 +1,4 @@
+TYPE foo = INTEGER;
+TYPE foo = DOUBLE;
+
+BEGIN END.
