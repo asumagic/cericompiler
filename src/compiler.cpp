@@ -170,23 +170,26 @@ Type Compiler::parse_factor_identifier()
 
 		// TODO: try catch to add context for the nth parameter and also for the function call
 		std::size_t i = 0;
-		do
+		if (m_current_token != TOKEN::RPARENT)
 		{
-			if (i >= function.parameters.size())
+			do
 			{
-				error(fmt::format(
-					"too much parameters for function '{}', expected {}", name, function.parameters.size()));
-			}
+				if (i >= function.parameters.size())
+				{
+					error(fmt::format(
+						"too much parameters for function '{}', expected {}", name, function.parameters.size()));
+				}
 
-			const FunctionParameter& declared_parameter = function.parameters[i];
+				const FunctionParameter& declared_parameter = function.parameters[i];
 
-			const Type expression_type = parse_expression();
-			check_type(expression_type, declared_parameter.type);
+				const Type expression_type = parse_expression();
+				check_type(expression_type, declared_parameter.type);
 
-			m_codegen->function_call_param(call, expression_type);
+				m_codegen->function_call_param(call, expression_type);
 
-			++i;
-		} while (try_read_token(TOKEN::COMMA));
+				++i;
+			} while (try_read_token(TOKEN::COMMA));
+		}
 
 		if (i < function.parameters.size())
 		{
