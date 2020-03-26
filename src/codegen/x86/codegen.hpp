@@ -72,6 +72,7 @@ class CodeGen
 	void load_value_from_pointer(Type dereferenced_type);
 
 	void store_variable(const Variable& variable);
+	void store_value_to_pointer(Type value_type);
 
 	void alu_and_bool();
 	void alu_or_bool();

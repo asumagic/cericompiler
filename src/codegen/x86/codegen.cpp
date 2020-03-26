@@ -97,6 +97,13 @@ void CodeGen::store_variable(const Variable& variable)
 	m_output << fmt::format("\tpop {}\n", variable.mangled_name());
 }
 
+void CodeGen::store_value_to_pointer([[maybe_unused]] Type value_type)
+{
+	m_output << "\tpopq %rax\n"
+				"\tpopq %rbx\n"
+				"\tmovq %rbx, (%rax)\n";
+}
+
 void CodeGen::alu_and_bool()
 {
 	alu_load_binop(Type::BOOLEAN);

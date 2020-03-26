@@ -91,8 +91,8 @@ expect_compiles("ffi-test-no-params")
 expect_diagnostic("fail-case-call-missing-params" ".*not enough parameters.*")
 expect_diagnostic("fail-case-call-extra-params" ".*too much parameters.*")
 expect_compiles("duplicate-include")
-expect_output("type-pointer-simple" "123\\n")
-expect_output("type-pointer-to-pointer" "123\\n")
+expect_output("type-pointer-simple" "123\\n321\\n")
+expect_output("type-pointer-to-pointer" "123\\n321\\n")
 
 # Force tests to occur after compilation
 add_custom_target(run_unit_test ALL

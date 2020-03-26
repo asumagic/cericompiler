@@ -5,5 +5,7 @@ VAR foo : INTEGER;
 BEGIN
     pinteger := @foo;
     foo := 123;
-    DISPLAY pinteger^
+    DISPLAY pinteger^;
+    pinteger^ := 321;
+    DISPLAY foo
 END.

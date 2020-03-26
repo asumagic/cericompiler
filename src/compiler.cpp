@@ -713,6 +713,48 @@ Variable Compiler::parse_assignment_statement_after_identifier(string_view name)
 
 	const VariableType& variable_type = it->second;
 
+	if (m_current_token == TOKEN::EXPONENT)
+	{
+		Type current_type = variable_type.type;
+
+		std::vector<Type> dereference_stack;
+
+		while (try_read_token(TOKEN::EXPONENT))
+		{
+			// TODO: deduplicate code with parse_factor()
+			const auto it = m_user_types.find(current_type);
+
+			if (it == m_user_types.end() || it->second.category != UserType::Category::POINTER)
+			{
+				error(fmt::format("cannot dereference non-pointer type '{}'", type_name(current_type).str()));
+			}
+
+			const UserType& type = it->second;
+
+			dereference_stack.push_back(type.layout_data.pointer.target);
+			current_type = type.layout_data.pointer.target;
+		}
+
+		// TODO: deduplicate code with below
+		read_token(ASSIGN, "expected ':=' in variable assignment");
+
+		Type type = parse_expression();
+
+		m_codegen->load_variable({name, variable_type});
+
+		dereference_stack.resize(dereference_stack.size() - 1); // ignore the last one
+		for (const Type type : dereference_stack)
+		{
+			m_codegen->load_value_from_pointer(type);
+		}
+
+		m_codegen->store_value_to_pointer(type);
+
+		check_type(type, current_type);
+
+		return {};
+	}
+
 	read_token(ASSIGN, "expected ':=' in variable assignment");
 
 	Type type = parse_expression();
@@ -721,7 +763,7 @@ Variable Compiler::parse_assignment_statement_after_identifier(string_view name)
 
 	check_type(type, variable_type.type);
 
-	return {name, {type}};
+	return {name, variable_type};
 }
 
 void Compiler::parse_if_statement()

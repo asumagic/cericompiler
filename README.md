@@ -100,7 +100,7 @@ This is provided for demonstration purposes, and includes some approximations (e
 `Number` is underspecified).
 
 ```sf
-Identifier                 := Letter{Letter|Digit}
+Identifier                 := Letter{Letter|Digit|"_"}
 Letter                     := "a"|...|"z"
 
 Number                     := Digit{Digit}
@@ -155,7 +155,7 @@ TypeOrVoid                 := Type | "VOID"
 Expression                 := SimpleExpression [RelationalOperator SimpleExpression]
 RelationalOperator         := "==" | "!=" | "<>" | "<" | ">" | "<=" | ">="
 
-AssignementStatement       := Identifier ":=" Expression
+AssignementStatement       := Identifier { "^" } ":=" Expression
 IfStatement                := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 WhileStatement             := "WHILE" Expression DO Statement
 ForStatement               := "FOR" AssignementStatement "TO" Expression "DO" Statement
