@@ -54,7 +54,7 @@ void CodeGen::define_global_variable(const Variable& variable)
 	case Type::DOUBLE: m_output << ".double 0.0"; break;
 	default:
 		// HACK: this is gonna break horribly with >64-bit types
-		m_output << ".double 0.0";
+		m_output << ".quad 0";
 		// throw UnimplementedError{"Unimplemented global variable type"};
 	}
 
