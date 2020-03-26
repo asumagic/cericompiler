@@ -90,24 +90,24 @@ class CodeGen
 
 	void convert(Type source, Type destination);
 
-	void statement_if_prepare(IfStatement&);
-	void statement_if_post_check(IfStatement&);
-	void statement_if_with_else(IfStatement&);
-	void statement_if_without_else(IfStatement&);
-	void statement_if_finalize(IfStatement&);
+	void statement_if_prepare(IfStatement& statement);
+	void statement_if_post_check(IfStatement& statement);
+	void statement_if_with_else(IfStatement& statement);
+	void statement_if_without_else(IfStatement& statement);
+	void statement_if_finalize(IfStatement& statement);
 
-	void statement_while_prepare(WhileStatement&);
-	void statement_while_post_check(WhileStatement&);
-	void statement_while_finalize(WhileStatement&);
+	void statement_while_prepare(WhileStatement& statement);
+	void statement_while_post_check(WhileStatement& statement);
+	void statement_while_finalize(WhileStatement& statement);
 
-	void statement_for_prepare(ForStatement&, const Variable& assignement_variable);
-	void statement_for_post_assignment(ForStatement&);
-	void statement_for_post_check(ForStatement&);
-	void statement_for_finalize(ForStatement&);
+	void statement_for_prepare(ForStatement& statement, const Variable& assignement_variable);
+	void statement_for_post_assignment(ForStatement& statement);
+	void statement_for_post_check(ForStatement& statement);
+	void statement_for_finalize(ForStatement& statement);
 
-	void function_call_prepare(FunctionCall&);
-	void function_call_param(FunctionCall&, Type type);
-	void function_call_finalize(FunctionCall&);
+	void function_call_prepare(FunctionCall& statement);
+	void function_call_param(FunctionCall& statement, Type type);
+	void function_call_finalize(FunctionCall& statement);
 
 	void debug_display(Type type);
 
@@ -117,8 +117,8 @@ class CodeGen
 
 	void alu_compare(Type type, string_view instruction);
 
-	void        function_call_label_param(FunctionCall&, string_view label);
-	string_view function_call_register(FunctionCall&, Type type);
+	void        function_call_label_param(FunctionCall& call, string_view label);
+	string_view function_call_register(FunctionCall& call, Type type);
 
 	bool is_function_param_type_regular(Type type) const;
 	bool is_function_param_type_float(Type type) const;
