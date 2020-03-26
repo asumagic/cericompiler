@@ -429,7 +429,15 @@ void CodeGen::function_call_finalize(FunctionCall& call)
 		"\taddq $8, %rsp # Cancel stack alignment\n",
 		fmt::arg("function", call.function_name));
 
-	if (is_function_param_type_float(call.return_type))
+	if (call.return_type == Type::BOOLEAN)
+	{
+		throw UnimplementedTypeSupportError{"Unimplemented return type"};
+	}
+	else if (is_function_param_type_regular(call.return_type))
+	{
+		m_output << "\tpushq %rax\n";
+	}
+	else if (is_function_param_type_float(call.return_type))
 	{
 		m_output << "\taddq $-8, %rsp\n"
 					"\tmovsd %xmm0, (%rsp)\n";
