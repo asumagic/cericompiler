@@ -552,13 +552,18 @@ void Compiler::parse_for_statement()
 
 void Compiler::parse_block_statement()
 {
-	expect_token(KEYWORD_BEGIN, "expected 'BEGIN' to begin block statement");
+	read_token(KEYWORD_BEGIN, "expected 'BEGIN' to begin block statement");
+
+	// Check for an empty block statement, e.g. BEGIN END
+	if (try_read_token(KEYWORD_END))
+	{
+		return;
+	}
 
 	do
 	{
-		read_token();
 		parse_statement();
-	} while (m_current_token == SEMICOLON);
+	} while (try_read_token(TOKEN::SEMICOLON));
 
 	read_token(KEYWORD_END, "expected 'END' to finish block statement");
 }

@@ -115,7 +115,7 @@ AssignementStatement      := Identifier ":=" Expression
 IfStatement               := "IF" Expression "THEN" Statement [ "ELSE" Statement ]
 WhileStatement            := "WHILE" Expression DO Statement
 ForStatement              := "FOR" AssignementStatement "TO" Expression "DO" Statement
-BlockStatement            := "BEGIN" Statement { ";" Statement } "END"
+BlockStatement            := "BEGIN" [ Statement { ";" Statement } [";"] ] "END"
 DisplayStatement          := "DISPLAY" Expression
 
 Statement                 := AssignementStatement
