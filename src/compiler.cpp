@@ -464,14 +464,17 @@ void Compiler::parse_foreign_function_declaration()
 
 	read_token(LPARENT, "expected '(' after function name");
 
-	do
+	if (m_current_token != RPARENT)
 	{
-		if (is_token_type(m_current_token))
+		do
+		{
+			if (is_token_type(m_current_token))
 		{
 			const auto type = parse_type();
-			function.parameters.push_back({type});
-		}
-	} while (try_read_token(COMMA));
+				function.parameters.push_back({type});
+			}
+		} while (try_read_token(COMMA));
+	}
 
 	read_token(RPARENT, "expected ')' after type list");
 
