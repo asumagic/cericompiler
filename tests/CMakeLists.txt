@@ -82,6 +82,7 @@ expect_output("type-double-convert-int" "3\\n")
 expect_output("type-integer-convert-double" "123\.0+\\n")
 expect_output("type-declaration" "123\\n")
 expect_output("ffi-test-fmod" "1\.00*\\n")
+expect_compiles("ffi-test-no-params")
 expect_diagnostic("fail-case-call-missing-params" ".*not enough parameters.*")
 expect_diagnostic("fail-case-call-extra-params" ".*too much parameters.*")
 
