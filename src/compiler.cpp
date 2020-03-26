@@ -623,3 +623,5 @@ void Compiler::emit_global_variables()
 		m_codegen->define_global_variable({name, type});
 	}
 }
+
+std::string Variable::mangled_name() const { return fmt::format("_ceri_var_{}", name); }

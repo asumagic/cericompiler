@@ -39,7 +39,7 @@ void CodeGen::finalize_global_data_section() {}
 
 void CodeGen::define_global_variable(const Variable& variable)
 {
-	m_output << fmt::format("{}:\n\t", variable.name);
+	m_output << fmt::format("{}:\n\t", variable.mangled_name());
 
 	// NOTE: non 64-bit loads are still loaded with 64-bit pushes.
 	//       Realistically, this does not matter, though.
@@ -58,7 +58,10 @@ void CodeGen::define_global_variable(const Variable& variable)
 	m_output << fmt::format(" # type: {}\n", type_name(variable.type.type).str());
 }
 
-void CodeGen::load_variable(const Variable& variable) { m_output << fmt::format("\tpush {}\n", variable.name); }
+void CodeGen::load_variable(const Variable& variable)
+{
+	m_output << fmt::format("\tpush {}\n", variable.mangled_name());
+}
 void CodeGen::load_i64(uint64_t value)
 {
 	if ((value >> 32) != 0)
@@ -75,7 +78,10 @@ void CodeGen::load_i64(uint64_t value)
 	}
 }
 
-void CodeGen::store_variable(const Variable& variable) { m_output << fmt::format("\tpop {}\n", variable.name); }
+void CodeGen::store_variable(const Variable& variable)
+{
+	m_output << fmt::format("\tpop {}\n", variable.mangled_name());
+}
 
 void CodeGen::alu_and_bool()
 {
@@ -355,7 +361,7 @@ void CodeGen::statement_for_post_check(ForStatement statement)
 		"\tpop %rax\n"
 		"\tcmpq {name}, %rax\n"
 		"\tjl __next{tag}\n",
-		fmt::arg("name", statement.variable->name),
+		fmt::arg("name", statement.variable->mangled_name()),
 		fmt::arg("tag", statement.saved_tag));
 }
 
@@ -365,7 +371,7 @@ void CodeGen::statement_for_finalize(ForStatement statement)
 		"\taddq $1, {name}\n"
 		"\tjmp __for{tag}\n"
 		"__next{tag}:\n",
-		fmt::arg("name", statement.variable->name),
+		fmt::arg("name", statement.variable->mangled_name()),
 		fmt::arg("tag", statement.saved_tag));
 }
 

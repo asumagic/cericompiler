@@ -22,6 +22,8 @@ struct Variable
 {
 	std::string  name;
 	VariableType type;
+
+	std::string mangled_name() const;
 };
 
 class Compiler
