@@ -54,8 +54,8 @@ class Compiler
 	[[nodiscard]] Type parse_float_literal();
 	[[nodiscard]] Type parse_factor();
 	[[nodiscard]] Type parse_type_cast();
-	[[nodiscard]] Type parse_function_call(string_view name, bool expects_return = false);
-	[[nodiscard]] Type parse_variable_usage(string_view name);
+	[[nodiscard]] Type parse_function_call_after_identifier(string_view name, bool expects_return = false);
+	[[nodiscard]] Type parse_variable_usage_after_identifier(string_view name);
 	[[nodiscard]] Type parse_term();
 	[[nodiscard]] Type parse_simple_expression();
 	void               parse_declaration_block();
@@ -65,7 +65,7 @@ class Compiler
 	void               parse_type_definition();
 	[[nodiscard]] Type parse_expression();
 	Variable           parse_assignment_statement();
-	Variable           parse_assignment_statement(string_view name);
+	Variable           parse_assignment_statement_after_identifier(string_view name);
 	void               parse_if_statement();
 	void               parse_while_statement();
 	void               parse_for_statement();

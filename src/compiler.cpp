@@ -63,11 +63,11 @@ Type Compiler::parse_factor_identifier()
 
 	if (m_current_token == TOKEN::LPARENT)
 	{
-		return parse_function_call(name, true);
+		return parse_function_call_after_identifier(name, true);
 	}
 	else
 	{
-		return parse_variable_usage(name);
+		return parse_variable_usage_after_identifier(name);
 	}
 }
 
@@ -78,11 +78,11 @@ void Compiler::parse_statement_identifier()
 
 	if (m_current_token == TOKEN::LPARENT)
 	{
-		[[maybe_unused]] const Type type = parse_function_call(name);
+		[[maybe_unused]] const Type type = parse_function_call_after_identifier(name);
 	}
 	else
 	{
-		parse_assignment_statement(name);
+		parse_assignment_statement_after_identifier(name);
 	}
 }
 
@@ -173,7 +173,7 @@ Type Compiler::parse_type_cast()
 	return destination_type;
 }
 
-Type Compiler::parse_function_call(string_view name, bool expects_return)
+Type Compiler::parse_function_call_after_identifier(string_view name, bool expects_return)
 {
 	read_token(); // Consume '('
 
@@ -238,7 +238,7 @@ Type Compiler::parse_function_call(string_view name, bool expects_return)
 	return function.return_type;
 }
 
-Type Compiler::parse_variable_usage(string_view name)
+Type Compiler::parse_variable_usage_after_identifier(string_view name)
 {
 	const auto it = m_variables.find(name);
 	if (it == m_variables.end())
@@ -526,10 +526,10 @@ Variable Compiler::parse_assignment_statement()
 	const std::string name = token_text();
 	read_token(); // We needed the token_text up until now - consume the identifier
 
-	return parse_assignment_statement(name);
+	return parse_assignment_statement_after_identifier(name);
 }
 
-Variable Compiler::parse_assignment_statement(string_view name)
+Variable Compiler::parse_assignment_statement_after_identifier(string_view name)
 {
 	const auto it = m_variables.find(name);
 
