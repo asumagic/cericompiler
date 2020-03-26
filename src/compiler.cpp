@@ -247,6 +247,15 @@ Type Compiler::parse_type_cast()
 
 	const Type destination_type = parse_type();
 
+	if (check_enum_range(source_type, Type::FIRST_USER_DEFINED, Type::LAST_USER_DEFINED)
+		|| check_enum_range(destination_type, Type::FIRST_USER_DEFINED, Type::LAST_USER_DEFINED))
+	{
+		error(fmt::format(
+			"incompatible types for explicit conversion {} -> {}",
+			type_name(source_type).str(),
+			type_name(destination_type).str()));
+	}
+
 	m_codegen->convert(source_type, destination_type);
 
 	// right now just yolo it and don't convert

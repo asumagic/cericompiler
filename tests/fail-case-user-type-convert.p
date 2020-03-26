@@ -1,0 +1,5 @@
+VAR a : ^INTEGER; b : ^DOUBLE;
+
+BEGIN
+    b := CONVERT a TO ^DOUBLE
+END.
