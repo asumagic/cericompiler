@@ -10,6 +10,7 @@ using namespace std;
 %option yylineno
 
 stringconst  \"[^\n"]+\"
+ws      [ \t\n\r]+
 alpha   [A-Za-z]
 digit   [0-9]
 charliteral \'[^\n\r\t]\'
@@ -76,7 +77,7 @@ unknown [^\"A-Za-z0-9 \n\r\t\(\)\<\>\=\!\%\&\|\}\-\;\.]+
 ")"       return RPARENT;
 "!"       return NOT;
 <<EOF>>   return FEOF;
-
+{ws}      {}
 "(*"    { /* Skip comments between '(*' and '*)' */
 		int c;
 		while((c = yyinput()) != 0){
