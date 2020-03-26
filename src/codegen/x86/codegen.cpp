@@ -443,12 +443,9 @@ void CodeGen::function_call_finalize(FunctionCall& call)
 		m_output << fmt::format("\tmovb ${floatcount}, %al\n", fmt::arg("floatcount", call.float_count));
 	}
 
-	// TODO: maybe do stack alignment in a more sane way. we'll need that for local variables to work properly
-	m_output << fmt::format(
-		"\taddq $-8, %rsp # Align stack to 16-byte.\n"
-		"\tcall {function}\n"
-		"\taddq $8, %rsp # Cancel stack alignment\n",
-		fmt::arg("function", call.function_name));
+	align_stack();
+	m_output << fmt::format("\tcall {function}\n", fmt::arg("function", call.function_name));
+	unalign_stack();
 
 	if (call.return_type == Type::BOOLEAN)
 	{
@@ -510,6 +507,27 @@ void CodeGen::debug_display(Type type)
 
 	function_call_param(call, type);
 	function_call_finalize(call);
+}
+
+long CodeGen::offset_from_frame_pointer() const { return -8; }
+long CodeGen::compute_alignment_correction() const { return -(-offset_from_frame_pointer() % 16); }
+
+void CodeGen::align_stack() const
+{
+	const long alignment_correction = compute_alignment_correction();
+	if (alignment_correction != 0)
+	{
+		m_output << fmt::format("\taddq ${}, %rsp # align stack\n", alignment_correction);
+	}
+}
+
+void CodeGen::unalign_stack() const
+{
+	const long alignment_correction = compute_alignment_correction();
+	if (alignment_correction != 0)
+	{
+		m_output << fmt::format("\taddq ${}, %rsp # unalign stack\n", -alignment_correction);
+	}
 }
 
 void CodeGen::alu_load_binop(Type type)

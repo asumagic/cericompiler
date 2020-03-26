@@ -115,6 +115,12 @@ class CodeGen
 	void debug_display(Type type);
 
 	private:
+	long offset_from_frame_pointer() const;
+	long compute_alignment_correction() const;
+
+	void align_stack() const;
+	void unalign_stack() const;
+
 	void alu_load_binop(Type type);
 	void alu_store_f64();
 
