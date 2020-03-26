@@ -88,6 +88,9 @@ Functions:
 
 Misc:
 - [x] Include file support
+- [ ] C99 standard library bindings (when appropriate): Typedefs, constants and functions under `stdc/`
+    - [x] `math.h` (partial)
+    - [ ] [Others](https://en.cppreference.com/w/c/header)
 
 ## Language grammar
 
