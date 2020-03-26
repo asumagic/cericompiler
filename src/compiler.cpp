@@ -25,81 +25,6 @@
 #include <fmt/core.h>
 #include <vector>
 
-void Compiler::expect_token(TOKEN expected, string_view error_message) const
-{
-	if (m_current_token != expected)
-	{
-		error(error_message);
-	}
-}
-
-void Compiler::read_token(TOKEN expected, string_view error_message)
-{
-	expect_token(expected, error_message);
-	read_token();
-}
-
-bool Compiler::try_read_token(TOKEN expected)
-{
-	if (m_current_token == expected)
-	{
-		read_token();
-		return true;
-	}
-
-	return false;
-}
-
-std::string Compiler::source_context() const { return fmt::format("{}:{}:", m_unit_name, m_lexer.lineno()); };
-
-void Compiler::error(string_view error_message) const
-{
-	const auto context = source_context();
-	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", context, error_message.str());
-	fmt::print(stderr, fg(fmt::color::red), "{}note:  while reading token '{}'\n", context, token_text().str());
-
-	exit(-1);
-}
-
-void Compiler::bug(string_view error_message) const
-{
-	fmt::print(stderr, fg(fmt::color::red), "{}error: COMPILER BUG!\n", source_context());
-
-	error(error_message);
-}
-
-void Compiler::check_type(Type a, Type b) const
-{
-	if (check_enum_range(a, Type::FIRST_CONCEPT, Type::LAST_CONCEPT))
-	{
-		bug("only the second operand of TypeCheck may be a type concept");
-	}
-
-	bool match;
-
-	switch (b)
-	{
-	case Type::ARITHMETIC:
-	{
-		match = check_enum_range(a, Type::FIRST_ARITHMETIC, Type::LAST_ARITHMETIC);
-		break;
-	}
-
-	default:
-	{
-		match = (a == b);
-		break;
-	}
-	}
-
-	if (!match)
-	{
-		error(fmt::format("incompatible types: {}, {}", type_name(a).str(), type_name(b).str()));
-	}
-}
-
-TOKEN Compiler::read_token() { return (m_current_token = TOKEN(m_lexer.yylex())); }
-
 Compiler::Compiler(string_view unit_name, std::istream& input, std::ostream& output) :
 	m_unit_name{unit_name}, m_lexer{input, output}, m_codegen{std::make_unique<CodeGen>(output)}
 {}
@@ -130,8 +55,6 @@ void Compiler::operator()()
 	}
 }
 
-string_view Compiler::token_text() const { return m_lexer.YYText(); }
-
 Type Compiler::parse_factor_identifier()
 {
 	const std::string name = token_text();
@@ -140,83 +63,26 @@ Type Compiler::parse_factor_identifier()
 
 	if (m_current_token == TOKEN::LPARENT)
 	{
-		// Function call
-		read_token(); // Consume '('
-
-		const auto it = m_functions.find(name);
-		if (it == m_functions.end())
-		{
-			error(fmt::format("use of undeclared function '{}'", name));
-		}
-
-		const Function& function = it->second;
-
-		if (function.return_type == Type::VOID)
-		{
-			error(fmt::format("tried to get return value of function '{}' which does not return anything", name));
-		}
-
-		if (function.variadic)
-		{
-			bug("variadic foreign function calls are not supported from the language for now");
-		}
-
-		FunctionCall call;
-		call.function_name = name;
-		call.return_type   = function.return_type;
-		call.variadic      = function.variadic;
-
-		m_codegen->function_call_prepare(call);
-
-		// TODO: try catch to add context for the nth parameter and also for the function call
-		std::size_t i = 0;
-		if (m_current_token != TOKEN::RPARENT)
-		{
-			do
-			{
-				if (i >= function.parameters.size())
-				{
-					error(fmt::format(
-						"too much parameters for function '{}', expected {}", name, function.parameters.size()));
-				}
-
-				const FunctionParameter& declared_parameter = function.parameters[i];
-
-				const Type expression_type = parse_expression();
-				check_type(expression_type, declared_parameter.type);
-
-				m_codegen->function_call_param(call, expression_type);
-
-				++i;
-			} while (try_read_token(TOKEN::COMMA));
-		}
-
-		if (i < function.parameters.size())
-		{
-			error(
-				fmt::format("not enough parameters for function '{}', expected {}", name, function.parameters.size()));
-		}
-
-		m_codegen->function_call_finalize(call);
-
-		read_token(TOKEN::RPARENT, "expected ')' after parameter list in function call");
-
-		return function.return_type;
+		return parse_function_call(name, true);
 	}
 	else
 	{
-		// Variable
-		const auto it = m_variables.find(name);
-		if (it == m_variables.end())
-		{
-			error(fmt::format("use of undeclared identifier '{}'", name));
-		}
+		return parse_variable_usage(name);
+	}
+}
 
-		const VariableType& type = it->second;
+void Compiler::parse_statement_identifier()
+{
+	const std::string name = token_text();
+	read_token(); // Consume identifier
 
-		m_codegen->load_variable({name, type});
-
-		return type.type;
+	if (m_current_token == TOKEN::LPARENT)
+	{
+		[[maybe_unused]] const Type type = parse_function_call(name);
+	}
+	else
+	{
+		parse_assignment_statement(name);
 	}
 }
 
@@ -305,6 +171,86 @@ Type Compiler::parse_type_cast()
 
 	// right now just yolo it and don't convert
 	return destination_type;
+}
+
+Type Compiler::parse_function_call(string_view name, bool expects_return)
+{
+	read_token(); // Consume '('
+
+	const auto it = m_functions.find(name);
+	if (it == m_functions.end())
+	{
+		error(fmt::format("use of undeclared function '{}'", name.str()));
+	}
+
+	const Function& function = it->second;
+
+	if (function.return_type == Type::VOID && expects_return)
+	{
+		error(fmt::format("tried to get return value of function '{}' which does not return anything", name.str()));
+	}
+
+	if (function.variadic)
+	{
+		bug("variadic foreign function calls are not supported from the language for now");
+	}
+
+	FunctionCall call;
+	call.function_name = name;
+	call.return_type   = function.return_type;
+	call.variadic      = function.variadic;
+
+	m_codegen->function_call_prepare(call);
+
+	// TODO: try catch to add context for the nth parameter and also for the function call
+	std::size_t i = 0;
+	if (m_current_token != TOKEN::RPARENT)
+	{
+		do
+		{
+			if (i >= function.parameters.size())
+			{
+				error(fmt::format(
+					"too much parameters for function '{}', expected {}", name.str(), function.parameters.size()));
+			}
+
+			const FunctionParameter& declared_parameter = function.parameters[i];
+
+			const Type expression_type = parse_expression();
+			check_type(expression_type, declared_parameter.type);
+
+			m_codegen->function_call_param(call, expression_type);
+
+			++i;
+		} while (try_read_token(TOKEN::COMMA));
+	}
+
+	if (i < function.parameters.size())
+	{
+		error(fmt::format(
+			"not enough parameters for function '{}', expected {}", name.str(), function.parameters.size()));
+	}
+
+	m_codegen->function_call_finalize(call);
+
+	read_token(TOKEN::RPARENT, "expected ')' after parameter list in function call");
+
+	return function.return_type;
+}
+
+Type Compiler::parse_variable_usage(string_view name)
+{
+	const auto it = m_variables.find(name);
+	if (it == m_variables.end())
+	{
+		error(fmt::format("use of undeclared identifier '{}'", name.str()));
+	}
+
+	const VariableType& type = it->second;
+
+	m_codegen->load_variable({name, type});
+
+	return type.type;
 }
 
 Type Compiler::parse_term()
@@ -578,16 +524,22 @@ Variable Compiler::parse_assignment_statement()
 	expect_token(ID, "expected an identifier");
 
 	const std::string name = token_text();
-	const auto        it   = m_variables.find(name);
+	read_token(); // We needed the token_text up until now - consume the identifier
+
+	return parse_assignment_statement(name);
+}
+
+Variable Compiler::parse_assignment_statement(string_view name)
+{
+	const auto it = m_variables.find(name);
 
 	if (it == m_variables.end())
 	{
-		error(fmt::format("assignment of undeclared variable '{}'", name));
+		error(fmt::format("assignment of undeclared variable '{}'", name.str()));
 	}
 
 	const VariableType& variable_type = it->second;
 
-	read_token(); // We needed the token_text up until now - consume the identifier
 	read_token(ASSIGN, "expected ':=' in variable assignment");
 
 	Type type = parse_expression();
@@ -702,7 +654,8 @@ void Compiler::parse_statement()
 	case TOKEN::KEYWORD_FOR: parse_for_statement(); break;
 	case TOKEN::KEYWORD_BEGIN: parse_block_statement(); break;
 	case TOKEN::KEYWORD_DISPLAY: parse_display_statement(); break;
-	default: parse_assignment_statement(); break;
+	case TOKEN::ID: parse_statement_identifier(); break;
+	default: error("expected statement");
 	}
 }
 
@@ -738,3 +691,80 @@ void Compiler::emit_global_variables()
 		m_codegen->define_global_variable({name, type});
 	}
 }
+
+std::string Compiler::source_context() const { return fmt::format("{}:{}:", m_unit_name, m_lexer.lineno()); };
+
+void Compiler::error(string_view error_message) const
+{
+	const auto context = source_context();
+	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", context, error_message.str());
+	fmt::print(stderr, fg(fmt::color::red), "{}note:  while reading token '{}'\n", context, token_text().str());
+
+	exit(-1);
+}
+
+void Compiler::bug(string_view error_message) const
+{
+	fmt::print(stderr, fg(fmt::color::red), "{}error: COMPILER BUG!\n", source_context());
+
+	error(error_message);
+}
+
+void Compiler::check_type(Type a, Type b) const
+{
+	if (check_enum_range(a, Type::FIRST_CONCEPT, Type::LAST_CONCEPT))
+	{
+		bug("only the second operand of TypeCheck may be a type concept");
+	}
+
+	bool match;
+
+	switch (b)
+	{
+	case Type::ARITHMETIC:
+	{
+		match = check_enum_range(a, Type::FIRST_ARITHMETIC, Type::LAST_ARITHMETIC);
+		break;
+	}
+
+	default:
+	{
+		match = (a == b);
+		break;
+	}
+	}
+
+	if (!match)
+	{
+		error(fmt::format("incompatible types: {}, {}", type_name(a).str(), type_name(b).str()));
+	}
+}
+
+string_view Compiler::token_text() const { return m_lexer.YYText(); }
+
+void Compiler::expect_token(TOKEN expected, string_view error_message) const
+{
+	if (m_current_token != expected)
+	{
+		error(error_message);
+	}
+}
+
+void Compiler::read_token(TOKEN expected, string_view error_message)
+{
+	expect_token(expected, error_message);
+	read_token();
+}
+
+bool Compiler::try_read_token(TOKEN expected)
+{
+	if (m_current_token == expected)
+	{
+		read_token();
+		return true;
+	}
+
+	return false;
+}
+
+TOKEN Compiler::read_token() { return (m_current_token = TOKEN(m_lexer.yylex())); }

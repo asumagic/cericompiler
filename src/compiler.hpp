@@ -47,14 +47,15 @@ class Compiler
 
 	std::unique_ptr<CodeGen> m_codegen;
 
-	[[nodiscard]] string_view token_text() const;
-
 	[[nodiscard]] Type parse_factor_identifier();
+	void               parse_statement_identifier();
 	[[nodiscard]] Type parse_character_literal();
 	[[nodiscard]] Type parse_integer_literal();
 	[[nodiscard]] Type parse_float_literal();
 	[[nodiscard]] Type parse_factor();
 	[[nodiscard]] Type parse_type_cast();
+	[[nodiscard]] Type parse_function_call(string_view name, bool expects_return = false);
+	[[nodiscard]] Type parse_variable_usage(string_view name);
 	[[nodiscard]] Type parse_term();
 	[[nodiscard]] Type parse_simple_expression();
 	void               parse_declaration_block();
@@ -64,6 +65,7 @@ class Compiler
 	void               parse_type_definition();
 	[[nodiscard]] Type parse_expression();
 	Variable           parse_assignment_statement();
+	Variable           parse_assignment_statement(string_view name);
 	void               parse_if_statement();
 	void               parse_while_statement();
 	void               parse_for_statement();
@@ -98,6 +100,8 @@ class Compiler
 	//!		- check_type(Type::CHAR, Type::ARITHMETIC) *will* show an error
 	//!		- check_type(Type::ARITHMETIC, Type::UNSIGNED_INT) will show a *compiler bug error*
 	void check_type(Type a, Type b) const;
+
+	[[nodiscard]] string_view token_text() const;
 
 	//! \brief If the current token is not \p expected, show \p error_message as an error.
 	void expect_token(TOKEN expected, string_view error_message) const;

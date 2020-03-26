@@ -88,6 +88,9 @@ Functions:
 
 ## Language grammar
 
+This is provided for demonstration purposes, and includes some approximations (e.g. `Symbol` is not strictly defined and
+`Number` is underspecified).
+
 ```sf
 Identifier                 := Letter{Letter|Digit}
 Letter                     := "a"|...|"z"
@@ -95,7 +98,12 @@ Letter                     := "a"|...|"z"
 Number                     := Digit{Digit}
 Digit                      := "0"|...|"9"
 
-Factor                     := Number | Identifier | "(" Expression ")"| "!" Factor | TypeCast | FunctionCall
+CharacterLiteral           := "'" Symbol "'"
+IntegerLiteral             := Number
+FloatLiteral               := Number "." Number
+Literal                    := CharacterLiteral | IntegerLiteral | FloatLiteral
+
+Factor                     := Literal | Identifier | "(" Expression ")"| "!" Factor | TypeCast | FunctionCall
 TypeCast                   := "CONVERT" Expression "TO" Type
 
 FunctionCall               := Identifier "(" ParamList ")"
@@ -116,8 +124,8 @@ ForeignFunctionDeclaration := "FFI" Identifier "(" TypeList ")" : TypeOrVoid
 TypeList                   := [ Type {"," Type} ]
 
 Declaration                := VarDeclarationBlock
-                              | TypeDeclaration
-                              | ForeignFunctionDeclaration
+                            | TypeDeclaration
+                            | ForeignFunctionDeclaration
 
 Type                       := "INTEGER" | "CHAR" | "BOOLEAN" | "DOUBLE"
 TypeOrVoid                 := Type | "VOID"
@@ -132,13 +140,14 @@ ForStatement               := "FOR" AssignementStatement "TO" Expression "DO" St
 BlockStatement             := "BEGIN" [ Statement { ";" Statement } [";"] ] "END"
 DisplayStatement           := "DISPLAY" Expression
 
-Statement                  := AssignementStatement
-                              | IfStatement
-                              | WhileStatement
-                              | ForStatement
-                              | BlockStatement
-                              | DisplayStatement
-                              | TypeDefinition
+Statement                  := FunctionCall
+                            | AssignementStatement
+                            | IfStatement
+                            | WhileStatement
+                            | ForStatement
+                            | BlockStatement
+                            | DisplayStatement
+                            | TypeDefinition
 
 MainBlockStatement         := BlockStatement
 

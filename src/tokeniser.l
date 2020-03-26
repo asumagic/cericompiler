@@ -1,18 +1,8 @@
 %{
-// This is our Lexical tokeniser
-// It should be compiled into cpp with :
-// flex++ -d -otokeniser.cpp tokeniser.l
-// And then compiled into object with
-// g++ -c tokeniser.cpp
-// tokens can be read using lexer->yylex()
-// lexer->yylex() returns the type of the lexicon entry (see enum TOKEN in tokeniser.h)
-// and lexer->YYText() returns the lexicon entry as a string
-
 #include "token.hpp"
 #include <iostream>
 
 using namespace std;
-
 %}
 
 %option noyywrap
