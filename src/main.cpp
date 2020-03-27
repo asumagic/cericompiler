@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 		CLI::App cli{
 			"cericompiler\n"
 			"Example:\n"
-			"\tcericompiler ./hello.pas -o ./hello\n"
+			"\tcericompiler ./hello.pas -o ./hello -I /path/to/installation/std/\n"
 			"\t./hello\n"};
 
 		try
