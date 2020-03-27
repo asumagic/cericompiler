@@ -527,7 +527,7 @@ void CodeGen::align_stack()
 								  "\tandq $0xFFFFFFFFFFFFFFF0, %rsp\n";
 }
 
-void CodeGen::unalign_stack() { m_compiler.m_output_stream << "\torq %r12, %rsp # unalign stack: restore from %r1&\n"; }
+void CodeGen::unalign_stack() { m_compiler.m_output_stream << "\torq %r12, %rsp # unalign stack: restore from %r1\n"; }
 
 void CodeGen::alu_load_binop(Type type)
 {
