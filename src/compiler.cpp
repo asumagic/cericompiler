@@ -993,14 +993,17 @@ void Compiler::emit_global_variables()
 
 string_view Compiler::current_file() const { return m_file_name_stack.top(); }
 
-std::string Compiler::source_context() const
+void Compiler::show_source_context() const
 {
-	return fmt::format("{}:{}: ", current_file().str(), m_lexer->lineno());
+	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::white), "{}:{}: ", current_file().str(), m_lexer->lineno());
 };
 
 void Compiler::error(string_view error_message) const
 {
-	fmt::print(stderr, fg(fmt::color::red), "{}error: {}\n", source_context(), error_message.str());
+	show_source_context();
+	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::red), "error: ");
+	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::white), "{}\n", error_message.str());
+
 	note(fmt::format("while reading token '{}'", token_text().str()));
 
 	throw CompilerError{"aborting due to past error"};
@@ -1008,12 +1011,15 @@ void Compiler::error(string_view error_message) const
 
 void Compiler::note(string_view note_message) const
 {
-	fmt::print(stderr, fg(fmt::color::gray), "{}note:  {}\n", source_context(), note_message.str());
+	show_source_context();
+	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::green_yellow), "note:  ");
+	fmt::print(stderr, "{}\n", note_message.str());
 }
 
 void Compiler::bug(string_view error_message) const
 {
-	fmt::print(stderr, fg(fmt::color::red), "{}error: COMPILER BUG!\n", source_context());
+	show_source_context();
+	fmt::print(stderr, fg(fmt::color::red), "error: COMPILER BUG!\n");
 
 	error(error_message);
 }

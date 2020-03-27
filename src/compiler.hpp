@@ -155,7 +155,8 @@ class Compiler
 	void emit_global_variables();
 
 	string_view current_file() const;
-	std::string source_context() const;
+
+	void show_source_context() const;
 
 	//! \brief Halt the execution of the compiler due to an ill-formed program and display details provided by \p
 	//! error_message.
