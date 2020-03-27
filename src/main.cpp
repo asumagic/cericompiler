@@ -4,7 +4,6 @@
 
 #include <CLI/CLI.hpp>
 #include <fmt/core.h>
-#include <process.hpp>
 
 std::string base_name(std::string path) { return path.substr(0, path.find_last_of('.')); }
 
