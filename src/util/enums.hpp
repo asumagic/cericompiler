@@ -13,3 +13,12 @@ bool check_enum_range(T value, T first, T last)
 {
 	return underlying_cast(value) >= underlying_cast(first) && underlying_cast(value) <= underlying_cast(last);
 }
+
+struct EnumClassHash
+{
+	template<typename T>
+	std::size_t operator()(T t) const
+	{
+		return std::size_t(t);
+	}
+};

@@ -3,6 +3,7 @@
 #include "codegen/x86/codegen.hpp"
 #include "token.hpp"
 #include "types.hpp"
+#include "util/enums.hpp"
 #include "util/string_view.hpp"
 #include "variable.hpp"
 
@@ -98,11 +99,11 @@ class Compiler
 	std::unique_ptr<yyFlexLexer> m_lexer;
 	TOKEN                        m_current_token;
 
-	std::unordered_map<std::string, VariableType> m_variables;
-	std::unordered_map<std::string, Type>         m_typedefs;
-	std::unordered_map<Type, UserType>            m_user_types;
-	std::unordered_map<std::string, Function>     m_functions;
-	std::unordered_set<std::string>               m_includes;
+	std::unordered_map<std::string, VariableType>     m_variables;
+	std::unordered_map<std::string, Type>             m_typedefs;
+	std::unordered_map<Type, UserType, EnumClassHash> m_user_types;
+	std::unordered_map<std::string, Function>         m_functions;
+	std::unordered_set<std::string>                   m_includes;
 
 	std::unique_ptr<CodeGen> m_codegen;
 

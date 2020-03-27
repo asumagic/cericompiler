@@ -143,8 +143,6 @@ int main(int argc, char** argv)
 
 	if (flags.should_link)
 	{
-		using namespace TinyProcessLib;
-
 		// TODO: tweakable gcc path
 
 		const auto exit_status = std::system(
