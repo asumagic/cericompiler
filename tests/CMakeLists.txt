@@ -65,6 +65,7 @@ expect_diagnostic("fail-case-mismatch-boolean-in-arithmetic" ".*incompatible typ
 expect_diagnostic("fail-case-duplicate-variable" ".*duplicate.*")
 expect_diagnostic("fail-case-duplicate-ffi" ".*duplicate.*")
 expect_diagnostic("fail-case-duplicate-type" ".*duplicate.*")
+expect_diagnostic("fail-case-include-missing" ".*cannot open.*")
 expect_output("bitwise-not" "0\\n1\\n")
 expect_output("display" "0\\n")
 expect_output("display-arithmetic-tests" "10\\n10")
