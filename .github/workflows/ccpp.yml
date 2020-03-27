@@ -8,8 +8,12 @@ on:
 
 jobs:
   build:
-
-    runs-on: [ ubuntu-16.04, macos-latest ]
+    strategy:
+      matrix:
+        os:
+        - ubuntu-16.04
+        - macos-latest
+    runs-on: ${{matrix.os}}
 
     steps:
     - uses: actions/checkout@v2
