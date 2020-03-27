@@ -7,22 +7,27 @@
 
 std::string base_name(std::string path) { return path.substr(0, path.find_last_of('.')); }
 
-class CliFlags
+struct CliFlags
 {
-	public:
 	std::string source_path, assembly_path, program_path;
 	bool        assembly_stdout, should_link = false;
 
 	CompilerConfig config;
 
 	void parse(CLI::App& cli, int argc, char** argv);
-
-	private:
-	void setup_options(CLI::App& cli);
 };
 
-void CliFlags::setup_options(CLI::App& cli)
+void CliFlags::parse(CLI::App& cli, int argc, char** argv)
 {
+	const std::map<std::string, Target> target_map{{"x86_64-apple-darwin", Target::APPLE_DARWIN},
+												   {"x86_64-linux", Target::LINUX}};
+
+	// Default even if on unknown platform
+	config.target = Target::LINUX;
+#ifdef __APPLE__
+	config.target = Target::APPLE_DARWIN;
+#endif
+
 	cli.add_option("input-file", source_path, ".pas source to compile; stdin if not specified");
 
 	const auto paths_group = cli.add_option_group("output paths");
@@ -43,17 +48,17 @@ void CliFlags::setup_options(CLI::App& cli)
 
 	const auto settings_group = cli.add_option_group("compilation settings");
 
+	[[maybe_unused]] const auto option_target
+		= settings_group->add_option("--target", config.target, "target architecture and ABI")
+			  ->transform(CLI::CheckedTransformer(target_map, CLI::ignore_case));
+
 	[[maybe_unused]] const auto option_lookup_paths = settings_group->add_option(
 		"-I,--include-paths",
 		config.include_lookup_paths,
 		"list of directories that can be used as base include directories");
 
 	option_assembly_stdout->excludes(option_assembly_path)->excludes(option_should_link);
-}
 
-void CliFlags::parse(CLI::App& cli, int argc, char** argv)
-{
-	setup_options(cli);
 	cli.parse(argc, argv);
 
 	if (!program_path.empty())

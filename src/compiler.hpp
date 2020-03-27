@@ -17,9 +17,16 @@
 
 #include <FlexLexer.h>
 
+enum class Target
+{
+	APPLE_DARWIN,
+	LINUX
+};
+
 struct CompilerConfig
 {
 	std::vector<std::string> include_lookup_paths;
+	Target                   target;
 };
 
 struct FunctionParameter
@@ -80,6 +87,8 @@ bool operator==(const UserType& a, const UserType& b);
 
 class Compiler
 {
+	friend class CodeGen;
+
 	public:
 	Compiler(
 		const CompilerConfig& config,

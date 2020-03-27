@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <iosfwd>
 
+class Compiler;
 struct Variable;
 
 class IfStatement
@@ -50,7 +51,7 @@ struct FunctionCall
 class CodeGen
 {
 	public:
-	CodeGen(std::ostream& output) : m_output{output} {}
+	CodeGen(Compiler& compiler) : m_compiler{compiler} {}
 
 	void begin_program();
 	void finalize_program();
@@ -128,6 +129,7 @@ class CodeGen
 
 	void        function_call_label_param(FunctionCall& call, string_view label);
 	string_view function_call_register(FunctionCall& call, Type type);
+	std::string function_mangle_name(string_view name) const;
 
 	bool is_function_param_type_regular(Type type) const;
 	bool is_function_param_type_float(Type type) const;
@@ -136,5 +138,5 @@ class CodeGen
 
 	FunctionCall m_current_function;
 
-	std::ostream& m_output;
+	Compiler& m_compiler;
 };

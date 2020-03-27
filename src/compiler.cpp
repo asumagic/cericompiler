@@ -53,7 +53,7 @@ Compiler::Compiler(const CompilerConfig& config, string_view file_name, std::ist
 	m_config{config},
 	m_output_stream{output},
 	m_lexer{new yyFlexLexer(input, output)},
-	m_codegen{std::make_unique<CodeGen>(output)}
+	m_codegen{std::make_unique<CodeGen>(*this)}
 {
 	m_file_name_stack.push(file_name);
 
