@@ -146,8 +146,7 @@ int main(int argc, char** argv)
 		// TODO: tweakable gcc path
 
 		const auto exit_status = std::system(
-			(std::string("/usr/bin/gcc '") + flags.assembly_path + "' -o '" + flags.program_path + "' -lm -no-pie")
-				.c_str());
+			(std::string("/usr/bin/gcc '") + flags.assembly_path + "' -o '" + flags.program_path + "' -lm").c_str());
 
 		if (exit_status != 0)
 		{

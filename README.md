@@ -5,6 +5,9 @@ A simple compiler for a Pascal-like language.
 The supported backends currently are:
 - x86-64 assembly (AT&T).
 
+The supported calling conventions are:
+- SystemV ABI (tested on Linux, macOS).
+
 ## Requirements
 
 - CMake 3.5 or later
@@ -103,6 +106,7 @@ Misc:
 - [ ] C99 standard library bindings (when appropriate): Typedefs, constants and functions under `stdc/`
     - [x] `math.h` (partial)
     - [ ] [Others](https://en.cppreference.com/w/c/header)
+- [x] Generating PIEs
 
 ## Language grammar
 

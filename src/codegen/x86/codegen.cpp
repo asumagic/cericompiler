@@ -63,7 +63,7 @@ void CodeGen::define_global_variable(const Variable& variable)
 
 void CodeGen::load_variable(const Variable& variable)
 {
-	m_output << fmt::format("\tpush {}\n", variable.mangled_name());
+	m_output << fmt::format("\tpush {}(%rip)\n", variable.mangled_name());
 }
 void CodeGen::load_i64(uint64_t value)
 {
@@ -83,7 +83,10 @@ void CodeGen::load_i64(uint64_t value)
 
 void CodeGen::load_pointer_to_variable(const Variable& variable)
 {
-	m_output << fmt::format("\tpush ${}\n", variable.mangled_name());
+	m_output << fmt::format(
+		"\tleaq {}(%rip), %rax\n"
+		"\tpush %rax\n",
+		variable.mangled_name());
 }
 
 void CodeGen::load_value_from_pointer([[maybe_unused]] Type dereferenced_type)
@@ -94,7 +97,7 @@ void CodeGen::load_value_from_pointer([[maybe_unused]] Type dereferenced_type)
 
 void CodeGen::store_variable(const Variable& variable)
 {
-	m_output << fmt::format("\tpop {}\n", variable.mangled_name());
+	m_output << fmt::format("\tpop {}(%rip)\n", variable.mangled_name());
 }
 
 void CodeGen::store_value_to_pointer([[maybe_unused]] Type value_type)
@@ -388,7 +391,7 @@ void CodeGen::statement_for_post_check(ForStatement& statement)
 	// we branch *out* if var < %rax, mind the op order in at&t
 	m_output << fmt::format(
 		"\tpop %rax\n"
-		"\tcmpq {name}, %rax\n"
+		"\tcmpq {name}(%rip), %rax\n"
 		"\tjl __next{tag}\n",
 		fmt::arg("name", statement.variable->mangled_name()),
 		fmt::arg("tag", statement.saved_tag));
@@ -397,7 +400,7 @@ void CodeGen::statement_for_post_check(ForStatement& statement)
 void CodeGen::statement_for_finalize(ForStatement& statement)
 {
 	m_output << fmt::format(
-		"\taddq $1, {name}\n"
+		"\taddq $1, {name}(%rip)\n"
 		"\tjmp __for{tag}\n"
 		"__next{tag}:\n",
 		fmt::arg("name", statement.variable->mangled_name()),
@@ -606,7 +609,7 @@ void CodeGen::function_call_label_param(FunctionCall& call, string_view label)
 {
 	// HACK: type passed to function_call_register should be a pointer or something
 	m_output << fmt::format(
-		"\tmovq ${label}, {paramreg}\n",
+		"\tleaq {label}(%rip), {paramreg}\n",
 		fmt::arg("label", label.str()),
 		fmt::arg("paramreg", function_call_register(call, Type::UNSIGNED_INT).str()));
 
