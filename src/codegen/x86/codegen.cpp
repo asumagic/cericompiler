@@ -17,7 +17,7 @@ void CodeGen::finalize_executable_section() {}
 void CodeGen::begin_main_procedure()
 {
 	m_compiler.m_output_stream << fmt::format(
-		".globl main\n"
+		".globl {mainfunc}\n"
 		"{mainfunc}:\n"
 		"\tmovq %rsp, %rbp # Save the position of the top of the stack\n",
 		fmt::arg("mainfunc", function_mangle_name("main")));
