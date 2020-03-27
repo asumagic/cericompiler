@@ -116,9 +116,6 @@ class CodeGen
 	void debug_display(Type type);
 
 	private:
-	long offset_from_frame_pointer() const;
-	long compute_alignment_correction() const;
-
 	void align_stack();
 	void unalign_stack();
 

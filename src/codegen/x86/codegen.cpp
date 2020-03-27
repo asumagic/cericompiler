@@ -519,26 +519,15 @@ void CodeGen::debug_display(Type type)
 	function_call_finalize(call);
 }
 
-long CodeGen::offset_from_frame_pointer() const { return -8; }
-long CodeGen::compute_alignment_correction() const { return -(-offset_from_frame_pointer() % 16); }
-
 void CodeGen::align_stack()
 {
-	const long alignment_correction = compute_alignment_correction();
-	if (alignment_correction != 0)
-	{
-		m_compiler.m_output_stream << fmt::format("\taddq ${}, %rsp # align stack\n", alignment_correction);
-	}
+	m_compiler.m_output_stream << "\t# align stack: save lower nibble of %rsp to %r12 (non-volatile) and round down\n"
+								  "\tmovq %rsp, %r12\n"
+								  "\tandq $0xF, %r12\n"
+								  "\tandq $0xFFFFFFFFFFFFFFF0, %rsp\n";
 }
 
-void CodeGen::unalign_stack()
-{
-	const long alignment_correction = compute_alignment_correction();
-	if (alignment_correction != 0)
-	{
-		m_compiler.m_output_stream << fmt::format("\taddq ${}, %rsp # unalign stack\n", -alignment_correction);
-	}
-}
+void CodeGen::unalign_stack() { m_compiler.m_output_stream << "\torq %r12, %rsp # unalign stack: restore from %r1&\n"; }
 
 void CodeGen::alu_load_binop(Type type)
 {
