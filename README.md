@@ -2,11 +2,13 @@
 
 A simple compiler for a Pascal-like language.
 
-The supported backends currently are:
-- x86-64 assembly (AT&T).
+Supported and tested targets:
+- x86-64
+    - SystemV ABI
+        - Apple Darwin (macOS) (AT&T assembly)
+        - Linux (AT&T assembly)
 
-The supported calling conventions are:
-- SystemV ABI (tested on Linux, macOS).
+CI available on the [GitHub mirror](https://github.com/AsuMagic/cericompiler).
 
 ## Requirements
 
