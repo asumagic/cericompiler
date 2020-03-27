@@ -884,14 +884,16 @@ void Compiler::parse_block_statement()
 {
 	read_token(KEYWORD_BEGIN, "expected 'BEGIN' to begin block statement");
 
-	// Check for an empty block statement, e.g. BEGIN END
-	if (try_read_token(KEYWORD_END))
-	{
-		return;
-	}
-
 	do
 	{
+		// This enables:
+		// - empty block statements, e.g. BEGIN END
+		// - optional semicolons at the last statement of a block statement
+		if (try_read_token(KEYWORD_END))
+		{
+			return;
+		}
+
 		parse_statement();
 	} while (try_read_token(TOKEN::SEMICOLON));
 

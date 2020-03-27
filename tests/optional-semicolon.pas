@@ -1,0 +1,3 @@
+BEGIN
+    DISPLAY 1;
+END.
