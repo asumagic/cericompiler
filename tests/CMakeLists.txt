@@ -5,10 +5,10 @@ function(expect_compiles name)
 		NAME ${name}
 		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_test.py
 		    "compile_and_pray"
-		    $<TARGET_FILE:${PROJECT_NAME}>        # Path to compiler
-			${CMAKE_CURRENT_SOURCE_DIR}/${name}.p # Path to source
-			${CMAKE_CURRENT_BINARY_DIR}/${name}.s # Path to output assembly
-			${CMAKE_CURRENT_BINARY_DIR}/${name}   # Path to output binary
+			$<TARGET_FILE:${PROJECT_NAME}>          # Path to compiler
+			${CMAKE_CURRENT_SOURCE_DIR}/${name}.pas # Path to source
+			${CMAKE_CURRENT_BINARY_DIR}/${name}.s   # Path to output assembly
+			${CMAKE_CURRENT_BINARY_DIR}/${name}     # Path to output binary
 	)
 endfunction()
 
@@ -22,8 +22,8 @@ function(expect_diagnostic name diagnostic_regex)
 		    /usr/bin/python3
 			${CMAKE_CURRENT_SOURCE_DIR}/run_test.py
 			"compile_and_match_diagnostic"
-			$<TARGET_FILE:${PROJECT_NAME}>        # Path to compiler
-			${CMAKE_CURRENT_SOURCE_DIR}/${name}.p # Path to source
+			$<TARGET_FILE:${PROJECT_NAME}>          # Path to compiler
+			${CMAKE_CURRENT_SOURCE_DIR}/${name}.pas # Path to source
 			${diagnostic_regex}
 	)
 endfunction()
@@ -36,10 +36,10 @@ function(expect_output name program_output_regex)
 		NAME ${name}
 		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_test.py
 		    "compile_and_match_output"
-			$<TARGET_FILE:${PROJECT_NAME}>        # Path to compiler
-			${CMAKE_CURRENT_SOURCE_DIR}/${name}.p # Path to source
-			${CMAKE_CURRENT_BINARY_DIR}/${name}.s # Path to output assembly
-			${CMAKE_CURRENT_BINARY_DIR}/${name}   # Path to output binary
+			$<TARGET_FILE:${PROJECT_NAME}>          # Path to compiler
+			${CMAKE_CURRENT_SOURCE_DIR}/${name}.pas # Path to source
+			${CMAKE_CURRENT_BINARY_DIR}/${name}.s   # Path to output assembly
+			${CMAKE_CURRENT_BINARY_DIR}/${name}     # Path to output binary
 			${program_output_regex}
 	)
 endfunction()
