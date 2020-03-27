@@ -147,10 +147,11 @@ int main(int argc, char** argv)
 		using namespace TinyProcessLib;
 
 		// TODO: tweakable gcc path
-		Process linker(
-			std::vector<std::string>{"/usr/bin/gcc", flags.assembly_path, "-o", flags.program_path, "-lm", "-no-pie"});
 
-		const auto exit_status = linker.get_exit_status();
+		const auto exit_status = std::system(
+			(std::string("/usr/bin/gcc '") + flags.assembly_path + "' -o '" + flags.program_path + "' -lm -no-pie")
+				.c_str());
+
 		if (exit_status != 0)
 		{
 			fmt::print(stderr, "<cli>: linker unexpectedly exited with code {}\n", exit_status);

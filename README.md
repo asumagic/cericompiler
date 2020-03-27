@@ -29,7 +29,6 @@ The following dependencies are in use but do not require manual installation:
 - [Hunter](https://github.com/cpp-pm/hunter) (C++ package manager)
 - [CLI11](https://github.com/CLIUtils/CLI11) (commandline parsing)
 - [FLEX](https://github.com/westes/flex) (scanner generator)
-- [tiny-process-library](https://github.com/eidheim/tiny-process-library) (process invoking)
 - [\{fmt\}](https://github.com/fmtlib/fmt) (formatting library)
 
 ## Usage
