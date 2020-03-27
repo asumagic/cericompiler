@@ -16,6 +16,11 @@
 
 #include <FlexLexer.h>
 
+struct CompilerConfig
+{
+	std::vector<std::string> include_lookup_paths;
+};
+
 struct FunctionParameter
 {
 	Type        type;
@@ -75,11 +80,17 @@ bool operator==(const UserType& a, const UserType& b);
 class Compiler
 {
 	public:
-	Compiler(string_view file_name = "<stdin>.pas", std::istream& = std::cin, std::ostream& = std::cout);
+	Compiler(
+		const CompilerConfig& config,
+		string_view           file_name = "<stdin>.pas",
+		std::istream&                   = std::cin,
+		std::ostream&                   = std::cout);
 
 	void operator()();
 
 	private:
+	const CompilerConfig& m_config;
+
 	std::stack<std::string> m_file_name_stack;
 
 	std::ostream& m_output_stream;

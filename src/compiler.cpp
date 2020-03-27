@@ -49,8 +49,11 @@ bool operator==(const UserType& a, const UserType& b)
 	return true;
 }
 
-Compiler::Compiler(string_view file_name, std::istream& input, std::ostream& output) :
-	m_output_stream{output}, m_lexer{new yyFlexLexer(input, output)}, m_codegen{std::make_unique<CodeGen>(output)}
+Compiler::Compiler(const CompilerConfig& config, string_view file_name, std::istream& input, std::ostream& output) :
+	m_config{config},
+	m_output_stream{output},
+	m_lexer{new yyFlexLexer(input, output)},
+	m_codegen{std::make_unique<CodeGen>(output)}
 {
 	m_file_name_stack.push(file_name);
 
@@ -569,7 +572,34 @@ void Compiler::parse_include()
 
 	if (!included_source)
 	{
-		error(fmt::format("cannot open include file '{}'", path));
+		for (const std::string& directory : m_config.include_lookup_paths)
+		{
+			included_source.open(directory + '/' + path);
+
+			if (included_source)
+			{
+				break;
+			}
+		}
+	}
+
+	if (!included_source)
+	{
+		try
+		{
+			error(fmt::format("cannot open include file '{}'", path));
+		}
+		catch (const CompilerError& error)
+		{
+			note("tried in working directory");
+
+			for (const std::string& directory : m_config.include_lookup_paths)
+			{
+				note(fmt::format("tried in '{}'", directory));
+			}
+
+			throw;
+		}
 	}
 
 	// Create new lexer state and save old state
@@ -603,9 +633,6 @@ void Compiler::parse_include()
 		note("included here");
 		throw;
 	}
-
-	// TODO: "source:1: note: including from here by catching and rethrowing exception"
-	// TODO: keep a stack of unit names instead of m_unit_name
 
 	// Restore old state
 	restore_state();

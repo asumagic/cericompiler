@@ -18,6 +18,12 @@ linker_flags = ["-no-pie", "-lm"]
 # TODO: dedup compile_and_pray and compile_and_match_output code
 # TODO: check and print error codes
 
+import os
+common_compiler_flags = [
+    # TODO: retrieve include path in an actually sane way
+    "-I" + os.path.dirname(source_path) + "/../std/"
+]
+
 if action == "compile_and_pray":
     asm_path = sys.argv[4]
     exec_path = sys.argv[5]
@@ -26,7 +32,8 @@ if action == "compile_and_pray":
         compiler_path,
         source_path,
         "--assembly-output", asm_path,
-        "--program-output", exec_path
+        "--program-output", exec_path,
+        *common_compiler_flags
     ])
 
     (stdout, stderr) = compiler_process.communicate()
@@ -43,7 +50,8 @@ elif action == "compile_and_match_output":
         compiler_path,
         source_path,
         "--assembly-output", asm_path,
-        "--program-output", exec_path
+        "--program-output", exec_path,
+        *common_compiler_flags
     ])
 
     (stdout, stderr) = compiler_process.communicate()
@@ -70,7 +78,8 @@ elif action == "compile_and_match_diagnostic":
         [
             compiler_path,
             source_path,
-            "--assembly-stdout" # TODO: option to discard assembly
+            "--assembly-stdout", # TODO: option to discard assembly
+            *common_compiler_flags
         ],
         stdout=DEVNULL,
         stderr=PIPE

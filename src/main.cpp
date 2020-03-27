@@ -6,19 +6,7 @@
 #include <fmt/core.h>
 #include <process.hpp>
 
-using namespace TinyProcessLib;
-
-std::string base_name(std::string path)
-{
-	const auto pos = path.find_last_of('.');
-
-	if (pos == std::string::npos)
-	{
-		return path;
-	}
-
-	return path.substr(0, pos);
-}
+std::string base_name(std::string path) { return path.substr(0, path.find_last_of('.')); }
 
 class CliFlags
 {
@@ -26,7 +14,7 @@ class CliFlags
 	std::string source_path, assembly_path, program_path;
 	bool        assembly_stdout, should_link = false;
 
-	std::vector<std::string> include_lookup_paths;
+	CompilerConfig config;
 
 	void parse(CLI::App& cli, int argc, char** argv);
 
@@ -57,7 +45,9 @@ void CliFlags::setup_options(CLI::App& cli)
 	const auto settings_group = cli.add_option_group("compilation settings");
 
 	[[maybe_unused]] const auto option_lookup_paths = settings_group->add_option(
-		"-I,--include-paths", include_lookup_paths, "list of directories that can be used as base include directories");
+		"-I,--include-paths",
+		config.include_lookup_paths,
+		"list of directories that can be used as base include directories");
 
 	option_assembly_stdout->excludes(option_assembly_path)->excludes(option_should_link);
 }
@@ -142,7 +132,7 @@ int main(int argc, char** argv)
 
 		try
 		{
-			Compiler{source_name, *input_stream, *output_stream}();
+			Compiler{flags.config, source_name, *input_stream, *output_stream}();
 		}
 		catch (const std::runtime_error& e)
 		{
@@ -154,17 +144,17 @@ int main(int argc, char** argv)
 
 	if (flags.should_link)
 	{
-		{
-			// TODO: tweakable gcc path
-			Process linker(std::vector<std::string>{
-				"/usr/bin/gcc", flags.assembly_path, "-o", flags.program_path, "-lm", "-no-pie"});
+		using namespace TinyProcessLib;
 
-			const auto exit_status = linker.get_exit_status();
-			if (exit_status != 0)
-			{
-				fmt::print(stderr, "<cli>: linker unexpectedly exited with code {}\n", exit_status);
-				exit(exit_status);
-			}
+		// TODO: tweakable gcc path
+		Process linker(
+			std::vector<std::string>{"/usr/bin/gcc", flags.assembly_path, "-o", flags.program_path, "-lm", "-no-pie"});
+
+		const auto exit_status = linker.get_exit_status();
+		if (exit_status != 0)
+		{
+			fmt::print(stderr, "<cli>: linker unexpectedly exited with code {}\n", exit_status);
+			exit(exit_status);
 		}
 	}
 }
