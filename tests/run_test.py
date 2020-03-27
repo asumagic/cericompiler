@@ -21,60 +21,35 @@ linker_flags = ["-no-pie", "-lm"]
 if action == "compile_and_pray":
     asm_path = sys.argv[4]
     exec_path = sys.argv[5]
-    linker_path = "gcc"
 
-    source_file = open(source_path)
-    asm_file = open(asm_path, "w")
-
-    compiler_process = Popen(
-        [compiler_path],
-        stdin=source_file,
-        stdout=asm_file
-    )
+    compiler_process = Popen([
+        compiler_path,
+        source_path,
+        "--assembly-output", asm_path,
+        "--program-output", exec_path
+    ])
 
     (stdout, stderr) = compiler_process.communicate()
 
     if compiler_process.returncode != 0:
         sys.exit(compiler_process.returncode)
-
-    linker_process = Popen(
-        [linker_path, "-o" + exec_path, asm_path, *linker_flags]
-    )
-
-    (stdout, stderr) = linker_process.communicate()
-
-    if linker_process.returncode != 0:
-        sys.exit(linker_process.returncode)
 
 elif action == "compile_and_match_output":
     asm_path = sys.argv[4]
     exec_path = sys.argv[5]
     output_pattern = sys.argv[6] + '$'
 
-    linker_path = "gcc"
-
-    source_file = open(source_path)
-    asm_file = open(asm_path, "w")
-
-    compiler_process = Popen(
-        [compiler_path],
-        stdin=source_file,
-        stdout=asm_file
-    )
+    compiler_process = Popen([
+        compiler_path,
+        source_path,
+        "--assembly-output", asm_path,
+        "--program-output", exec_path
+    ])
 
     (stdout, stderr) = compiler_process.communicate()
 
     if compiler_process.returncode != 0:
         sys.exit(compiler_process.returncode)
-
-    linker_process = Popen(
-        [linker_path, "-o" + exec_path, asm_path, *linker_flags]
-    )
-
-    (stdout, stderr) = linker_process.communicate()
-
-    if linker_process.returncode != 0:
-        sys.exit(linker_process.returncode)
 
     output_process = Popen([exec_path], stdout=PIPE)
 
@@ -91,11 +66,12 @@ elif action == "compile_and_match_output":
 elif action == "compile_and_match_diagnostic":
     diagnostic_pattern = sys.argv[4]
 
-    source_file = open(source_path)
-
     compiler_process = Popen(
-        [compiler_path],
-        stdin=source_file,
+        [
+            compiler_path,
+            source_path,
+            "--assembly-stdout" # TODO: option to discard assembly
+        ],
         stdout=DEVNULL,
         stderr=PIPE
     )
