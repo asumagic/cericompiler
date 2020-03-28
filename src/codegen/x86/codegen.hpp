@@ -131,6 +131,8 @@ class CodeGen
 	bool is_function_param_type_regular(Type type) const;
 	bool is_function_param_type_float(Type type) const;
 
+	[[noreturn]] void alu_unimplemented();
+
 	std::size_t m_label_tag = 0;
 
 	FunctionCall m_current_function;

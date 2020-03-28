@@ -39,11 +39,6 @@ bool operator==(const UserType& a, const UserType& b)
 	{
 		return a.layout_data.pointer.target == b.layout_data.pointer.target;
 	}
-
-	default:
-	{
-		throw UnimplementedTypeSupportError{};
-	}
 	}
 
 	return true;
@@ -83,10 +78,6 @@ void Compiler::operator()()
 		}
 
 		m_codegen->finalize_program();
-	}
-	catch (const CompilerBug& e)
-	{
-		bug(e.what());
 	}
 	catch (const CompilerError& e)
 	{

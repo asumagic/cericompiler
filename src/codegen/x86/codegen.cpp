@@ -150,7 +150,7 @@ void CodeGen::alu_add(Type type)
 
 	default:
 	{
-		throw UnimplementedTypeSupportError{};
+		alu_unimplemented();
 	}
 	}
 }
@@ -177,7 +177,7 @@ void CodeGen::alu_sub(Type type)
 
 	default:
 	{
-		throw UnimplementedTypeSupportError{};
+		alu_unimplemented();
 	}
 	}
 }
@@ -204,7 +204,7 @@ void CodeGen::alu_multiply(Type type)
 
 	default:
 	{
-		throw UnimplementedTypeSupportError{};
+		alu_unimplemented();
 	}
 	}
 }
@@ -232,7 +232,7 @@ void CodeGen::alu_divide(Type type)
 
 	default:
 	{
-		throw UnimplementedTypeSupportError{};
+		alu_unimplemented();
 	}
 	}
 }
@@ -274,7 +274,7 @@ void CodeGen::alu_modulus(Type type)
 
 	default:
 	{
-		throw UnimplementedTypeSupportError{};
+		alu_unimplemented();
 	}
 	}
 }
@@ -322,8 +322,8 @@ void CodeGen::convert(Type source, Type destination)
 		}
 	}
 
-	throw UnimplementedTypeSupportError{fmt::format(
-		"unsupported type conversion occured: {} -> {}", type_name(source).str(), type_name(destination).str())};
+	m_compiler.bug(fmt::format(
+		"unsupported type conversion occured: {} -> {}", type_name(source).str(), type_name(destination).str()));
 }
 
 void CodeGen::statement_if_prepare(IfStatement& statement) { statement.saved_tag = ++m_label_tag; }
@@ -440,7 +440,7 @@ void CodeGen::function_call_param(FunctionCall& call, Type type)
 	}
 	else
 	{
-		throw UnimplementedTypeSupportError{"Unimplemented function_call_param() for this type"};
+		m_compiler.bug("unimplemented parameter type");
 	}
 }
 
@@ -459,7 +459,7 @@ void CodeGen::function_call_finalize(FunctionCall& call)
 
 	if (call.return_type == Type::BOOLEAN)
 	{
-		throw UnimplementedTypeSupportError{"Unimplemented return type"};
+		m_compiler.bug("unimplemented return type");
 	}
 	else if (is_function_param_type_regular(call.return_type))
 	{
@@ -472,7 +472,7 @@ void CodeGen::function_call_finalize(FunctionCall& call)
 	}
 	else if (call.return_type != Type::VOID)
 	{
-		throw UnimplementedTypeSupportError{"Unimplemented return type"};
+		m_compiler.bug("unimplemented return type");
 	}
 }
 
@@ -485,34 +485,11 @@ void CodeGen::debug_display(Type type)
 
 	switch (type)
 	{
-	case Type::UNSIGNED_INT:
-	{
-		function_call_label_param(call, "__cc_format_string_llu");
-		break;
-	}
-
-	case Type::BOOLEAN:
-	{
-		function_call_label_param(call, "__cc_format_string_llu");
-		break;
-	}
-
-	case Type::CHAR:
-	{
-		function_call_label_param(call, "__cc_format_string_c");
-		break;
-	}
-
-	case Type::DOUBLE:
-	{
-		function_call_label_param(call, "__cc_format_string_f");
-		break;
-	}
-
-	default:
-	{
-		throw UnimplementedTypeSupportError{};
-	}
+	case Type::UNSIGNED_INT: function_call_label_param(call, "__cc_format_string_llu"); break;
+	case Type::BOOLEAN: function_call_label_param(call, "__cc_format_string_llu"); break;
+	case Type::CHAR: function_call_label_param(call, "__cc_format_string_c"); break;
+	case Type::DOUBLE: function_call_label_param(call, "__cc_format_string_f"); break;
+	default: m_compiler.bug("unimplemented display statement for this type");
 	}
 
 	function_call_param(call, type);
@@ -552,7 +529,7 @@ void CodeGen::alu_load_binop(Type type)
 
 	default:
 	{
-		throw UnimplementedTypeSupportError{};
+		alu_unimplemented();
 	}
 	}
 }
@@ -584,7 +561,7 @@ void CodeGen::alu_compare(Type type, string_view instruction)
 
 	default:
 	{
-		throw UnimplementedTypeSupportError{};
+		alu_unimplemented();
 	}
 	}
 
@@ -644,10 +621,10 @@ string_view CodeGen::function_call_register(FunctionCall& call, Type type)
 	}
 	else
 	{
-		throw UnimplementedTypeSupportError{"Unimplemented function_call_register() for this type"};
+		m_compiler.bug("unimplemented parameter type: could not determine register");
 	}
 
-	throw UnimplementedError{"Pushing extra parameters to stack not supported yet"};
+	m_compiler.bug("unimplemented parameter pushing on stack");
 }
 
 std::string CodeGen::function_mangle_name(string_view name) const
@@ -656,8 +633,8 @@ std::string CodeGen::function_mangle_name(string_view name) const
 	{
 	case Target::LINUX: return name;
 	case Target::APPLE_DARWIN: return fmt::format("_{}", name.str());
-	default: throw UnimplementedError{"Unsupported target for function calls"};
-	}
+	default: m_compiler.bug("unimplemented function calls for this target");
+	};
 }
 
 bool CodeGen::is_function_param_type_regular(Type type) const
@@ -670,3 +647,5 @@ bool CodeGen::is_function_param_type_float(Type type) const
 {
 	return check_enum_range(type, Type::FIRST_FLOATING, Type::LAST_FLOATING);
 }
+
+void CodeGen::alu_unimplemented() { m_compiler.bug("unimplemented ALU operation for this type"); }
