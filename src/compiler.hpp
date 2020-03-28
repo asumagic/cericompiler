@@ -1,8 +1,10 @@
 #pragma once
 
 #include "codegen/x86/codegen.hpp"
+#include "function.hpp"
 #include "token.hpp"
 #include "types.hpp"
+#include "usertype.hpp"
 #include "util/enums.hpp"
 #include "util/string_view.hpp"
 #include "variable.hpp"
@@ -17,89 +19,33 @@
 
 #include <FlexLexer.h>
 
-enum class Target
-{
-	APPLE_DARWIN,
-	LINUX
-};
-
-struct CompilerConfig
-{
-	std::vector<std::string> include_lookup_paths;
-	Target                   target;
-};
-
-struct FunctionParameter
-{
-	Type        type;
-	std::string name = "";
-};
-
-struct Function
-{
-	bool                           variadic = false;
-	Type                           return_type;
-	std::vector<FunctionParameter> parameters;
-	bool                           foreign = false;
-};
-
-struct UserType
-{
-	enum class Category
-	{
-		POINTER,
-		/*ARRAY,
-		RECORD*/
-	};
-
-	struct PointerType
-	{
-		Type target;
-	};
-
-	UserType(Category category) : category{category}
-	{
-		switch (category)
-		{
-		case Category::POINTER: new (&layout_data.pointer) PointerType();
-		}
-	}
-
-	~UserType()
-	{
-		switch (category)
-		{
-		case Category::POINTER: layout_data.pointer.~PointerType();
-		}
-	}
-
-	Category category;
-
-	union
-	{
-		PointerType pointer;
-	} layout_data;
-
-	friend bool operator==(const UserType& a, const UserType& b);
-};
-
-bool operator==(const UserType& a, const UserType& b);
-
 class Compiler
 {
 	friend class CodeGen;
 
 	public:
+	enum class Target
+	{
+		APPLE_DARWIN,
+		LINUX
+	};
+
+	struct Config
+	{
+		std::vector<std::string> include_lookup_paths;
+		Target                   target;
+	};
+
 	Compiler(
-		const CompilerConfig& config,
-		string_view           file_name = "<stdin>.pas",
-		std::istream&                   = std::cin,
-		std::ostream&                   = std::cout);
+		const Config& config,
+		string_view   file_name = "<stdin>.pas",
+		std::istream&           = std::cin,
+		std::ostream&           = std::cout);
 
 	void operator()();
 
 	private:
-	const CompilerConfig& m_config;
+	const Config& m_config;
 
 	std::stack<std::string> m_file_name_stack;
 

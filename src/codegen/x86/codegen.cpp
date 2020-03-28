@@ -485,7 +485,7 @@ void CodeGen::debug_display(Type type)
 
 	switch (type)
 	{
-	case Type::UNSIGNED_INT: function_call_label_param(call, "__cc_format_string_llu"); break;
+	case Type::UNSIGNED_INT:
 	case Type::BOOLEAN: function_call_label_param(call, "__cc_format_string_llu"); break;
 	case Type::CHAR: function_call_label_param(call, "__cc_format_string_c"); break;
 	case Type::DOUBLE: function_call_label_param(call, "__cc_format_string_f"); break;
@@ -631,8 +631,8 @@ std::string CodeGen::function_mangle_name(string_view name) const
 {
 	switch (m_compiler.m_config.target)
 	{
-	case Target::LINUX: return name;
-	case Target::APPLE_DARWIN: return fmt::format("_{}", name.str());
+	case Compiler::Target::LINUX: return name;
+	case Compiler::Target::APPLE_DARWIN: return fmt::format("_{}", name.str());
 	default: m_compiler.bug("unimplemented function calls for this target");
 	};
 }

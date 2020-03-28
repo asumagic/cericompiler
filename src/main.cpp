@@ -12,18 +12,18 @@ struct CliFlags
 	std::string source_path, assembly_path, program_path;
 	bool        assembly_stdout, should_link = false;
 
-	CompilerConfig config;
+	Compiler::Config config;
 
 	void parse(CLI::App& cli, int argc, char** argv);
 };
 
 void CliFlags::parse(CLI::App& cli, int argc, char** argv)
 {
-	const std::map<std::string, Target> target_map{{"x86_64-apple-darwin", Target::APPLE_DARWIN},
-												   {"x86_64-linux", Target::LINUX}};
+	const std::map<std::string, Compiler::Target> target_map{{"x86_64-apple-darwin", Compiler::Target::APPLE_DARWIN},
+															 {"x86_64-linux", Compiler::Target::LINUX}};
 
 	// Default even if on unknown platform
-	config.target = Target::LINUX;
+	config.target = Compiler::Target::LINUX;
 #ifdef __APPLE__
 	config.target = Target::APPLE_DARWIN;
 #endif

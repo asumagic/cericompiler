@@ -28,6 +28,7 @@ add_executable(${PROJECT_NAME}
 	"src/compiler.cpp"
 	"src/token.cpp"
 	"src/types.cpp"
+	"src/usertype.cpp"
 	"src/main.cpp"
 	"src/util/string_view.cpp"
 	"src/variable.cpp"

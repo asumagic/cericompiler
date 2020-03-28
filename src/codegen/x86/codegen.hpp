@@ -109,9 +109,9 @@ class CodeGen
 	void statement_for_post_check(ForStatement& statement);
 	void statement_for_finalize(ForStatement& statement);
 
-	void function_call_prepare(FunctionCall& statement);
-	void function_call_param(FunctionCall& statement, Type type);
-	void function_call_finalize(FunctionCall& statement);
+	void function_call_prepare(FunctionCall& call);
+	void function_call_param(FunctionCall& call, Type type);
+	void function_call_finalize(FunctionCall& call);
 
 	void debug_display(Type type);
 

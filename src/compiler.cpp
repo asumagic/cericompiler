@@ -26,25 +26,7 @@
 #include <fstream>
 #include <vector>
 
-bool operator==(const UserType& a, const UserType& b)
-{
-	if (a.category != b.category)
-	{
-		return false;
-	}
-
-	switch (a.category)
-	{
-	case UserType::Category::POINTER:
-	{
-		return a.layout_data.pointer.target == b.layout_data.pointer.target;
-	}
-	}
-
-	return true;
-}
-
-Compiler::Compiler(const CompilerConfig& config, string_view file_name, std::istream& input, std::ostream& output) :
+Compiler::Compiler(const Config& config, string_view file_name, std::istream& input, std::ostream& output) :
 	m_config{config},
 	m_output_stream{output},
 	m_lexer{new yyFlexLexer(input, output)},
