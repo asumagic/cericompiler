@@ -624,8 +624,6 @@ std::unique_ptr<ast::nodes::Expression> Compiler::_parse_unary()
 	// TODO:
 	// @Identifier
 	// unary
-	// type cast
-	// func call
 	switch (m_current_token)
 	{
 	case TOKEN::KEYWORD_CONVERT:
