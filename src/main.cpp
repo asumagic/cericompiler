@@ -25,7 +25,7 @@ void CliFlags::parse(CLI::App& cli, int argc, char** argv)
 	// Default even if on unknown platform
 	config.target = Compiler::Target::LINUX;
 #ifdef __APPLE__
-	config.target = Target::APPLE_DARWIN;
+	config.target = Compiler::Target::APPLE_DARWIN;
 #endif
 
 	cli.add_option("input-file", source_path, ".pas source to compile; stdin if not specified");
