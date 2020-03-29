@@ -26,6 +26,9 @@ class Visitor
 	virtual void operator()(nodes::AssignmentStatement& expression)        = 0;
 	virtual void operator()(nodes::VariableDeclarationBlock& expression)   = 0;
 	virtual void operator()(nodes::ForeignFunctionDeclaration& expression) = 0;
+	virtual void operator()(nodes::Include& expression)                    = 0;
+	virtual void operator()(nodes::BuiltinType& expression)                = 0;
+	virtual void operator()(nodes::UserType& expression)                   = 0;
 	virtual void operator()(nodes::Program& expression)                    = 0;
 };
 } // namespace ast

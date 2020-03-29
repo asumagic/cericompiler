@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../types.hpp"
 #include "common.hpp"
 
 #include <memory>
@@ -89,13 +88,13 @@ struct CallExpression : Expression
 
 struct TypeCastExpression : Expression
 {
-	TypeCastExpression(Type target_type, std::unique_ptr<Expression> expression) :
-		target_type{target_type}, expression{std::move(expression)}
+	TypeCastExpression(std::unique_ptr<TypeName> target_type, std::unique_ptr<Expression> expression) :
+		target_type{std::move(target_type)}, expression{std::move(expression)}
 	{}
 
 	virtual void visit(Visitor& visitor) override;
 
-	Type                        target_type;
+	std::unique_ptr<TypeName>   target_type;
 	std::unique_ptr<Expression> expression;
 };
 

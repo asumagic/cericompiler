@@ -18,5 +18,8 @@ struct Statement : Node
 
 struct Expression : Statement
 {};
+
+struct TypeName : Node
+{};
 } // namespace nodes
 } // namespace ast

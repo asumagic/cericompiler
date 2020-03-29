@@ -2,8 +2,6 @@
 
 #include "ast/nodes/all.hpp"
 #include "ast/visitors/debugprint.hpp"
-#include "codegen/x86/codegen.hpp"
-#include "function.hpp"
 #include "token.hpp"
 #include "types.hpp"
 #include "usertype.hpp"
@@ -60,14 +58,11 @@ class Compiler
 
 	std::unordered_set<std::string> m_includes;
 
-	std::unique_ptr<CodeGen> m_codegen;
-
 	Type m_first_free_type = Type::FIRST_USER_DEFINED;
 
 	int operator_priority(BinaryOperator op) const;
 
-	void               parse_include();                     // todo: should it be in ast?
-	[[nodiscard]] Type parse_type(bool allow_void = false); // todo: determine how to do
+	[[nodiscard]] std::unique_ptr<ast::nodes::TypeName> parse_type(bool allow_void = false);
 
 	char           read_character_literal();
 	std::uint64_t  read_integer_literal();
@@ -83,6 +78,7 @@ class Compiler
 
 	std::unique_ptr<ast::nodes::VariableDeclarationBlock>   parse_variable_declaration_block();
 	std::unique_ptr<ast::nodes::ForeignFunctionDeclaration> parse_foreign_function_declaration();
+	std::unique_ptr<ast::nodes::Include>                    parse_include();
 
 	std::unique_ptr<ast::nodes::Statement> parse_if_statement();
 	std::unique_ptr<ast::nodes::Statement> parse_while_statement();

@@ -27,6 +27,9 @@ class DebugPrint : public Visitor
 	virtual void operator()(nodes::AssignmentStatement& expression) override;
 	virtual void operator()(nodes::VariableDeclarationBlock& expression) override;
 	virtual void operator()(nodes::ForeignFunctionDeclaration& expression) override;
+	virtual void operator()(nodes::Include& expression) override;
+	virtual void operator()(nodes::BuiltinType& expression) override;
+	virtual void operator()(nodes::UserType& expression) override;
 	virtual void operator()(nodes::Program& expression) override;
 
 	private:

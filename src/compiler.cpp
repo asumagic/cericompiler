@@ -28,10 +28,7 @@
 #include <vector>
 
 Compiler::Compiler(const Config& config, string_view file_name, std::istream& input, std::ostream& output) :
-	m_config{config},
-	m_output_stream{output},
-	m_lexer{new yyFlexLexer(input, output)},
-	m_codegen{std::make_unique<CodeGen>(*this)}
+	m_config{config}, m_output_stream{output}, m_lexer{new yyFlexLexer(input, output)}
 {
 	m_file_name_stack.push(file_name);
 
@@ -84,102 +81,11 @@ void Compiler::operator()()
 	}
 }
 
-void Compiler::parse_include()
-{
-	/*read_token(); // consume INCLUDE
-
-	expect_token(TOKEN::STRINGCONST, "expected string literal after INCLUDE directive");
-	const std::string path = token_text().substr(1, token_text().size() - 2);
-
-	read_token(); // consume STRINGCONST include path
-
-	read_token(SEMICOLON, "expected ';' after INCLUDE directive");
-
-	const auto emplace_result = m_includes.emplace(path);
-	const bool success        = emplace_result.second;
-
-	if (!success)
-	{
-		// Already included this file
-		return;
-	}
-
-	std::ifstream included_source{path};
-
-	if (!included_source)
-	{
-		for (const std::string& directory : m_config.include_lookup_paths)
-		{
-			included_source.open(directory + '/' + path);
-
-			if (included_source)
-			{
-				break;
-			}
-		}
-	}
-
-	if (!included_source)
-	{
-		try
-		{
-			error(fmt::format("cannot open include file '{}'", path));
-		}
-		catch (const CompilerError& error)
-		{
-			note("tried in working directory");
-
-			for (const std::string& directory : m_config.include_lookup_paths)
-			{
-				note(fmt::format("tried in '{}'", directory));
-			}
-
-			throw;
-		}
-	}
-
-	// Create new lexer state and save old state
-	auto new_lexer_state   = std::unique_ptr<yyFlexLexer>{new yyFlexLexer(included_source, m_output_stream)};
-	auto old_lexer_state   = std::move(m_lexer);
-	m_lexer                = std::move(new_lexer_state);
-	auto old_current_token = m_current_token;
-	m_file_name_stack.push(path);
-
-	const auto restore_state = [&] {
-		m_file_name_stack.pop();
-		m_lexer         = std::move(old_lexer_state);
-		m_current_token = old_current_token;
-	};
-
-	try
-	{
-		// Read the first token using the new lexer
-		read_token();
-
-		parse_declaration_block();
-
-		if (m_current_token != TOKEN::FEOF)
-		{
-			error("expected end of file");
-		}
-	}
-	catch (const CompilerError& e)
-	{
-		restore_state();
-		note("included here");
-		throw;
-	}
-
-	// Restore old state
-	restore_state();*/
-	bug("parse_include not implemented anymore");
-}
-
-Type Compiler::parse_type(bool allow_void)
+std::unique_ptr<ast::nodes::TypeName> Compiler::parse_type(bool allow_void)
 {
 	if (allow_void && try_read_token(VOID))
 	{
-		return Type::VOID;
+		return std::make_unique<ast::nodes::BuiltinType>(Type::VOID);
 	}
 
 	if (is_token_type(m_current_token))
@@ -190,10 +96,10 @@ Type Compiler::parse_type(bool allow_void)
 
 		switch (token)
 		{
-		case TOKEN::TYPE_INTEGER: return Type::UNSIGNED_INT;
-		case TOKEN::TYPE_DOUBLE: return Type::DOUBLE;
-		case TOKEN::TYPE_BOOLEAN: return Type::BOOLEAN;
-		case TOKEN::TYPE_CHAR: return Type::CHAR;
+		case TOKEN::TYPE_INTEGER: return std::make_unique<ast::nodes::BuiltinType>(Type::UNSIGNED_INT);
+		case TOKEN::TYPE_DOUBLE: return std::make_unique<ast::nodes::BuiltinType>(Type::DOUBLE);
+		case TOKEN::TYPE_BOOLEAN: return std::make_unique<ast::nodes::BuiltinType>(Type::BOOLEAN);
+		case TOKEN::TYPE_CHAR: return std::make_unique<ast::nodes::BuiltinType>(Type::CHAR);
 		default: bug("unrecognized type");
 		}
 	}
@@ -215,10 +121,11 @@ Type Compiler::parse_type(bool allow_void)
 
 	if (try_read_token(EXPONENT))
 	{
-		UserType type(UserType::Category::POINTER);
+		/*UserType type(UserType::Category::POINTER);
 		type.layout_data.pointer.target = parse_type(false);
 
-		return create_type(type);
+		return create_type(type);*/
+		bug("bbbbb");
 	}
 
 	error("expected type");
@@ -358,9 +265,9 @@ std::unique_ptr<ast::nodes::VariableDeclarationBlock> Compiler::parse_variable_d
 
 		read_token(TOKEN::COLON, "expected ':' after variable name list in declaration block");
 
-		const Type type = parse_type();
+		auto type = parse_type();
 
-		multiple_declarations.emplace_back(std::move(names), type);
+		multiple_declarations.emplace_back(std::move(names), std::move(type));
 
 		read_token(TOKEN::SEMICOLON, "expected ';' after multiple variable declaration");
 
@@ -383,7 +290,7 @@ std::unique_ptr<ast::nodes::VariableDeclarationBlock> Compiler::parse_variable_d
 
 std::unique_ptr<ast::nodes::ForeignFunctionDeclaration> Compiler::parse_foreign_function_declaration()
 {
-	Function function;
+	ast::nodes::Function function;
 	function.foreign = true;
 
 	read_token(TOKEN::KEYWORD_FFI, "expected 'FFI'");
@@ -396,8 +303,8 @@ std::unique_ptr<ast::nodes::ForeignFunctionDeclaration> Compiler::parse_foreign_
 		{
 			if (is_token_type(m_current_token))
 			{
-				const Type type = parse_type();
-				function.parameters.push_back({type});
+				auto type = parse_type();
+				function.parameters.push_back(std::move(type));
 			}
 		} while (try_read_token(TOKEN::COMMA));
 	}
@@ -410,6 +317,95 @@ std::unique_ptr<ast::nodes::ForeignFunctionDeclaration> Compiler::parse_foreign_
 	read_token(SEMICOLON, "expected ';' after FFI declaration");
 
 	return std::make_unique<ast::nodes::ForeignFunctionDeclaration>(std::move(name), std::move(function));
+}
+
+std::unique_ptr<ast::nodes::Include> Compiler::parse_include()
+{
+	read_token(KEYWORD_INCLUDE, "expected 'INCLUDE'");
+
+	expect_token(TOKEN::STRINGCONST, "expected string literal after INCLUDE directive");
+	const std::string path = token_text().substr(1, token_text().size() - 2);
+
+	read_token(); // consume STRINGCONST include path
+
+	read_token(SEMICOLON, "expected ';' after INCLUDE directive");
+
+	const auto emplace_result = m_includes.emplace(path);
+	const bool success        = emplace_result.second;
+
+	if (!success)
+	{
+		// Already included this file
+		return nullptr;
+	}
+
+	std::ifstream included_source{path};
+
+	if (!included_source)
+	{
+		for (const std::string& directory : m_config.include_lookup_paths)
+		{
+			included_source.open(directory + '/' + path);
+
+			if (included_source)
+			{
+				break;
+			}
+		}
+	}
+
+	if (!included_source)
+	{
+		try
+		{
+			error(fmt::format("cannot open include file '{}'", path));
+		}
+		catch (const CompilerError& error)
+		{
+			note("tried in working directory");
+
+			for (const std::string& directory : m_config.include_lookup_paths)
+			{
+				note(fmt::format("tried in '{}'", directory));
+			}
+
+			throw;
+		}
+	}
+
+	// Create new lexer state and save old state
+	auto new_lexer_state   = std::unique_ptr<yyFlexLexer>{new yyFlexLexer(included_source, m_output_stream)};
+	auto old_lexer_state   = std::move(m_lexer);
+	m_lexer                = std::move(new_lexer_state);
+	auto old_current_token = m_current_token;
+	m_file_name_stack.push(path);
+
+	const auto restore_state = [&] {
+		m_file_name_stack.pop();
+		m_lexer         = std::move(old_lexer_state);
+		m_current_token = old_current_token;
+	};
+
+	try
+	{
+		// Read the first token using the new lexer
+		read_token();
+
+		auto included_program = parse_program();
+
+		if (m_current_token != TOKEN::FEOF)
+		{
+			error("expected end of file");
+		}
+
+		return std::make_unique<ast::nodes::Include>(std::move(path), std::move(included_program));
+	}
+	catch (const CompilerError& e)
+	{
+		restore_state();
+		note("included here");
+		throw;
+	}
 }
 
 std::unique_ptr<ast::nodes::Statement> Compiler::parse_if_statement()
@@ -542,9 +538,9 @@ std::unique_ptr<ast::nodes::Expression> Compiler::parse_type_cast()
 	auto expression = parse_expression();
 
 	read_token(TOKEN::KEYWORD_TO, "expected 'TO' after expression in CONVERT expression");
-	const Type target_type = parse_type();
+	auto target_type = parse_type();
 
-	return std::make_unique<ast::nodes::TypeCastExpression>(target_type, std::move(expression));
+	return std::make_unique<ast::nodes::TypeCastExpression>(std::move(target_type), std::move(expression));
 }
 
 std::unique_ptr<ast::nodes::Expression> Compiler::parse_primary()
@@ -690,7 +686,7 @@ std::unique_ptr<ast::nodes::Node> Compiler::parse_program()
 		case TOKEN::KEYWORD_VAR: nodes.push_back(parse_variable_declaration_block()); break;
 		// case TOKEN::KEYWORD_TYPE: nodes.push_back(parse_type_definition()); break;
 		case TOKEN::KEYWORD_FFI: nodes.push_back(parse_foreign_function_declaration()); break;
-		// case TOKEN::KEYWORD_INCLUDE: handle_include(nodes); break;
+		case TOKEN::KEYWORD_INCLUDE: nodes.push_back(parse_include()); break;
 		case TOKEN::KEYWORD_BEGIN: nodes.push_back(parse_block_statement()); break;
 		case TOKEN::DOT: return std::make_unique<ast::nodes::Program>(std::move(nodes));
 		default: error("expected declaration or block statement");

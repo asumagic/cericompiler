@@ -21,6 +21,9 @@ struct DisplayStatement;
 struct AssignmentStatement;
 struct VariableDeclarationBlock;
 struct ForeignFunctionDeclaration;
+struct Include;
+struct BuiltinType;
+struct UserType;
 struct Program;
 } // namespace nodes
 } // namespace ast

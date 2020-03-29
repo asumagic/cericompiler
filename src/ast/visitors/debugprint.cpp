@@ -44,8 +44,9 @@ void DebugPrint::operator()(nodes::CallExpression& expression)
 
 void DebugPrint::operator()(nodes::TypeCastExpression& expression)
 {
-	print_indented("TypeCastExpression to {}", type_name(expression.target_type).str());
+	print_indented("TypeCastExpression");
 
+	indented("targettype", [&] { expression.target_type->visit(*this); });
 	indented("operand", [&] { expression.expression->visit(*this); });
 }
 
@@ -116,7 +117,8 @@ void DebugPrint::operator()(nodes::VariableDeclarationBlock& expression)
 	indented("multipledeclarations", [&] {
 		for (const auto& multiple_declaration : expression.multiple_declarations)
 		{
-			print_indented("VariableMultipleDeclaration (type={})", type_name(multiple_declaration.type).str());
+			print_indented("VariableMultipleDeclaration");
+			indented("type", [&] { multiple_declaration.type->visit(*this); });
 			indented("names", [&] {
 				for (const auto& name : multiple_declaration.names)
 				{
@@ -131,6 +133,19 @@ void DebugPrint::operator()(nodes::ForeignFunctionDeclaration& expression)
 {
 	print_indented("ForeignFunctionDeclaration '{}' (types=todo)", expression.name);
 }
+
+void DebugPrint::operator()(nodes::Include& expression)
+{
+	print_indented("Include '{}'", expression.name);
+	indented("contents", [&] { expression.contents->visit(*this); });
+}
+
+void DebugPrint::operator()(nodes::BuiltinType& expression)
+{
+	print_indented("Builtin type '{}'", type_name(expression.type).str());
+}
+
+void DebugPrint::operator()(nodes::UserType& expression) { print_indented("User type '{}'", expression.name); }
 
 void DebugPrint::operator()(nodes::Program& expression)
 {
