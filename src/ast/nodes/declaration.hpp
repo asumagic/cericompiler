@@ -16,7 +16,7 @@ struct VariableDeclarationBlock : Node
 	struct MultipleDeclaration
 	{
 		MultipleDeclaration(std::vector<std::string> names, std::unique_ptr<TypeName> type) :
-			names{std::move(names)}, type{std::move(type)}
+		    names{std::move(names)}, type{std::move(type)}
 		{}
 
 		std::vector<std::string>  names;
@@ -24,7 +24,7 @@ struct VariableDeclarationBlock : Node
 	};
 
 	VariableDeclarationBlock(std::vector<MultipleDeclaration> multiple_declaration) :
-		multiple_declarations{std::move(multiple_declaration)}
+	    multiple_declarations{std::move(multiple_declaration)}
 	{}
 
 	virtual void visit(Visitor& visitor) override;
@@ -43,7 +43,7 @@ struct Function
 struct ForeignFunctionDeclaration : Node
 {
 	ForeignFunctionDeclaration(std::string name, Function function) :
-		name{std::move(name)}, function{std::move(function)}
+	    name{std::move(name)}, function{std::move(function)}
 	{}
 
 	virtual void visit(Visitor& visitor) override;

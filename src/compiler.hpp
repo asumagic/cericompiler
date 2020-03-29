@@ -58,8 +58,6 @@ class Compiler
 
 	std::unordered_set<std::string> m_includes;
 
-	Type m_first_free_type = Type::FIRST_USER_DEFINED;
-
 	int operator_priority(BinaryOperator op) const;
 
 	[[nodiscard]] std::unique_ptr<ast::nodes::TypeName> parse_type(bool allow_void = false);
@@ -95,9 +93,6 @@ class Compiler
 											parse_binop_rhs(std::unique_ptr<ast::nodes::Expression> lhs, int priority = 0);
 	std::unique_ptr<ast::nodes::Expression> parse_expression();
 	std::unique_ptr<ast::nodes::Node>       parse_program();
-
-	Type create_type(UserType user_type);
-	Type allocate_type_id();
 
 	string_view current_file() const;
 

@@ -7,11 +7,14 @@ namespace ast
 {
 namespace visitors
 {
-class DebugPrint : public Visitor
+class CodeGenX86 : public VisitorWithErrorDefaults
 {
 	public:
+	struct Context
+	{};
+
 	virtual void operator()(nodes::BinaryExpression& expression) override;
-	virtual void operator()(nodes::UnaryExpression& expression) override;
+	/*virtual void operator()(nodes::UnaryExpression& expression) override;
 	virtual void operator()(nodes::VariableExpression& expression) override;
 	virtual void operator()(nodes::CallExpression& expression) override;
 	virtual void operator()(nodes::TypeCastExpression& expression) override;
@@ -30,17 +33,10 @@ class DebugPrint : public Visitor
 	virtual void operator()(nodes::Include& expression) override;
 	virtual void operator()(nodes::BuiltinType& expression) override;
 	virtual void operator()(nodes::UserType& expression) override;
-	virtual void operator()(nodes::TypeAnnotation& expression) override;
-	virtual void operator()(nodes::Program& expression) override;
+	 virtual void operator()(nodes::Program& expression) override;*/
 
 	private:
-	template<class... Ts>
-	void print_indented(Ts&&... params);
-
-	template<class Func>
-	void indented(const std::string& category, Func&& func);
-
-	int m_depth = 0;
+	std::ostream& m_output_stream;
 };
 } // namespace visitors
 } // namespace ast

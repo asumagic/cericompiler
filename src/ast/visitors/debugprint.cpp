@@ -147,6 +147,13 @@ void DebugPrint::operator()(nodes::BuiltinType& expression)
 
 void DebugPrint::operator()(nodes::UserType& expression) { print_indented("User type '{}'", expression.name); }
 
+void DebugPrint::operator()(nodes::TypeAnnotation& expression)
+{
+	print_indented("TypeAnnotation");
+	indented("type", [&] { expression.type->visit(*this); });
+	indented("expression", [&] { expression.expression->visit(*this); });
+}
+
 void DebugPrint::operator()(nodes::Program& expression)
 {
 	print_indented("Program");

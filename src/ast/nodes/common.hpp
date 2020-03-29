@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 namespace ast
 {
 class Visitor;
@@ -13,13 +15,18 @@ struct Node
 	virtual void visit(Visitor& visitor) = 0;
 };
 
+struct TypeName : Node
+{};
+
+struct Annotation : Node
+{};
+
 struct Statement : Node
 {};
 
 struct Expression : Statement
-{};
-
-struct TypeName : Node
-{};
+{
+	std::unique_ptr<TypeName> baked_type;
+};
 } // namespace nodes
 } // namespace ast

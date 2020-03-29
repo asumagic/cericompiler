@@ -694,39 +694,6 @@ std::unique_ptr<ast::nodes::Node> Compiler::parse_program()
 	}
 }
 
-Type Compiler::create_type(UserType user_type)
-{
-	// TODO: have another map for the opposite lookup
-	/*	for (const auto it : m_user_types)
-		{
-			const Type      other_type      = it.first;
-			const UserType& other_user_type = it.second;
-
-			if (user_type == other_user_type)
-			{
-				return other_type;
-			}
-		}
-
-		const auto emplace_result = m_user_types.emplace(allocate_type_id(), user_type);
-		const auto it             = emplace_result.first;
-		const bool success        = emplace_result.second;
-
-		if (!success)
-		{
-			bug("type id was already allocated");
-		}
-
-		return it->first;*/
-	bug("user types not implemented anymore");
-}
-
-Type Compiler::allocate_type_id()
-{
-	m_first_free_type = Type(underlying_cast(m_first_free_type) + 1);
-	return m_first_free_type;
-}
-
 string_view Compiler::current_file() const { return m_file_name_stack.top(); }
 
 void Compiler::show_source_context() const
