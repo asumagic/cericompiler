@@ -3,8 +3,6 @@
 #include "../nodes/all.hpp"
 #include "../visitor.hpp"
 
-#include <fmt/core.h>
-
 namespace ast
 {
 namespace visitors

@@ -1,12 +1,16 @@
 #include "debugprint.hpp"
 
+#include "../../util/enums.hpp"
+
+#include <fmt/core.h>
+
 namespace ast
 {
 namespace visitors
 {
 void DebugPrint::operator()(nodes::BinaryExpression& expression)
 {
-	print_indented("BinaryExpression (op=todo)");
+	print_indented("BinaryExpression (op={})", underlying_cast(expression.op));
 
 	indented("operands", [&] {
 		expression.lhs->visit(*this);
@@ -16,7 +20,7 @@ void DebugPrint::operator()(nodes::BinaryExpression& expression)
 
 void DebugPrint::operator()(nodes::UnaryExpression& expression)
 {
-	print_indented("UnaryExpression (op=todo)");
+	print_indented("UnaryExpression (op={})", underlying_cast(expression.op));
 
 	indented("operand", [&] { expression.expression->visit(*this); });
 }
@@ -28,7 +32,7 @@ void DebugPrint::operator()(nodes::VariableExpression& expression)
 
 void DebugPrint::operator()(nodes::CallExpression& expression)
 {
-	print_indented("CallExpression '{}', args:", expression.function_name);
+	print_indented("CallExpression '{}'", expression.function_name);
 
 	indented("arguments", [&] {
 		for (auto& argument : expression.arguments)
@@ -40,7 +44,7 @@ void DebugPrint::operator()(nodes::CallExpression& expression)
 
 void DebugPrint::operator()(nodes::TypeCastExpression& expression)
 {
-	print_indented("TypeCastExpression to {} of expression:", type_name(expression.target_type).str());
+	print_indented("TypeCastExpression to {}", type_name(expression.target_type).str());
 
 	indented("operand", [&] { expression.expression->visit(*this); });
 }
@@ -108,12 +112,24 @@ void DebugPrint::operator()(nodes::AssignmentStatement& expression)
 
 void DebugPrint::operator()(nodes::VariableDeclarationBlock& expression)
 {
-	print_indented("VariableDeclarationBlock (todo)");
+	print_indented("VariableDeclarationBlock");
+	indented("multipledeclarations", [&] {
+		for (const auto& multiple_declaration : expression.multiple_declarations)
+		{
+			print_indented("VariableMultipleDeclaration (type={})", type_name(multiple_declaration.type).str());
+			indented("names", [&] {
+				for (const auto& name : multiple_declaration.names)
+				{
+					print_indented("'{}'", name);
+				}
+			});
+		}
+	});
 }
 
 void DebugPrint::operator()(nodes::ForeignFunctionDeclaration& expression)
 {
-	print_indented("ForeignFunctionDeclaration (todo)");
+	print_indented("ForeignFunctionDeclaration '{}' (types=todo)", expression.name);
 }
 
 void DebugPrint::operator()(nodes::Program& expression)
