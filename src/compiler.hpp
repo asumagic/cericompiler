@@ -76,29 +76,29 @@ class Compiler
 	std::string    read_identifier();
 	BinaryOperator peek_binop();
 
-	std::unique_ptr<ast::nodes::Expression> _parse_character_literal();
-	std::unique_ptr<ast::nodes::Expression> _parse_integer_literal();
-	std::unique_ptr<ast::nodes::Expression> _parse_float_literal();
-	std::unique_ptr<ast::nodes::Expression> _parse_string_literal();
+	std::unique_ptr<ast::nodes::Expression> parse_character_literal();
+	std::unique_ptr<ast::nodes::Expression> parse_integer_literal();
+	std::unique_ptr<ast::nodes::Expression> parse_float_literal();
+	std::unique_ptr<ast::nodes::Expression> parse_string_literal();
 
-	std::unique_ptr<ast::nodes::VariableDeclarationBlock>   _parse_variable_declaration_block();
-	std::unique_ptr<ast::nodes::ForeignFunctionDeclaration> _parse_foreign_function_declaration();
+	std::unique_ptr<ast::nodes::VariableDeclarationBlock>   parse_variable_declaration_block();
+	std::unique_ptr<ast::nodes::ForeignFunctionDeclaration> parse_foreign_function_declaration();
 
-	std::unique_ptr<ast::nodes::Statement> _parse_if_statement();
-	std::unique_ptr<ast::nodes::Statement> _parse_while_statement();
-	std::unique_ptr<ast::nodes::Statement> _parse_for_statement();
-	std::unique_ptr<ast::nodes::Statement> _parse_block_statement();
-	std::unique_ptr<ast::nodes::Statement> _parse_display_statement();
-	std::unique_ptr<ast::nodes::Statement> _parse_statement();
+	std::unique_ptr<ast::nodes::Statement> parse_if_statement();
+	std::unique_ptr<ast::nodes::Statement> parse_while_statement();
+	std::unique_ptr<ast::nodes::Statement> parse_for_statement();
+	std::unique_ptr<ast::nodes::Statement> parse_block_statement();
+	std::unique_ptr<ast::nodes::Statement> parse_display_statement();
+	std::unique_ptr<ast::nodes::Statement> parse_statement();
 
-	std::unique_ptr<ast::nodes::Expression> _parse_type_cast();
+	std::unique_ptr<ast::nodes::Expression> parse_type_cast();
 
-	std::unique_ptr<ast::nodes::Expression> _parse_primary();
-	std::unique_ptr<ast::nodes::Expression> _parse_unary();
+	std::unique_ptr<ast::nodes::Expression> parse_primary();
+	std::unique_ptr<ast::nodes::Expression> parse_unary();
 	std::unique_ptr<ast::nodes::Expression>
-											_parse_binop_rhs(std::unique_ptr<ast::nodes::Expression> lhs, int priority = 0);
-	std::unique_ptr<ast::nodes::Expression> _parse_expression();
-	std::unique_ptr<ast::nodes::Node>       _parse_program();
+											parse_binop_rhs(std::unique_ptr<ast::nodes::Expression> lhs, int priority = 0);
+	std::unique_ptr<ast::nodes::Expression> parse_expression();
+	std::unique_ptr<ast::nodes::Node>       parse_program();
 
 	Type create_type(UserType user_type);
 	Type allocate_type_id();
