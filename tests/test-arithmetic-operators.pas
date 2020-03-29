@@ -1,5 +1,5 @@
 VAR a : INTEGER;
 
 BEGIN
-    a := a + a - a
+    a := 1 + 2 * 3
 END.

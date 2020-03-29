@@ -296,16 +296,9 @@ std::string Compiler::read_identifier()
 	return value;
 }
 
-BinaryOperator Compiler::try_read_binop()
+BinaryOperator Compiler::peek_binop()
 {
-	const auto token = m_current_token;
-
-	if (check_enum_range(m_current_token, TOKEN::FIRST_OP, TOKEN::LAST_OP))
-	{
-		read_token();
-	}
-
-	switch (token)
+	switch (m_current_token)
 	{
 	case TOKEN::ADDOP_ADD: return BinaryOperator::ADD;
 	case TOKEN::ADDOP_SUB: return BinaryOperator::SUBTRACT;
@@ -644,13 +637,15 @@ Compiler::_parse_binop_rhs(std::unique_ptr<ast::nodes::Expression> lhs, int curr
 	// inspired by llvm kaleidoscope binop parsing
 	for (;;)
 	{
-		const auto first_op          = try_read_binop();
+		const auto first_op          = peek_binop();
 		const auto first_op_priority = operator_priority(first_op);
 
-		if (first_op == BinaryOperator::INVALID || current_priority >= first_op_priority)
+		if (first_op == BinaryOperator::INVALID || first_op_priority < current_priority)
 		{
 			return lhs;
 		}
+
+		read_token();
 
 		auto rhs = _parse_unary();
 
@@ -659,10 +654,10 @@ Compiler::_parse_binop_rhs(std::unique_ptr<ast::nodes::Expression> lhs, int curr
 			return nullptr;
 		}
 
-		const auto next_op          = try_read_binop();
+		const auto next_op          = peek_binop();
 		const auto next_op_priority = operator_priority(next_op);
 
-		if (next_op == BinaryOperator::INVALID || first_op_priority >= next_op_priority)
+		if (next_op == BinaryOperator::INVALID || first_op_priority < next_op_priority)
 		{
 			rhs = _parse_binop_rhs(std::move(rhs), first_op_priority + 1);
 

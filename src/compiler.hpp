@@ -74,7 +74,7 @@ class Compiler
 	double         read_float_literal();
 	std::string    read_string_literal();
 	std::string    read_identifier();
-	BinaryOperator try_read_binop();
+	BinaryOperator peek_binop();
 
 	std::unique_ptr<ast::nodes::Expression> _parse_character_literal();
 	std::unique_ptr<ast::nodes::Expression> _parse_integer_literal();
