@@ -21,6 +21,8 @@
 
 #include <FlexLexer.h>
 
+using BinaryOperator = ast::nodes::BinaryExpression::Operator;
+
 class Compiler
 {
 	friend class CodeGen;
@@ -56,56 +58,23 @@ class Compiler
 	std::unique_ptr<yyFlexLexer> m_lexer;
 	TOKEN                        m_current_token;
 
-	std::unordered_map<std::string, VariableType>     m_variables;
-	std::unordered_map<std::string, Type>             m_typedefs;
-	std::unordered_map<Type, UserType, EnumClassHash> m_user_types;
-	std::unordered_map<std::string, Function>         m_functions;
-	std::unordered_set<std::string>                   m_includes;
+	std::unordered_set<std::string> m_includes;
 
 	std::unique_ptr<CodeGen> m_codegen;
 
 	Type m_first_free_type = Type::FIRST_USER_DEFINED;
 
-	[[nodiscard]] Type parse_factor_identifier();    // unnecessary
-	void               parse_statement_identifier(); // unnecessary
-	[[nodiscard]] Type parse_character_literal();    // done
-	[[nodiscard]] Type parse_integer_literal();      // done
-	[[nodiscard]] Type parse_float_literal();        // done
-	[[nodiscard]] Type parse_variable_reference();   // done
-	[[nodiscard]] Type parse_dereferencable();       // unnecessary
-	[[nodiscard]] Type parse_factor();               // unnecessary
-	[[nodiscard]] Type parse_type_cast();            // done
-	[[nodiscard]] Type
-					   parse_function_call_after_identifier(string_view name, bool expects_return = false); // unnecessary
-	[[nodiscard]] Type parse_variable_usage_after_identifier(string_view name);       // unnecessary
-	[[nodiscard]] Type parse_term();                                                  // unnecessary
-	[[nodiscard]] Type parse_simple_expression();                                     // unnecessary
-	void               parse_declaration_block();                                     // done
-	void               parse_variable_declaration_block();                            // done
-	void               parse_foreign_function_declaration();                          // done
-	void               parse_include();                                               // todo: should it be in ast?
-	[[nodiscard]] Type parse_type(bool allow_void = false);                           // todo: determine how to do
-	void               parse_type_definition();                                       // todo
-	[[nodiscard]] Type parse_expression();                                            // done
-	Variable           parse_assignment_statement();                                  // unnecessary
-	Variable           parse_assignment_statement_after_identifier(string_view name); // unnecessary
-	void               parse_if_statement();                                          // done
-	void               parse_while_statement();                                       // done
-	void               parse_for_statement();                                         // "done"
-	void               parse_block_statement();                                       // done
-	void               parse_display_statement();                                     // done
-	void               parse_statement();                                             // done
-	void               parse_main_block_statement();                                  // unnecessary
-	void               parse_program();
+	int operator_priority(BinaryOperator op) const;
 
-	int operator_priority(ast::nodes::BinaryExpression::Operator op) const;
+	void               parse_include();                     // todo: should it be in ast?
+	[[nodiscard]] Type parse_type(bool allow_void = false); // todo: determine how to do
 
-	char                                   read_character_literal();
-	std::uint64_t                          read_integer_literal();
-	double                                 read_float_literal();
-	std::string                            read_string_literal();
-	std::string                            read_identifier();
-	ast::nodes::BinaryExpression::Operator try_read_binop();
+	char           read_character_literal();
+	std::uint64_t  read_integer_literal();
+	double         read_float_literal();
+	std::string    read_string_literal();
+	std::string    read_identifier();
+	BinaryOperator try_read_binop();
 
 	std::unique_ptr<ast::nodes::Expression> _parse_character_literal();
 	std::unique_ptr<ast::nodes::Expression> _parse_integer_literal();
@@ -133,8 +102,6 @@ class Compiler
 
 	Type create_type(UserType user_type);
 	Type allocate_type_id();
-
-	void emit_global_variables();
 
 	string_view current_file() const;
 

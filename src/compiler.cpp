@@ -84,457 +84,9 @@ void Compiler::operator()()
 	}
 }
 
-Type Compiler::parse_factor_identifier()
-{
-	const std::string name = token_text();
-
-	read_token(); // Consume identifier
-
-	if (m_current_token == TOKEN::LPARENT)
-	{
-		return parse_function_call_after_identifier(name, true);
-	}
-	else
-	{
-		return parse_variable_usage_after_identifier(name);
-	}
-}
-
-void Compiler::parse_statement_identifier()
-{
-	const std::string name = token_text();
-	read_token(); // Consume identifier
-
-	if (m_current_token == TOKEN::LPARENT)
-	{
-		[[maybe_unused]] const Type type = parse_function_call_after_identifier(name);
-	}
-	else
-	{
-		parse_assignment_statement_after_identifier(name);
-	}
-}
-
-Type Compiler::parse_character_literal()
-{
-	// 2nd character in e.g. `'h'`
-	m_codegen->load_i64(token_text()[1]);
-	read_token();
-
-	return Type::CHAR;
-}
-
-Type Compiler::parse_integer_literal()
-{
-	static_assert(
-		sizeof(unsigned long long) >= sizeof(std::int64_t),
-		"unsigned long long must be 64-bit on the compiler platform");
-
-	m_codegen->load_i64(std::stoull(token_text()));
-	read_token();
-
-	return Type::UNSIGNED_INT;
-}
-
-Type Compiler::parse_float_literal()
-{
-	static_assert(sizeof(double) == sizeof(std::int64_t), "double must be 64-bit on the compiler platform");
-
-	double        source = std::stod(token_text());
-	std::uint64_t target;
-	std::memcpy(&target, &source, sizeof(target));
-
-	m_codegen->load_i64(target);
-	read_token();
-
-	return Type::DOUBLE;
-}
-
-Type Compiler::parse_variable_reference()
-{
-	read_token();
-
-	expect_token(TOKEN::ID, "expected identifier after referencing operator '@'");
-	const std::string name = token_text();
-	read_token();
-
-	const auto it = m_variables.find(name);
-	if (it == m_variables.end())
-	{
-		error(fmt::format("use of undeclared identifier '{}'", name));
-	}
-
-	const VariableType& variable_type = it->second;
-
-	UserType user_type(UserType::Category::POINTER);
-	user_type.layout_data.pointer.target = variable_type.type;
-	const Type pointer_type              = create_type(user_type);
-
-	m_codegen->load_pointer_to_variable({it->first, variable_type});
-
-	return pointer_type;
-}
-
-Type Compiler::parse_dereferencable()
-{
-	switch (m_current_token)
-	{
-	case LPARENT:
-	{
-		read_token();
-		Type type = parse_expression();
-		read_token(RPARENT, "expected ')'");
-
-		return type;
-	}
-
-	case NOT:
-	{
-		read_token();
-		Type type = parse_factor();
-		check_type(type, Type::BOOLEAN);
-
-		m_codegen->alu_not_bool();
-
-		return Type::BOOLEAN;
-	}
-
-	case AT: return parse_variable_reference();
-	case CHAR_LITERAL: return parse_character_literal();
-	case INTEGER_LITERAL: return parse_integer_literal();
-	case FLOAT_LITERAL: return parse_float_literal();
-	case ID: return parse_factor_identifier();
-	case KEYWORD_CONVERT: return parse_type_cast();
-	default:
-	{
-		error("expected expression");
-	}
-	}
-}
-
-Type Compiler::parse_factor()
-{
-	Type current_type = parse_dereferencable();
-
-	while (try_read_token(TOKEN::EXPONENT))
-	{
-		const auto it = m_user_types.find(current_type);
-
-		if (it == m_user_types.end() || it->second.category != UserType::Category::POINTER)
-		{
-			error(fmt::format("cannot dereference non-pointer type '{}'", type_name(current_type).str()));
-		}
-
-		const UserType& type = it->second;
-
-		m_codegen->load_value_from_pointer(type.layout_data.pointer.target);
-		current_type = type.layout_data.pointer.target;
-	}
-
-	return current_type;
-}
-
-Type Compiler::parse_type_cast()
-{
-	read_token(); // CONVERT
-
-	const Type source_type = parse_expression();
-
-	read_token(KEYWORD_TO, "expected 'TO' after expression in CONVERT expression");
-
-	const Type destination_type = parse_type();
-
-	if (check_enum_range(source_type, Type::FIRST_USER_DEFINED, Type::LAST_USER_DEFINED)
-		|| check_enum_range(destination_type, Type::FIRST_USER_DEFINED, Type::LAST_USER_DEFINED))
-	{
-		error(fmt::format(
-			"incompatible types for explicit conversion {} -> {}",
-			type_name(source_type).str(),
-			type_name(destination_type).str()));
-	}
-
-	m_codegen->convert(source_type, destination_type);
-
-	// right now just yolo it and don't convert
-	return destination_type;
-}
-
-Type Compiler::parse_function_call_after_identifier(string_view name, bool expects_return)
-{
-	read_token(); // Consume '('
-
-	const auto it = m_functions.find(name);
-	if (it == m_functions.end())
-	{
-		error(fmt::format("use of undeclared function '{}'", name.str()));
-	}
-
-	const Function& function = it->second;
-
-	if (function.return_type == Type::VOID && expects_return)
-	{
-		error(fmt::format("tried to get return value of function '{}' which does not return anything", name.str()));
-	}
-
-	if (function.variadic)
-	{
-		bug("variadic foreign function calls are not supported from the language for now");
-	}
-
-	FunctionCall call;
-	call.function_name = name;
-	call.return_type   = function.return_type;
-	call.variadic      = function.variadic;
-
-	m_codegen->function_call_prepare(call);
-
-	// TODO: try catch to add context for the nth parameter and also for the function call
-	std::size_t i = 0;
-	if (m_current_token != TOKEN::RPARENT)
-	{
-		do
-		{
-			if (i >= function.parameters.size())
-			{
-				error(fmt::format(
-					"too much parameters for function '{}', expected {}", name.str(), function.parameters.size()));
-			}
-
-			const FunctionParameter& declared_parameter = function.parameters[i];
-
-			const Type expression_type = parse_expression();
-			check_type(expression_type, declared_parameter.type);
-
-			m_codegen->function_call_param(call, expression_type);
-
-			++i;
-		} while (try_read_token(TOKEN::COMMA));
-	}
-
-	if (i < function.parameters.size())
-	{
-		error(fmt::format(
-			"not enough parameters for function '{}', expected {}", name.str(), function.parameters.size()));
-	}
-
-	m_codegen->function_call_finalize(call);
-
-	read_token(TOKEN::RPARENT, "expected ')' after parameter list in function call");
-
-	return function.return_type;
-}
-
-Type Compiler::parse_variable_usage_after_identifier(string_view name)
-{
-	const auto it = m_variables.find(name);
-	if (it == m_variables.end())
-	{
-		error(fmt::format("use of undeclared identifier '{}'", name.str()));
-	}
-
-	const VariableType& type = it->second;
-
-	m_codegen->load_variable({name, type});
-
-	return type.type;
-}
-
-Type Compiler::parse_term()
-{
-	const Type first_type = parse_factor();
-	while (is_token_mulop(m_current_token))
-	{
-		const TOKEN op_token = m_current_token;
-		read_token();
-
-		const Type nth_type = parse_factor();
-		check_type(first_type, nth_type);
-
-		switch (op_token)
-		{
-		case TOKEN::MULOP_AND:
-		{
-			check_type(first_type, Type::BOOLEAN);
-			m_codegen->alu_and_bool();
-			break;
-		}
-
-		case TOKEN::MULOP_MUL:
-		{
-			check_type(first_type, Type::ARITHMETIC);
-			m_codegen->alu_multiply(first_type);
-			break;
-		}
-
-		case TOKEN::MULOP_DIV:
-		{
-			check_type(first_type, Type::ARITHMETIC);
-			m_codegen->alu_divide(first_type);
-			break;
-		}
-
-		case TOKEN::MULOP_MOD:
-		{
-			check_type(first_type, Type::ARITHMETIC);
-			m_codegen->alu_modulus(first_type);
-			break;
-		}
-
-		default: bug("unimplemented multiplicative operator");
-		}
-	}
-
-	return first_type;
-}
-
-Type Compiler::parse_simple_expression()
-{
-	const Type first_type = parse_term();
-
-	while (is_token_addop(m_current_token))
-	{
-		const TOKEN op_token = m_current_token;
-		read_token();
-
-		const Type nth_type = parse_term();
-		check_type(first_type, nth_type);
-
-		switch (op_token)
-		{
-		case TOKEN::ADDOP_OR:
-		{
-			check_type(first_type, Type::BOOLEAN);
-			m_codegen->alu_or_bool();
-			break;
-		}
-
-		case TOKEN::ADDOP_ADD:
-		{
-			check_type(first_type, Type::ARITHMETIC);
-			m_codegen->alu_add(first_type);
-			break;
-		}
-
-		case TOKEN::ADDOP_SUB:
-		{
-			check_type(first_type, Type::ARITHMETIC);
-			m_codegen->alu_sub(first_type);
-			break;
-		}
-
-		default: bug("unimplemented additive operator");
-		}
-	}
-
-	return first_type;
-}
-
-void Compiler::parse_declaration_block()
-{
-	for (;;)
-	{
-		switch (m_current_token)
-		{
-		case TOKEN::KEYWORD_VAR: parse_variable_declaration_block(); break;
-		case TOKEN::KEYWORD_TYPE: parse_type_definition(); break;
-		case TOKEN::KEYWORD_FFI: parse_foreign_function_declaration(); break;
-		case TOKEN::KEYWORD_INCLUDE: parse_include(); break;
-		default: return;
-		}
-	}
-}
-
-void Compiler::parse_variable_declaration_block()
-{
-	read_token(TOKEN::KEYWORD_VAR, "expected 'VAR' to begin variable declaration block");
-
-	for (;;)
-	{
-		std::vector<std::string> current_declarations;
-
-		do
-		{
-			current_declarations.push_back(token_text());
-			read_token(); // Skip variable name
-		} while (try_read_token(TOKEN::COMMA));
-
-		read_token(COLON, "expected ':' after variable name list in declaration block");
-
-		const Type type = parse_type();
-
-		for (auto& name : current_declarations)
-		{
-			const auto emplace_result = m_variables.emplace(name, VariableType{type});
-			const bool success        = emplace_result.second;
-
-			if (!success)
-			{
-				error(fmt::format("duplicate declaration of variable '{}'", name));
-			}
-		}
-
-		read_token(TOKEN::SEMICOLON, "expected ';' after variable declaration");
-
-		// If the current token is an identifier, then we assume we're continuing to parse a variable declaration.
-		// e.g.:
-		//     VAR
-		//         a : INTEGER;
-		//         b, c : BOOLEAN;
-		//     BEGIN END.
-		// At the end of the 1st iteration, `b` is read and is an identifier, so it loops again.
-		// At the end of the 2nd iteration, `BEGIN` is read but is not an ID, therefore this will break out.
-		if (m_current_token != ID)
-		{
-			break;
-		}
-	};
-}
-
-void Compiler::parse_foreign_function_declaration()
-{
-	Function function;
-	function.foreign = true;
-
-	read_token(); // consume FFI
-
-	expect_token(ID, "expected function name");
-	const std::string name = token_text();
-	read_token();
-
-	read_token(LPARENT, "expected '(' after function name");
-
-	if (m_current_token != RPARENT)
-	{
-		do
-		{
-			if (is_token_type(m_current_token))
-			{
-				const auto type = parse_type();
-				function.parameters.push_back({type});
-			}
-		} while (try_read_token(COMMA));
-	}
-
-	read_token(RPARENT, "expected ')' after type list");
-
-	read_token(COLON, "expected ':' after ')' to specify return type of foreign function");
-
-	function.return_type = parse_type(true);
-
-	read_token(SEMICOLON, "expected ';' after FFI declaration");
-
-	const auto emplace_result = m_functions.emplace(name, std::move(function));
-	const bool success        = emplace_result.second;
-
-	if (!success)
-	{
-		error(fmt::format("duplicate declaration of function '{}'", name));
-	}
-}
-
 void Compiler::parse_include()
 {
-	read_token(); // consume INCLUDE
+	/*read_token(); // consume INCLUDE
 
 	expect_token(TOKEN::STRINGCONST, "expected string literal after INCLUDE directive");
 	const std::string path = token_text().substr(1, token_text().size() - 2);
@@ -619,7 +171,8 @@ void Compiler::parse_include()
 	}
 
 	// Restore old state
-	restore_state();
+	restore_state();*/
+	bug("parse_include not implemented anymore");
 }
 
 Type Compiler::parse_type(bool allow_void)
@@ -647,7 +200,8 @@ Type Compiler::parse_type(bool allow_void)
 
 	if (m_current_token == ID)
 	{
-		const auto it = m_typedefs.find(token_text());
+		bug("aaaaaa");
+		/*const auto it = m_typedefs.find(token_text());
 
 		if (it == m_typedefs.end())
 		{
@@ -656,7 +210,7 @@ Type Compiler::parse_type(bool allow_void)
 
 		read_token();
 
-		return it->second;
+		return it->second;*/
 	}
 
 	if (try_read_token(EXPONENT))
@@ -670,293 +224,29 @@ Type Compiler::parse_type(bool allow_void)
 	error("expected type");
 }
 
-void Compiler::parse_type_definition()
-{
-	read_token(); // consume TYPE keyword
-
-	expect_token(TOKEN::ID, "expected identifier after TYPE declaration");
-	const std::string alias = token_text();
-	read_token(); // consume identifier
-
-	read_token(TOKEN::EQUAL, "expected '=' after aliased name in TYPE declaration");
-
-	const Type aliased = parse_type();
-
-	read_token(TOKEN::SEMICOLON, "expected ';' after TYPE declaration");
-
-	const auto emplace_result = m_typedefs.emplace(alias, aliased);
-	const bool success        = emplace_result.second;
-
-	if (!success)
-	{
-		error(fmt::format("duplicate declaration of type '{}'", alias));
-	}
-}
-
-Type Compiler::parse_expression()
-{
-	const Type first_type = parse_simple_expression();
-
-	if (is_token_relop(m_current_token))
-	{
-		const TOKEN op_token = m_current_token;
-		read_token();
-
-		const Type nth_type = parse_simple_expression();
-		check_type(first_type, nth_type);
-
-		switch (op_token)
-		{
-		case TOKEN::RELOP_EQU: m_codegen->alu_equal(first_type); break;
-		case TOKEN::RELOP_DIFF: m_codegen->alu_not_equal(first_type); break;
-		case TOKEN::RELOP_SUPE: m_codegen->alu_greater_equal(first_type); break;
-		case TOKEN::RELOP_INFE: m_codegen->alu_lower_equal(first_type); break;
-		case TOKEN::RELOP_INF: m_codegen->alu_lower(first_type); break;
-		case TOKEN::RELOP_SUP: m_codegen->alu_greater(first_type); break;
-		default: bug("unknown comparison operator");
-		}
-
-		return Type::BOOLEAN;
-	}
-
-	return first_type;
-}
-
-Variable Compiler::parse_assignment_statement()
-{
-	expect_token(ID, "expected an identifier");
-
-	const std::string name = token_text();
-	read_token(); // We needed the token_text up until now - consume the identifier
-
-	return parse_assignment_statement_after_identifier(name);
-}
-
-Variable Compiler::parse_assignment_statement_after_identifier(string_view name)
-{
-	const auto it = m_variables.find(name);
-
-	if (it == m_variables.end())
-	{
-		error(fmt::format("assignment of undeclared variable '{}'", name.str()));
-	}
-
-	const VariableType& variable_type = it->second;
-
-	if (m_current_token == TOKEN::EXPONENT)
-	{
-		Type current_type = variable_type.type;
-
-		std::vector<Type> dereference_stack;
-
-		while (try_read_token(TOKEN::EXPONENT))
-		{
-			// TODO: deduplicate code with parse_factor()
-			const auto it = m_user_types.find(current_type);
-
-			if (it == m_user_types.end() || it->second.category != UserType::Category::POINTER)
-			{
-				error(fmt::format("cannot dereference non-pointer type '{}'", type_name(current_type).str()));
-			}
-
-			const UserType& type = it->second;
-
-			dereference_stack.push_back(type.layout_data.pointer.target);
-			current_type = type.layout_data.pointer.target;
-		}
-
-		// TODO: deduplicate code with below
-		read_token(ASSIGN, "expected ':=' in variable assignment");
-
-		Type type = parse_expression();
-
-		m_codegen->load_variable({name, variable_type});
-
-		dereference_stack.resize(dereference_stack.size() - 1); // ignore the last one
-		for (const Type type : dereference_stack)
-		{
-			m_codegen->load_value_from_pointer(type);
-		}
-
-		m_codegen->store_value_to_pointer(type);
-
-		check_type(type, current_type);
-
-		return {};
-	}
-
-	read_token(ASSIGN, "expected ':=' in variable assignment");
-
-	Type type = parse_expression();
-
-	m_codegen->store_variable({name, variable_type});
-
-	check_type(type, variable_type.type);
-
-	return {name, variable_type};
-}
-
-void Compiler::parse_if_statement()
-{
-	IfStatement if_statement;
-	m_codegen->statement_if_prepare(if_statement);
-
-	read_token();
-	check_type(parse_expression(), Type::BOOLEAN);
-
-	read_token(KEYWORD_THEN, "expected 'THEN' after conditional expression of 'IF' statement");
-
-	m_codegen->statement_if_post_check(if_statement);
-
-	parse_statement();
-
-	if (try_read_token(KEYWORD_ELSE))
-	{
-		m_codegen->statement_if_with_else(if_statement);
-		parse_statement();
-	}
-	else
-	{
-		m_codegen->statement_if_without_else(if_statement);
-	}
-
-	m_codegen->statement_if_finalize(if_statement);
-}
-
-void Compiler::parse_while_statement()
-{
-	WhileStatement while_statement;
-	m_codegen->statement_while_prepare(while_statement);
-
-	read_token();
-	const Type type = parse_expression();
-	check_type(type, Type::BOOLEAN);
-
-	read_token(KEYWORD_DO, "expected 'DO' after conditional expression of 'WHILE' statement");
-
-	m_codegen->statement_while_post_check(while_statement);
-
-	parse_statement();
-
-	m_codegen->statement_while_finalize(while_statement);
-}
-
-void Compiler::parse_for_statement()
-{
-	read_token();
-	const auto assignment = parse_assignment_statement();
-	check_type(assignment.type.type, Type::UNSIGNED_INT);
-
-	ForStatement for_statement;
-	m_codegen->statement_for_prepare(for_statement, assignment);
-	m_codegen->statement_for_post_assignment(for_statement);
-
-	read_token(KEYWORD_TO, "expected 'TO' after assignement in 'FOR' statement");
-
-	check_type(parse_expression(), Type::UNSIGNED_INT);
-
-	read_token(KEYWORD_DO, "expected 'DO' after max expression in 'FOR' statement");
-
-	m_codegen->statement_for_post_check(for_statement);
-
-	parse_statement();
-
-	m_codegen->statement_for_finalize(for_statement);
-}
-
-void Compiler::parse_block_statement()
-{
-	read_token(KEYWORD_BEGIN, "expected 'BEGIN' to begin block statement");
-
-	do
-	{
-		// This enables:
-		// - empty block statements, e.g. BEGIN END
-		// - optional semicolons at the last statement of a block statement
-		if (try_read_token(KEYWORD_END))
-		{
-			return;
-		}
-
-		parse_statement();
-	} while (try_read_token(TOKEN::SEMICOLON));
-
-	read_token(KEYWORD_END, "expected 'END' to finish block statement");
-}
-
-void Compiler::parse_display_statement()
-{
-	read_token();
-	const Type type = parse_expression();
-
-	// check if user defined, if not its not allowed
-	if (check_enum_range(type, Type::FIRST_USER_DEFINED, Type::LAST_USER_DEFINED))
-	{
-		error(fmt::format("DISPLAY is not supported for type {}", type_name(type).str()));
-	}
-
-	m_codegen->debug_display(type);
-}
-
-void Compiler::parse_statement()
-{
-	switch (m_current_token)
-	{
-	case TOKEN::KEYWORD_IF: parse_if_statement(); break;
-	case TOKEN::KEYWORD_WHILE: parse_while_statement(); break;
-	case TOKEN::KEYWORD_FOR: parse_for_statement(); break;
-	case TOKEN::KEYWORD_BEGIN: parse_block_statement(); break;
-	case TOKEN::KEYWORD_DISPLAY: parse_display_statement(); break;
-	case TOKEN::ID: parse_statement_identifier(); break;
-	default: error("expected statement");
-	}
-}
-
-void Compiler::parse_main_block_statement()
-{
-	m_codegen->begin_main_procedure();
-
-	parse_block_statement();
-	read_token(DOT, "expected '.' at end of program");
-
-	m_codegen->finalize_main_procedure();
-}
-
-void Compiler::parse_program()
-{
-	m_codegen->begin_executable_section();
-	parse_declaration_block();
-	parse_main_block_statement();
-	m_codegen->finalize_executable_section();
-
-	m_codegen->begin_global_data_section();
-	emit_global_variables();
-	m_codegen->finalize_global_data_section();
-}
-
-int Compiler::operator_priority(ast::nodes::BinaryExpression::Operator op) const
+int Compiler::operator_priority(BinaryOperator op) const
 {
 	// TODO: move this map elsewhere
 	constexpr int equ_priority = 10, add_priority = 20, mul_priority = 30;
 
-	static const std::unordered_map<ast::nodes::BinaryExpression::Operator, int, EnumClassHash> map{
-		{ast::nodes::BinaryExpression::Operator::INVALID, -1},
+	static const std::unordered_map<BinaryOperator, int, EnumClassHash> map{
+		{BinaryOperator::INVALID, -1},
 
-		{ast::nodes::BinaryExpression::Operator::ADD, add_priority},
-		{ast::nodes::BinaryExpression::Operator::SUBTRACT, add_priority},
-		{ast::nodes::BinaryExpression::Operator::MULTIPLY, mul_priority},
-		{ast::nodes::BinaryExpression::Operator::DIVIDE, mul_priority},
-		{ast::nodes::BinaryExpression::Operator::MODULUS, mul_priority},
+		{BinaryOperator::ADD, add_priority},
+		{BinaryOperator::SUBTRACT, add_priority},
+		{BinaryOperator::MULTIPLY, mul_priority},
+		{BinaryOperator::DIVIDE, mul_priority},
+		{BinaryOperator::MODULUS, mul_priority},
 
-		{ast::nodes::BinaryExpression::Operator::EQUAL, equ_priority},
-		{ast::nodes::BinaryExpression::Operator::NOT_EQUAL, equ_priority},
-		{ast::nodes::BinaryExpression::Operator::GREATER_EQUAL, equ_priority},
-		{ast::nodes::BinaryExpression::Operator::LOWER_EQUAL, equ_priority},
-		{ast::nodes::BinaryExpression::Operator::GREATER, equ_priority},
-		{ast::nodes::BinaryExpression::Operator::LOWER, equ_priority},
+		{BinaryOperator::EQUAL, equ_priority},
+		{BinaryOperator::NOT_EQUAL, equ_priority},
+		{BinaryOperator::GREATER_EQUAL, equ_priority},
+		{BinaryOperator::LOWER_EQUAL, equ_priority},
+		{BinaryOperator::GREATER, equ_priority},
+		{BinaryOperator::LOWER, equ_priority},
 
-		{ast::nodes::BinaryExpression::Operator::LOGICAL_AND, mul_priority},
-		{ast::nodes::BinaryExpression::Operator::LOGICAL_OR, add_priority}};
+		{BinaryOperator::LOGICAL_AND, mul_priority},
+		{BinaryOperator::LOGICAL_OR, add_priority}};
 
 	return map.find(op)->second;
 }
@@ -1006,7 +296,7 @@ std::string Compiler::read_identifier()
 	return value;
 }
 
-ast::nodes::BinaryExpression::Operator Compiler::try_read_binop()
+BinaryOperator Compiler::try_read_binop()
 {
 	const auto token = m_current_token;
 
@@ -1017,23 +307,23 @@ ast::nodes::BinaryExpression::Operator Compiler::try_read_binop()
 
 	switch (token)
 	{
-	case TOKEN::ADDOP_ADD: return ast::nodes::BinaryExpression::Operator::ADD;
-	case TOKEN::ADDOP_SUB: return ast::nodes::BinaryExpression::Operator::SUBTRACT;
-	case TOKEN::MULOP_MUL: return ast::nodes::BinaryExpression::Operator::MULTIPLY;
-	case TOKEN::MULOP_DIV: return ast::nodes::BinaryExpression::Operator::DIVIDE;
-	case TOKEN::MULOP_MOD: return ast::nodes::BinaryExpression::Operator::MODULUS;
+	case TOKEN::ADDOP_ADD: return BinaryOperator::ADD;
+	case TOKEN::ADDOP_SUB: return BinaryOperator::SUBTRACT;
+	case TOKEN::MULOP_MUL: return BinaryOperator::MULTIPLY;
+	case TOKEN::MULOP_DIV: return BinaryOperator::DIVIDE;
+	case TOKEN::MULOP_MOD: return BinaryOperator::MODULUS;
 
-	case TOKEN::RELOP_EQU: return ast::nodes::BinaryExpression::Operator::EQUAL;
-	case TOKEN::RELOP_DIFF: return ast::nodes::BinaryExpression::Operator::NOT_EQUAL;
-	case TOKEN::RELOP_SUPE: return ast::nodes::BinaryExpression::Operator::GREATER_EQUAL;
-	case TOKEN::RELOP_INFE: return ast::nodes::BinaryExpression::Operator::LOWER_EQUAL;
-	case TOKEN::RELOP_SUP: return ast::nodes::BinaryExpression::Operator::GREATER;
-	case TOKEN::RELOP_INF: return ast::nodes::BinaryExpression::Operator::LOWER;
+	case TOKEN::RELOP_EQU: return BinaryOperator::EQUAL;
+	case TOKEN::RELOP_DIFF: return BinaryOperator::NOT_EQUAL;
+	case TOKEN::RELOP_SUPE: return BinaryOperator::GREATER_EQUAL;
+	case TOKEN::RELOP_INFE: return BinaryOperator::LOWER_EQUAL;
+	case TOKEN::RELOP_SUP: return BinaryOperator::GREATER;
+	case TOKEN::RELOP_INF: return BinaryOperator::LOWER;
 
-	case TOKEN::MULOP_AND: return ast::nodes::BinaryExpression::Operator::LOGICAL_AND;
-	case TOKEN::ADDOP_OR: return ast::nodes::BinaryExpression::Operator::LOGICAL_OR;
+	case TOKEN::MULOP_AND: return BinaryOperator::LOGICAL_AND;
+	case TOKEN::ADDOP_OR: return BinaryOperator::LOGICAL_OR;
 
-	default: return ast::nodes::BinaryExpression::Operator::INVALID;
+	default: return BinaryOperator::INVALID;
 	}
 }
 
@@ -1351,7 +641,7 @@ Compiler::_parse_binop_rhs(std::unique_ptr<ast::nodes::Expression> lhs, int curr
 		const auto first_op          = try_read_binop();
 		const auto first_op_priority = operator_priority(first_op);
 
-		if (first_op == ast::nodes::BinaryExpression::Operator::INVALID || current_priority >= first_op_priority)
+		if (first_op == BinaryOperator::INVALID || current_priority >= first_op_priority)
 		{
 			return lhs;
 		}
@@ -1366,7 +656,7 @@ Compiler::_parse_binop_rhs(std::unique_ptr<ast::nodes::Expression> lhs, int curr
 		const auto next_op          = try_read_binop();
 		const auto next_op_priority = operator_priority(next_op);
 
-		if (next_op == ast::nodes::BinaryExpression::Operator::INVALID || first_op_priority >= next_op_priority)
+		if (next_op == BinaryOperator::INVALID || first_op_priority >= next_op_priority)
 		{
 			rhs = _parse_binop_rhs(std::move(rhs), first_op_priority + 1);
 
@@ -1410,44 +700,34 @@ std::unique_ptr<ast::nodes::Node> Compiler::_parse_program()
 Type Compiler::create_type(UserType user_type)
 {
 	// TODO: have another map for the opposite lookup
-	for (const auto it : m_user_types)
-	{
-		const Type      other_type      = it.first;
-		const UserType& other_user_type = it.second;
-
-		if (user_type == other_user_type)
+	/*	for (const auto it : m_user_types)
 		{
-			return other_type;
+			const Type      other_type      = it.first;
+			const UserType& other_user_type = it.second;
+
+			if (user_type == other_user_type)
+			{
+				return other_type;
+			}
 		}
-	}
 
-	const auto emplace_result = m_user_types.emplace(allocate_type_id(), user_type);
-	const auto it             = emplace_result.first;
-	const bool success        = emplace_result.second;
+		const auto emplace_result = m_user_types.emplace(allocate_type_id(), user_type);
+		const auto it             = emplace_result.first;
+		const bool success        = emplace_result.second;
 
-	if (!success)
-	{
-		bug("type id was already allocated");
-	}
+		if (!success)
+		{
+			bug("type id was already allocated");
+		}
 
-	return it->first;
+		return it->first;*/
+	bug("user types not implemented anymore");
 }
 
 Type Compiler::allocate_type_id()
 {
 	m_first_free_type = Type(underlying_cast(m_first_free_type) + 1);
 	return m_first_free_type;
-}
-
-void Compiler::emit_global_variables()
-{
-	for (const auto& it : m_variables)
-	{
-		const auto&         name = it.first;
-		const VariableType& type = it.second;
-
-		m_codegen->define_global_variable({name, type});
-	}
 }
 
 string_view Compiler::current_file() const { return m_file_name_stack.top(); }
