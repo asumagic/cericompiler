@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ast/nodes/all.hpp"
+#include "ast/visitors/debugprint.hpp"
 #include "codegen/x86/codegen.hpp"
 #include "function.hpp"
 #include "token.hpp"
@@ -64,36 +66,70 @@ class Compiler
 
 	Type m_first_free_type = Type::FIRST_USER_DEFINED;
 
-	[[nodiscard]] Type parse_factor_identifier();
-	void               parse_statement_identifier();
-	[[nodiscard]] Type parse_character_literal();
-	[[nodiscard]] Type parse_integer_literal();
-	[[nodiscard]] Type parse_float_literal();
-	[[nodiscard]] Type parse_variable_reference();
-	[[nodiscard]] Type parse_dereferencable();
-	[[nodiscard]] Type parse_factor();
-	[[nodiscard]] Type parse_type_cast();
-	[[nodiscard]] Type parse_function_call_after_identifier(string_view name, bool expects_return = false);
-	[[nodiscard]] Type parse_variable_usage_after_identifier(string_view name);
-	[[nodiscard]] Type parse_term();
-	[[nodiscard]] Type parse_simple_expression();
-	void               parse_declaration_block();
-	void               parse_variable_declaration_block();
-	void               parse_foreign_function_declaration();
-	void               parse_include();
-	[[nodiscard]] Type parse_type(bool allow_void = false);
-	void               parse_type_definition();
-	[[nodiscard]] Type parse_expression();
-	Variable           parse_assignment_statement();
-	Variable           parse_assignment_statement_after_identifier(string_view name);
-	void               parse_if_statement();
-	void               parse_while_statement();
-	void               parse_for_statement();
-	void               parse_block_statement();
-	void               parse_display_statement();
-	void               parse_statement();
-	void               parse_main_block_statement();
+	[[nodiscard]] Type parse_factor_identifier();    // unnecessary
+	void               parse_statement_identifier(); // unnecessary
+	[[nodiscard]] Type parse_character_literal();    // done
+	[[nodiscard]] Type parse_integer_literal();      // done
+	[[nodiscard]] Type parse_float_literal();        // done
+	[[nodiscard]] Type parse_variable_reference();   // done
+	[[nodiscard]] Type parse_dereferencable();       // unnecessary
+	[[nodiscard]] Type parse_factor();               // unnecessary
+	[[nodiscard]] Type parse_type_cast();            // done
+	[[nodiscard]] Type
+					   parse_function_call_after_identifier(string_view name, bool expects_return = false); // unnecessary
+	[[nodiscard]] Type parse_variable_usage_after_identifier(string_view name);       // unnecessary
+	[[nodiscard]] Type parse_term();                                                  // unnecessary
+	[[nodiscard]] Type parse_simple_expression();                                     // unnecessary
+	void               parse_declaration_block();                                     // done
+	void               parse_variable_declaration_block();                            // done
+	void               parse_foreign_function_declaration();                          // done
+	void               parse_include();                                               // todo: should it be in ast?
+	[[nodiscard]] Type parse_type(bool allow_void = false);                           // todo: determine how to do
+	void               parse_type_definition();                                       // todo
+	[[nodiscard]] Type parse_expression();                                            // done
+	Variable           parse_assignment_statement();                                  // unnecessary
+	Variable           parse_assignment_statement_after_identifier(string_view name); // unnecessary
+	void               parse_if_statement();                                          // done
+	void               parse_while_statement();                                       // done
+	void               parse_for_statement();                                         // "done"
+	void               parse_block_statement();                                       // done
+	void               parse_display_statement();                                     // done
+	void               parse_statement();                                             // done
+	void               parse_main_block_statement();                                  // unnecessary
 	void               parse_program();
+
+	int operator_priority(ast::nodes::BinaryExpression::Operator op) const;
+
+	char                                   read_character_literal();
+	std::uint64_t                          read_integer_literal();
+	double                                 read_float_literal();
+	std::string                            read_string_literal();
+	std::string                            read_identifier();
+	ast::nodes::BinaryExpression::Operator try_read_binop();
+
+	std::unique_ptr<ast::nodes::Expression> _parse_character_literal();
+	std::unique_ptr<ast::nodes::Expression> _parse_integer_literal();
+	std::unique_ptr<ast::nodes::Expression> _parse_float_literal();
+	std::unique_ptr<ast::nodes::Expression> _parse_string_literal();
+
+	std::unique_ptr<ast::nodes::VariableDeclarationBlock>   _parse_variable_declaration_block();
+	std::unique_ptr<ast::nodes::ForeignFunctionDeclaration> _parse_foreign_function_declaration();
+
+	std::unique_ptr<ast::nodes::Statement> _parse_if_statement();
+	std::unique_ptr<ast::nodes::Statement> _parse_while_statement();
+	std::unique_ptr<ast::nodes::Statement> _parse_for_statement();
+	std::unique_ptr<ast::nodes::Statement> _parse_block_statement();
+	std::unique_ptr<ast::nodes::Statement> _parse_display_statement();
+	std::unique_ptr<ast::nodes::Statement> _parse_statement();
+
+	std::unique_ptr<ast::nodes::Expression> _parse_type_cast();
+
+	std::unique_ptr<ast::nodes::Expression> _parse_primary();
+	std::unique_ptr<ast::nodes::Expression> _parse_unary();
+	std::unique_ptr<ast::nodes::Expression>
+											_parse_binop_rhs(std::unique_ptr<ast::nodes::Expression> lhs, int priority = 0);
+	std::unique_ptr<ast::nodes::Expression> _parse_expression();
+	std::unique_ptr<ast::nodes::Node>       _parse_program();
 
 	Type create_type(UserType user_type);
 	Type allocate_type_id();

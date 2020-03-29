@@ -16,6 +16,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "compiler.hpp"
+#include "ast/visitors/debugprint.hpp"
 #include "exceptions.hpp"
 #include "token.hpp"
 #include "util/enums.hpp"
@@ -49,17 +50,27 @@ void Compiler::operator()()
 {
 	try
 	{
-		m_codegen->begin_program();
+		/*
+		 m_codegen->begin_program();
 
-		read_token(); // Read first token
-		parse_program();
+		 read_token(); // Read first token
+		 parse_program();
 
-		if (m_current_token != FEOF)
-		{
-			error(fmt::format("extraneous characters at end of file. did you use '.' instead of ';'?"));
-		}
+		 if (m_current_token != FEOF)
+		 {
+			 error(fmt::format("extraneous characters at end of file. did you use '.' instead of ';'?"));
+		 }
 
-		m_codegen->finalize_program();
+		 m_codegen->finalize_program();
+		 */
+
+		read_token();
+		auto program = _parse_program();
+
+		ast::visitors::DebugPrint visitor;
+		program->visit(visitor);
+
+		error("done");
 	}
 	catch (const CompilerError& e)
 	{
@@ -921,6 +932,479 @@ void Compiler::parse_program()
 	m_codegen->begin_global_data_section();
 	emit_global_variables();
 	m_codegen->finalize_global_data_section();
+}
+
+int Compiler::operator_priority(ast::nodes::BinaryExpression::Operator op) const
+{
+	// TODO: move this map elsewhere
+	constexpr int equ_priority = 10, add_priority = 20, mul_priority = 30;
+
+	static const std::unordered_map<ast::nodes::BinaryExpression::Operator, int, EnumClassHash> map{
+		{ast::nodes::BinaryExpression::Operator::INVALID, -1},
+
+		{ast::nodes::BinaryExpression::Operator::ADD, add_priority},
+		{ast::nodes::BinaryExpression::Operator::SUBTRACT, add_priority},
+		{ast::nodes::BinaryExpression::Operator::MULTIPLY, mul_priority},
+		{ast::nodes::BinaryExpression::Operator::DIVIDE, mul_priority},
+		{ast::nodes::BinaryExpression::Operator::MODULUS, mul_priority},
+
+		{ast::nodes::BinaryExpression::Operator::EQUAL, equ_priority},
+		{ast::nodes::BinaryExpression::Operator::NOT_EQUAL, equ_priority},
+		{ast::nodes::BinaryExpression::Operator::GREATER_EQUAL, equ_priority},
+		{ast::nodes::BinaryExpression::Operator::LOWER_EQUAL, equ_priority},
+		{ast::nodes::BinaryExpression::Operator::GREATER, equ_priority},
+		{ast::nodes::BinaryExpression::Operator::LOWER, equ_priority},
+
+		{ast::nodes::BinaryExpression::Operator::LOGICAL_AND, mul_priority},
+		{ast::nodes::BinaryExpression::Operator::LOGICAL_OR, add_priority}};
+
+	return map.find(op)->second;
+}
+
+char Compiler::read_character_literal()
+{
+	const char value = token_text()[1];
+	read_token();
+
+	return value;
+}
+
+uint64_t Compiler::read_integer_literal()
+{
+	static_assert(
+		sizeof(unsigned long long) >= sizeof(std::int64_t),
+		"unsigned long long must be 64-bit on the compiler platform");
+
+	const auto value = std::stoull(token_text());
+	read_token();
+
+	return value;
+}
+
+double Compiler::read_float_literal()
+{
+	const double value = std::stod(token_text());
+	read_token();
+
+	return value;
+}
+
+std::string Compiler::read_string_literal()
+{
+	const std::string value = token_text();
+	read_token();
+
+	return value.substr(1, value.size() - 1);
+}
+
+std::string Compiler::read_identifier()
+{
+	expect_token(TOKEN::ID, "expected identifier");
+
+	const std::string value = token_text();
+	read_token();
+	return value;
+}
+
+ast::nodes::BinaryExpression::Operator Compiler::try_read_binop()
+{
+	const auto token = m_current_token;
+
+	if (check_enum_range(m_current_token, TOKEN::FIRST_OP, TOKEN::LAST_OP))
+	{
+		read_token();
+	}
+
+	switch (token)
+	{
+	case TOKEN::ADDOP_ADD: return ast::nodes::BinaryExpression::Operator::ADD;
+	case TOKEN::ADDOP_SUB: return ast::nodes::BinaryExpression::Operator::SUBTRACT;
+	case TOKEN::MULOP_MUL: return ast::nodes::BinaryExpression::Operator::MULTIPLY;
+	case TOKEN::MULOP_DIV: return ast::nodes::BinaryExpression::Operator::DIVIDE;
+	case TOKEN::MULOP_MOD: return ast::nodes::BinaryExpression::Operator::MODULUS;
+
+	case TOKEN::RELOP_EQU: return ast::nodes::BinaryExpression::Operator::EQUAL;
+	case TOKEN::RELOP_DIFF: return ast::nodes::BinaryExpression::Operator::NOT_EQUAL;
+	case TOKEN::RELOP_SUPE: return ast::nodes::BinaryExpression::Operator::GREATER_EQUAL;
+	case TOKEN::RELOP_INFE: return ast::nodes::BinaryExpression::Operator::LOWER_EQUAL;
+	case TOKEN::RELOP_SUP: return ast::nodes::BinaryExpression::Operator::GREATER;
+	case TOKEN::RELOP_INF: return ast::nodes::BinaryExpression::Operator::LOWER;
+
+	case TOKEN::MULOP_AND: return ast::nodes::BinaryExpression::Operator::LOGICAL_AND;
+	case TOKEN::ADDOP_OR: return ast::nodes::BinaryExpression::Operator::LOGICAL_OR;
+
+	default: return ast::nodes::BinaryExpression::Operator::INVALID;
+	}
+}
+
+std::unique_ptr<ast::nodes::Expression> Compiler::_parse_character_literal()
+{
+	return std::make_unique<ast::nodes::CharacterLiteral>(read_character_literal());
+}
+
+std::unique_ptr<ast::nodes::Expression> Compiler::_parse_integer_literal()
+{
+	return std::make_unique<ast::nodes::IntegerLiteral>(read_integer_literal());
+}
+
+std::unique_ptr<ast::nodes::Expression> Compiler::_parse_float_literal()
+{
+	return std::make_unique<ast::nodes::CharacterLiteral>(read_character_literal());
+}
+
+std::unique_ptr<ast::nodes::Expression> Compiler::_parse_string_literal()
+{
+	return std::make_unique<ast::nodes::StringLiteral>(read_string_literal());
+}
+
+std::unique_ptr<ast::nodes::VariableDeclarationBlock> Compiler::_parse_variable_declaration_block()
+{
+	read_token(TOKEN::KEYWORD_VAR, "expected 'VAR' to begin variable declaration block");
+
+	std::vector<ast::nodes::VariableDeclarationBlock::MultipleDeclaration> multiple_declarations;
+
+	for (;;)
+	{
+		std::vector<std::string> names;
+
+		do
+		{
+			names.push_back(token_text());
+			read_token();
+		} while (try_read_token(TOKEN::COMMA));
+
+		read_token(TOKEN::COLON, "expected ':' after variable name list in declaration block");
+
+		const Type type = parse_type();
+
+		multiple_declarations.emplace_back(std::move(names), type);
+
+		read_token(TOKEN::SEMICOLON, "expected ';' after multiple variable declaration");
+
+		// If the current token is an identifier, then we assume we're continuing to parse a variable declaration.
+		// e.g.:
+		//     VAR
+		//         a : INTEGER;
+		//         b, c : BOOLEAN;
+		//     BEGIN END.
+		// At the end of the 1st iteration, `b` is read and is an identifier, so it loops again.
+		// At the end of the 2nd iteration, `BEGIN` is read but is not an ID, therefore this will break out.
+		if (m_current_token != ID)
+		{
+			break;
+		}
+	}
+
+	return std::make_unique<ast::nodes::VariableDeclarationBlock>(std::move(multiple_declarations));
+}
+
+std::unique_ptr<ast::nodes::ForeignFunctionDeclaration> Compiler::_parse_foreign_function_declaration()
+{
+	Function function;
+	function.foreign = true;
+
+	read_token(TOKEN::KEYWORD_FFI, "expected 'FFI'");
+	const std::string name = read_identifier();
+	read_token(TOKEN::LPARENT, "expected '(' after function name");
+
+	if (m_current_token != RPARENT)
+	{
+		do
+		{
+			if (is_token_type(m_current_token))
+			{
+				const Type type = parse_type();
+				function.parameters.push_back({type});
+			}
+		} while (try_read_token(TOKEN::COMMA));
+	}
+
+	read_token(RPARENT, "expected ')' after type list");
+	read_token(COLON, "expected ':' after ')' to specify return type of foreign function");
+
+	function.return_type = parse_type(true);
+
+	read_token(SEMICOLON, "expected ';' after FFI declaration");
+
+	return std::make_unique<ast::nodes::ForeignFunctionDeclaration>(std::move(name), std::move(function));
+}
+
+std::unique_ptr<ast::nodes::Statement> Compiler::_parse_if_statement()
+{
+	read_token(TOKEN::KEYWORD_IF, "expected 'IF'");
+
+	auto conditional = _parse_expression();
+
+	read_token(TOKEN::KEYWORD_THEN, "expected 'THEN' after conditional expression of 'IF' statement");
+
+	auto on_success = _parse_statement();
+	auto on_failure = try_read_token(TOKEN::KEYWORD_ELSE) ? _parse_statement() : nullptr;
+
+	return std::make_unique<ast::nodes::IfStatement>(
+		std::move(conditional), std::move(on_success), std::move(on_failure));
+}
+
+std::unique_ptr<ast::nodes::Statement> Compiler::_parse_while_statement()
+{
+	read_token(TOKEN::KEYWORD_WHILE, "expected 'WHILE'");
+
+	auto conditional = _parse_expression();
+
+	read_token(TOKEN::KEYWORD_DO, "expected 'DO' after conditional expression of 'WHILE' statement");
+
+	auto loop_body = _parse_statement();
+
+	return std::make_unique<ast::nodes::WhileStatement>(std::move(conditional), std::move(loop_body));
+}
+
+std::unique_ptr<ast::nodes::Statement> Compiler::_parse_for_statement()
+{
+	read_token(TOKEN::KEYWORD_FOR, "expected 'FOR'");
+
+	bug("todo for statement");
+
+	/*
+	read_token();
+	const auto assignment = parse_assignment_statement();
+	check_type(assignment.type.type, Type::UNSIGNED_INT);
+
+	ForStatement for_statement;
+	m_codegen->statement_for_prepare(for_statement, assignment);
+	m_codegen->statement_for_post_assignment(for_statement);
+
+	read_token(KEYWORD_TO, "expected 'TO' after assignement in 'FOR' statement");
+
+	check_type(parse_expression(), Type::UNSIGNED_INT);
+
+	read_token(KEYWORD_DO, "expected 'DO' after max expression in 'FOR' statement");
+
+	m_codegen->statement_for_post_check(for_statement);
+
+	parse_statement();
+
+	m_codegen->statement_for_finalize(for_statement);*/
+}
+
+std::unique_ptr<ast::nodes::Statement> Compiler::_parse_block_statement()
+{
+	read_token(TOKEN::KEYWORD_BEGIN, "expected 'BEGIN' to begin block statement");
+
+	std::vector<std::unique_ptr<ast::nodes::Statement>> statements;
+
+	do
+	{
+		// This enables:
+		// - empty block statements, e.g. BEGIN END
+		// - optional semicolons at the last statement of a block statement
+		if (m_current_token == TOKEN::KEYWORD_END)
+		{
+			break;
+		}
+
+		statements.push_back(_parse_statement());
+	} while (try_read_token(TOKEN::SEMICOLON));
+
+	read_token(TOKEN::KEYWORD_END, "expected 'END' to finish block statement");
+
+	return std::make_unique<ast::nodes::BlockStatement>(std::move(statements));
+}
+
+std::unique_ptr<ast::nodes::Statement> Compiler::_parse_display_statement()
+{
+	read_token(TOKEN::KEYWORD_DISPLAY, "expected 'DISPLAY'");
+
+	auto expression = _parse_expression();
+
+	return std::make_unique<ast::nodes::DisplayStatement>(std::move(expression));
+}
+
+std::unique_ptr<ast::nodes::Statement> Compiler::_parse_statement()
+{
+	switch (m_current_token)
+	{
+	case TOKEN::KEYWORD_IF: return _parse_if_statement();
+	case TOKEN::KEYWORD_WHILE: return _parse_while_statement();
+	case TOKEN::KEYWORD_FOR: return _parse_for_statement();
+	case TOKEN::KEYWORD_BEGIN: return _parse_block_statement();
+	case TOKEN::KEYWORD_DISPLAY: return _parse_display_statement();
+	default:
+	{
+		auto expression = _parse_expression();
+
+		if (expression == nullptr)
+		{
+			return nullptr;
+		}
+
+		if (try_read_token(TOKEN::ASSIGN))
+		{
+			auto rhs = _parse_expression();
+
+			if (rhs == nullptr)
+			{
+				error("expected rhs");
+			}
+
+			return std::make_unique<ast::nodes::AssignmentStatement>(std::move(expression), std::move(rhs));
+		}
+
+		return expression;
+	}
+	}
+}
+
+std::unique_ptr<ast::nodes::Expression> Compiler::_parse_type_cast()
+{
+	read_token(TOKEN::KEYWORD_CONVERT, "expected 'CONVERT'");
+	auto expression = _parse_expression();
+
+	read_token(TOKEN::KEYWORD_TO, "expected 'TO' after expression in CONVERT expression");
+	const Type target_type = parse_type();
+
+	return std::make_unique<ast::nodes::TypeCastExpression>(target_type, std::move(expression));
+}
+
+std::unique_ptr<ast::nodes::Expression> Compiler::_parse_primary()
+{
+	switch (m_current_token)
+	{
+	case TOKEN::CHAR_LITERAL:
+	{
+		return _parse_character_literal();
+		break;
+	}
+
+	case TOKEN::FLOAT_LITERAL:
+	{
+		return _parse_float_literal();
+		break;
+	}
+
+	case TOKEN::INTEGER_LITERAL:
+	{
+		return _parse_integer_literal();
+		break;
+	}
+
+	case TOKEN::ID:
+	{
+		const auto identifier = read_identifier();
+
+		if (try_read_token(TOKEN::LPARENT))
+		{
+			// Function call
+			// TODO: determine how to move this to a function. problem is having consumed identifier already
+
+			std::vector<std::unique_ptr<ast::nodes::Expression>> arguments;
+
+			if (m_current_token != TOKEN::RPARENT)
+			{
+				do
+				{
+					arguments.push_back(_parse_expression());
+				} while (try_read_token(TOKEN::COMMA));
+			}
+
+			read_token(TOKEN::RPARENT, "expected ')' after parameter list in function call");
+
+			return std::make_unique<ast::nodes::CallExpression>(std::move(identifier), std::move(arguments));
+		}
+
+		return std::make_unique<ast::nodes::VariableExpression>(std::move(identifier));
+	}
+
+	default:
+	{
+		return nullptr;
+	}
+	}
+}
+
+std::unique_ptr<ast::nodes::Expression> Compiler::_parse_unary()
+{
+	// TODO:
+	// @Identifier
+	// ()
+	// unary
+	// type cast
+	// func call
+	switch (m_current_token)
+	{
+	case TOKEN::KEYWORD_CONVERT:
+	{
+		return _parse_type_cast();
+	}
+
+	default:
+	{
+		return _parse_primary();
+	}
+	}
+}
+
+std::unique_ptr<ast::nodes::Expression>
+Compiler::_parse_binop_rhs(std::unique_ptr<ast::nodes::Expression> lhs, int current_priority)
+{
+	// inspired by llvm kaleidoscope binop parsing
+	for (;;)
+	{
+		const auto first_op          = try_read_binop();
+		const auto first_op_priority = operator_priority(first_op);
+
+		if (first_op == ast::nodes::BinaryExpression::Operator::INVALID || current_priority >= first_op_priority)
+		{
+			return lhs;
+		}
+
+		auto rhs = _parse_unary();
+
+		if (rhs == nullptr)
+		{
+			return nullptr;
+		}
+
+		const auto next_op          = try_read_binop();
+		const auto next_op_priority = operator_priority(next_op);
+
+		if (next_op == ast::nodes::BinaryExpression::Operator::INVALID || first_op_priority >= next_op_priority)
+		{
+			rhs = _parse_binop_rhs(std::move(rhs), first_op_priority + 1);
+
+			if (rhs == nullptr)
+			{
+				return nullptr;
+			}
+		}
+
+		// create expression
+		lhs = std::make_unique<ast::nodes::BinaryExpression>(first_op, std::move(lhs), std::move(rhs));
+	}
+}
+
+std::unique_ptr<ast::nodes::Expression> Compiler::_parse_expression()
+{
+	auto lhs = _parse_unary();
+
+	return _parse_binop_rhs(std::move(lhs));
+}
+
+std::unique_ptr<ast::nodes::Node> Compiler::_parse_program()
+{
+	std::vector<std::unique_ptr<ast::nodes::Node>> nodes;
+
+	for (;;)
+	{
+		switch (m_current_token)
+		{
+		case TOKEN::KEYWORD_VAR: nodes.push_back(_parse_variable_declaration_block()); break;
+		// case TOKEN::KEYWORD_TYPE: nodes.push_back(_parse_type_definition()); break;
+		case TOKEN::KEYWORD_FFI: nodes.push_back(_parse_foreign_function_declaration()); break;
+		// case TOKEN::KEYWORD_INCLUDE: handle_include(nodes); break;
+		case TOKEN::KEYWORD_BEGIN: nodes.push_back(_parse_block_statement()); break;
+		case TOKEN::DOT: return std::make_unique<ast::nodes::Program>(std::move(nodes));
+		default: error("expected declaration or block statement");
+		}
+	}
 }
 
 Type Compiler::create_type(UserType user_type)

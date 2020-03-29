@@ -24,6 +24,10 @@ find_package(CLI11 CONFIG REQUIRED)
 
 FLEX_TARGET(tokeniser "src/tokeniser.l" "${CMAKE_CURRENT_BINARY_DIR}/tokeniser.cpp")
 add_executable(${PROJECT_NAME}
+	"src/ast/nodes/declaration.cpp"
+	"src/ast/nodes/expression.cpp"
+	"src/ast/nodes/statement.cpp"
+	"src/ast/visitors/debugprint.cpp"
 	"src/codegen/x86/codegen.cpp"
 	"src/compiler.cpp"
 	"src/token.cpp"
