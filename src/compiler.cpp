@@ -603,6 +603,15 @@ std::unique_ptr<ast::nodes::Expression> Compiler::_parse_primary()
 		return std::make_unique<ast::nodes::VariableExpression>(std::move(identifier));
 	}
 
+	case TOKEN::LPARENT:
+	{
+		read_token();
+		auto expression = _parse_expression();
+		read_token(TOKEN::RPARENT, "expected ')' after expression, following earlier '('");
+
+		return expression;
+	}
+
 	default:
 	{
 		return nullptr;
@@ -614,7 +623,6 @@ std::unique_ptr<ast::nodes::Expression> Compiler::_parse_unary()
 {
 	// TODO:
 	// @Identifier
-	// ()
 	// unary
 	// type cast
 	// func call
