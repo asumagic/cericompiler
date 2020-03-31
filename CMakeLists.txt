@@ -29,6 +29,7 @@ add_executable(${PROJECT_NAME}
 	"src/ast/nodes/statement.cpp"
 	"src/ast/visitor.cpp"
 	"src/ast/visitors/debugprint.cpp"
+	"src/ast/visitors/typeevaluator.cpp"
 	"src/ast/visitors/x86codegen.cpp"
 	"src/compiler.cpp"
 	"src/token.cpp"

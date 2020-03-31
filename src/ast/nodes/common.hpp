@@ -18,9 +18,6 @@ struct Node
 struct TypeName : Node
 {};
 
-struct Annotation : Node
-{};
-
 struct Statement : Node
 {};
 

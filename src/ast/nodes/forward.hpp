@@ -4,6 +4,10 @@ namespace ast
 {
 namespace nodes
 {
+struct TypeName;
+struct Statement;
+struct Expression;
+
 struct BinaryExpression;
 struct UnaryExpression;
 struct VariableExpression;

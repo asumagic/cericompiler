@@ -1,5 +1,7 @@
 #include "visitor.hpp"
 
+#include <fmt/core.h>
+
 namespace ast
 {
 void VisitorWithErrorDefaults::operator()([[maybe_unused]] nodes::BinaryExpression& expression)
@@ -98,6 +100,11 @@ void VisitorWithErrorDefaults::operator()([[maybe_unused]] nodes::UserType& expr
 
 void VisitorWithErrorDefaults::operator()([[maybe_unused]] nodes::Program& expression) { unexpected("Program"); }
 
-void VisitorWithErrorDefaults::unexpected(string_view message) {}
+void VisitorWithErrorDefaults::unexpected(string_view message)
+{
+	// TODO: invoke compiler.bug instead
+	fmt::print(stderr, "AST walker encountered unexpected node: {}\n", message.str());
+	std::exit(2);
+}
 
 } // namespace ast

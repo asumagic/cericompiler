@@ -17,6 +17,8 @@
 
 #include "compiler.hpp"
 #include "ast/visitors/debugprint.hpp"
+#include "ast/visitors/typeevaluator.hpp"
+#include "ast/visitors/x86codegen.hpp"
 #include "exceptions.hpp"
 #include "token.hpp"
 #include "util/enums.hpp"
@@ -67,6 +69,12 @@ void Compiler::operator()()
 		ast::visitors::DebugPrint visitor;
 		program->visit(visitor);
 
+		ast::visitors::TypeEvaluator type_evaluator{*this};
+		program->visit(type_evaluator);
+
+		ast::visitors::x86::CodeGen codegen{m_output_stream};
+		program->visit(codegen);
+
 		error("done");
 	}
 	catch (const CompilerError& e)
@@ -79,6 +87,32 @@ void Compiler::operator()()
 	{
 		bug(e.what());
 	}
+}
+
+void Compiler::error(string_view error_message) const
+{
+	show_source_context();
+	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::red), "error: ");
+	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::white), "{}\n", error_message.str());
+
+	note(fmt::format("while reading token '{}'", token_text().str()));
+
+	throw CompilerError{"aborting due to past error"};
+}
+
+void Compiler::note(string_view note_message) const
+{
+	show_source_context();
+	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::green_yellow), "note:  ");
+	fmt::print(stderr, "{}\n", note_message.str());
+}
+
+void Compiler::bug(string_view error_message) const
+{
+	show_source_context();
+	fmt::print(stderr, fg(fmt::color::red), "error: COMPILER BUG!\n");
+
+	error(error_message);
 }
 
 std::unique_ptr<ast::nodes::TypeName> Compiler::parse_type(bool allow_void)
@@ -699,62 +733,6 @@ string_view Compiler::current_file() const { return m_file_name_stack.top(); }
 void Compiler::show_source_context() const
 {
 	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::white), "{}:{}: ", current_file().str(), m_lexer->lineno());
-};
-
-void Compiler::error(string_view error_message) const
-{
-	show_source_context();
-	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::red), "error: ");
-	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::white), "{}\n", error_message.str());
-
-	note(fmt::format("while reading token '{}'", token_text().str()));
-
-	throw CompilerError{"aborting due to past error"};
-}
-
-void Compiler::note(string_view note_message) const
-{
-	show_source_context();
-	fmt::print(stderr, fmt::emphasis::bold | fg(fmt::color::green_yellow), "note:  ");
-	fmt::print(stderr, "{}\n", note_message.str());
-}
-
-void Compiler::bug(string_view error_message) const
-{
-	show_source_context();
-	fmt::print(stderr, fg(fmt::color::red), "error: COMPILER BUG!\n");
-
-	error(error_message);
-}
-
-void Compiler::check_type(Type a, Type b) const
-{
-	if (check_enum_range(a, Type::FIRST_CONCEPT, Type::LAST_CONCEPT))
-	{
-		bug("only the second operand of TypeCheck may be a type concept");
-	}
-
-	bool match;
-
-	switch (b)
-	{
-	case Type::ARITHMETIC:
-	{
-		match = check_enum_range(a, Type::FIRST_ARITHMETIC, Type::LAST_ARITHMETIC);
-		break;
-	}
-
-	default:
-	{
-		match = (a == b);
-		break;
-	}
-	}
-
-	if (!match)
-	{
-		error(fmt::format("incompatible types: {}, {}", type_name(a).str(), type_name(b).str()));
-	}
 }
 
 string_view Compiler::token_text() const { return m_lexer->YYText(); }

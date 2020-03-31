@@ -1,6 +1,7 @@
 #include "debugprint.hpp"
 
 #include "../../util/enums.hpp"
+#include "../nodes/all.hpp"
 
 #include <fmt/core.h>
 
@@ -147,13 +148,6 @@ void DebugPrint::operator()(nodes::BuiltinType& expression)
 
 void DebugPrint::operator()(nodes::UserType& expression) { print_indented("User type '{}'", expression.name); }
 
-void DebugPrint::operator()(nodes::TypeAnnotation& expression)
-{
-	print_indented("TypeAnnotation");
-	indented("type", [&] { expression.type->visit(*this); });
-	indented("expression", [&] { expression.expression->visit(*this); });
-}
-
 void DebugPrint::operator()(nodes::Program& expression)
 {
 	print_indented("Program");
@@ -168,7 +162,7 @@ void DebugPrint::operator()(nodes::Program& expression)
 template<class... Ts>
 void DebugPrint::print_indented(Ts&&... params)
 {
-	fmt::print("{}{}\n", std::string(m_depth * 4, ' '), fmt::format(std::forward<Ts>(params)...));
+	fmt::print(stderr, "{}{}\n", std::string(m_depth * 4, ' '), fmt::format(std::forward<Ts>(params)...));
 }
 
 template<class Func>

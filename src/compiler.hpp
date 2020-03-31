@@ -46,6 +46,17 @@ class Compiler
 
 	void operator()();
 
+	//! \brief Halt the execution of the compiler due to an ill-formed program and display details provided by \p
+	//! error_message.
+	[[noreturn]] void error(string_view error_message) const;
+
+	//! \brief Provide a note providing context for a compiler diagnostic.
+	void note(string_view note_message) const;
+
+	//! \brief Halt the execution of the compiler due to a compiler bug and display details provided by \p
+	//! error_message.
+	[[noreturn]] void bug(string_view error_message) const;
+
 	private:
 	const Config& m_config;
 
@@ -97,31 +108,6 @@ class Compiler
 	string_view current_file() const;
 
 	void show_source_context() const;
-
-	//! \brief Halt the execution of the compiler due to an ill-formed program and display details provided by \p
-	//! error_message.
-	[[noreturn]] void error(string_view error_message) const;
-
-	//! \brief Provide a note providing context for a compiler diagnostic.
-	void note(string_view note_message) const;
-
-	//! \brief Halt the execution of the compiler due to a compiler bug and display details provided by \p
-	//! error_message.
-	[[noreturn]] void bug(string_view error_message) const;
-
-	//! \brief Check whether types a and b are compatible (i.e. they behave identically) otherwise show an error.
-	//!
-	//! \param a may only be a concrete type, e.g. UNSIGNED_INT or CHAR.
-	//! \param b may be both a concrete type and a concept.
-	//!
-	//! \details
-	//!		Examples:
-	//!		- check_type(Type::UNSIGNED_INT, Type::ARITHMETIC) will *not* show an error
-	//!		- check_type(Type::UNSIGNED_INT, Type::UNSIGNED_INT) will *not* show an error
-	//!		- check_type(Type::DOUBLE, Type::CHAR) *will* show an error
-	//!		- check_type(Type::CHAR, Type::ARITHMETIC) *will* show an error
-	//!		- check_type(Type::ARITHMETIC, Type::UNSIGNED_INT) will show a *compiler bug error*
-	void check_type(Type a, Type b) const;
 
 	[[nodiscard]] string_view token_text() const;
 

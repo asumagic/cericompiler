@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../nodes/all.hpp"
 #include "../visitor.hpp"
 
 namespace ast
@@ -30,7 +29,6 @@ class DebugPrint : public Visitor
 	virtual void operator()(nodes::Include& expression) override;
 	virtual void operator()(nodes::BuiltinType& expression) override;
 	virtual void operator()(nodes::UserType& expression) override;
-	virtual void operator()(nodes::TypeAnnotation& expression) override;
 	virtual void operator()(nodes::Program& expression) override;
 
 	private:
