@@ -10,6 +10,8 @@ Supported and tested targets:
 
 CI available on the [GitHub mirror](https://github.com/AsuMagic/cericompiler).
 
+An experimental implementation of the compiler making use of an AST is available in the `ast` branch (with incomplete language support, no validation and no codegen).
+
 ## Requirements
 
 - CMake 3.5 or later
